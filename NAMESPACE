@@ -1,0 +1,10 @@
+
+Import(stats)
+
+
+export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm)
+ 
+S3method(summary, gmm)
+  
+
+
