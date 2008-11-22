@@ -1,5 +1,4 @@
-HAC <- function (x, weights = weightsAndrews2, prewhite = FALSE, ar.method = "ols",kernel=c("Quadratic Spectral", 
-    "Truncated", "Bartlett", "Parzen", "Tukey-Hanning")) 
+HAC <- function (x, weights = weightsAndrews2, bw = bwAndrews2, prewhite = FALSE, ar.method = "ols", kernel=c("Quadratic Spectral", "Truncated", "Bartlett", "Parzen", "Tukey-Hanning"), approx="AR(1)",tol = 1e-7) 
 {
     n.orig <- n <- nrow(x)
     k <- ncol(x)
@@ -12,8 +11,7 @@ HAC <- function (x, weights = weightsAndrews2, prewhite = FALSE, ar.method = "ol
 	x <- as.matrix(na.omit(var.fit$resid))
 	n <- n - prewhite
 	}
-    if (is.function(weights)) 
-        weights <- weights(x, ar.method = ar.method,kernel=kernel)
+    weights <- weights(x, ar.method = ar.method,kernel=kernel,bw=bw, approx = approx, prewhite = 1, tol = tol)
     if (length(weights) > n) 
 	{
         warning("more weights than observations, only first n used")
@@ -49,6 +47,8 @@ weightsAndrews2 <- function (x, bw = bwAndrews2, kernel = c("Quadratic Spectral"
     "ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol = 1e-7, verbose = FALSE)
 {
     kernel <- match.arg(kernel)
+    approx=match.arg(approx)
+
     if (is.function(bw)) 
         bw <- bw(x, kernel = kernel, prewhite = prewhite, ar.method = ar.method, approx=approx)
     n <- NROW(x) 
@@ -116,7 +116,7 @@ bwAndrews2 <- function (x, kernel = c("Quadratic Spectral",
    return(rval)
 }
 
-summary.gmm <- function(object, ...)
+summary.gmm <- function(object, interval=FALSE, ...)
 	{
 	z <- object
 	se <- sqrt(diag(z$vcov))
@@ -126,21 +126,93 @@ summary.gmm <- function(object, ...)
 	ans <- list(met=z$met,kernel=z$kernel,algo=z$algo)
 	names(ans$met) <- "GMM method"
 	names(ans$kernel) <- "kernel for cov matrix"
-	names(ans$algo) <- "Numerical algorithm"
-	
-	
+		
 	ans$par <- round(cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
 
     	dimnames(ans$par) <- list(names(z$par), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 
-	ans$j <- cbind(j,ifelse(z$df>0,pchisq(j,z$df,lower.tail = FALSE),"*******"))
-	dimnames(ans$j) <- list("Test E(g)=0   ",c("J-test","Pz(>j)"))
+	ans$J_test <- noquote(paste("Test-J degrees of freedom is ",z$df,sep=""))
+	ans$j <- noquote(cbind(j,ifelse(z$df>0,pchisq(j,z$df,lower.tail = FALSE),"*******")))
+	dimnames(ans$j) <- list("Test E(g)=0:  ",c("J-test","Pz(>j)"))
 	
+	if (interval != FALSE)
+		{
+		zs <- qnorm((1-interval)/2,lower.tail=FALSE)
+		ch <- zs*se
+		ans$interval <- cbind(par-ch,par+ch)
+		dimnames(ans$interval) <- list(names(par),c("Theta_lower","Theta_upper"))
+		}
 	class(ans) <- "summary.gmm"
 	ans
 	}
 
+lintest <- function(object,R,c)
+		{
+		z <- object
+		dl <- nrow(R)
+		rest <- R%*%z$par - c
+		if (class(z)=="gmm")
+			vcov_par <- z$vcov
+		else
+			vcov_par <- z$vcov_par
 
+		vcov <- R%*%vcov_par%*%t(R)
+		h0 <- matrix(rep(NA,nrow(R)),ncol=1)	
+		for (i in 1:nrow(R))
+			{
+			testnames <- names(z$par)[R[i,]!=0]
+			rn <- R[i,][R[i,]!=0]
+			if (rn[1] != 1)
+				h0[i] <- paste(rn[1],"*",testnames[1],sep="")
+			else
+				h0[i] <- testnames[1]
+			if (length(rn) > 1)
+				{
+				for (j in 2:length(rn))
+					{
+					if (rn[j] >= 0)
+						{	
+						if (rn[j] != 1)					
+							h0[i] <- paste(h0[i]," + ",rn[j],"*",testnames[j],sep="")
+						else
+							h0[i] <- paste(h0[i]," + ",testnames[j],sep="")
+						}
+					else
+						{	
+						if (abs(rn[j]) != 1)					
+							h0[i] <- paste(h0[i]," - ",abs(rn[j]),"*",testnames[j],sep="")					
+						else
+							h0[i] <- paste(h0[i]," - ",testnames[j],sep="")
+						}
+					}
+				}
+			h0[i] <- paste(h0[i]," = ",c[i],sep="")
+			}
+		rh <- solve(vcov,rest)		
+		ans <- list(description <- "Wald test for H0: R(Theta)=c")
+		ans$H0 <- noquote(h0)
+		colnames(ans$H0) <- "Null Hypothesis"		
+		wt <- crossprod(rest,rh)
+		pv <- pchisq(wt,dl,lower.tail=FALSE)
+		res <- cbind(wt,pv)
+		dimnames(res) <- list("Wald test", c("Statistics","P-Value"))
+		ans$result <- res
+		ans
+		} 
+
+
+		
+
+
+
+
+
+
+
+
+
+
+		
 
 

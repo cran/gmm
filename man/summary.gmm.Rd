@@ -5,10 +5,11 @@
  It presents the results from the \code{gmm} estimation in the same fashion as summary does for the lm class objects for example. It also compute the J-test for overidentifying restriction.
 }
 \usage{
-\method{summary}{gmm}(object, ...)
+\method{summary}{gmm}(object, interval=FALSE, ...)
 }
 \arguments{
  \item{object}{An object of class gmm returned by the function \code{gmm}}
+\item{interval}{Should the results include the confidence intervals of \eqn{\hat{\theta}}. If so, "interval" should be eqal to the confidence level.}
 \item{...}{Other arguments when summary is applied to an other classe object}
 }
 
@@ -35,30 +36,18 @@ phi<-c(.2,.7)
 thet <- 0
 sd <- .2
 x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+y <- x[7:n]
+ym1 <- x[6:(n-1)]
+ym2 <- x[5:(n-2)]
 
-g <- function(tet,x)
-	{
-	n <- nrow(x)
-	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
-	f <- cbind(u,u*x[5:(n-2)],u*x[4:(n-3)],u*x[3:(n-4)])
-	#f <- cbind(u,u*x[5:(n-2)],u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
-	#f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
-	return(f)
-	}
+H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
+g <- y~ym1+ym2
+x <- H
 
-Dg <- function(tet,x)
-	{
-	n <- nrow(x)
-	xx <- cbind(rep(1,(n-6)),x[6:(n-1)],x[5:(n-2)])
-	 H  <- cbind(rep(1,(n-6)),x[5:(n-2)],x[4:(n-3)],x[3:(n-4)])
-	# H  <- cbind(rep(1,(n-6)),x[5:(n-2)],x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-	#H  <- cbind(rep(1,(n-5)),x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-	f <- -crossprod(H,xx)/(n-6)
-	return(f)
-	}
+res <- gmm(g,x)
 
-resgmm <- gmm(g,c(0,.3,.6),x,grad=Dg)
-summary(resgmm)
+summary(res)
+summary(res,interval=0.95)
 
 }
 

@@ -1,10 +1,9 @@
-
 Import(stats)
 
-
-export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm)
+export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm,rho,smooth_g,get_dat,bwNeweyWest2,summary.gel,get_lamb,lintest,gel)
  
 S3method(summary, gmm)
+S3method(summary, gel)
   
 
 

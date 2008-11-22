@@ -1,0 +1,176 @@
+\name{gel}
+
+\alias{gel}
+
+\title{Generalized Empirical Likelihood estimation}
+
+\description{
+Function to estimate a vector of parameters based on moment conditions using the GEL method as presented by Newey-Smith(2004) and Anatolyev(2005).
+}
+\usage{
+gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC","iid"), 
+    kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), bw=bwAndrews2, 
+    approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, 
+    tol_lam=1e-9, tol_obj = 1e-9, tol_mom = 1e-9,maxiterlam=1000,constraint=FALSE,
+    intercept=TRUE,optfct=c("optim","optimize"), optlam=c("iter","numeric"),...)
+}
+\arguments{
+\item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).  }
+
+\item{tet0}{A \eqn{k \times 1} vector of starting values. If the dimension of \eqn{\theta} is one, see the argument "optfct".}
+
+\item{x}{The matrix or vector of data from which the function \eqn{g(\theta,x)} is computed. If "g" is a formula, it is an \eqn{n \times Nh} matrix of instruments (see details below).}
+
+\item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradiant is used compute the asymptotic covariance matrix of \eqn{\hat{\theta}}. If "g" is a formula, the gradiant is not required (see the details below).}
+
+\item{smooth}{If set to TRUE, the moment function is smoothed as proposed by Kitamura(1997)}
+
+\item{type}{"EL" for empirical likelihood, "ET" for exponential tilting, "CUE" for continuous updated estimator and "ETEL" for exponentially tilted empirical likelihood of Schennach(2007).}
+
+\item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will only avoid using the HAC matrix to compute the covariance matrix of the parameter.}
+
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{HAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE.}
+
+\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews2}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest2}} of Newey-West(1994).}
+
+\item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
+
+\item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
+
+\item{approx}{a character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews2}.}
+
+\item{tol_weights}{numeric. Weights that exceed \code{tol} are used for computing the covariance matrix, all other weights are treated as 0.}
+
+\item{tol_lam}{Tolerance for \eqn{\lambda} between two iterations. The algorithm stops when \eqn{\|\lambda_i -\lambda_{i-1}\|} reaches \code{tol_lamb} (see \code{\link{get_lamb}}) }
+
+\item{maxiterlam}{The algorithm to compute \eqn{\lambda} stops if there is no convergence after "maxiterlam" iterations (see \code{\link{get_lamb}}).}
+
+\item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{get_lamb}}).}
+
+\item{intercept}{If "g" is a formula, should the model include a constant? It should always be the case but the choice is yours.}
+
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.}
+
+\item{constraint}{If set to TRUE, the constraint optimization algorithm is used. See \code{\link{constrOptim}} to learn how it works. In particular, if you choose to use it, you need to provide "ui" and "ci" in order to impose the constraint \eqn{ui \theta - ci \geq 0}.}
+
+\item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
+
+\item{optlam}{The default is "iter" which solves for \eqn{\lambda} using the Newton iterative method \code{\link{get_lamb}}. If set to "numeric", the algorithm \code{\link{optim}} is used to compute \eqn{\lambda} instead.}
+
+\item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
+
+}
+
+\details{
+\code{\link{weightsAndrews2}} and \code{\link{bwAndrews2}} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
+
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}.
+
+If "smooth" is set to TRUE, the sample moment conditions \eqn{\sum_{t=1}^n g(\theta,x_t)} is replaced by:
+\eqn{\sum_{t=1}^n g^k(\theta,x_t)},
+where
+\eqn{g^k(\theta,x_t)=\sum_{i=-r}^r k(i) g(\theta,x_{t+i})},
+where \eqn{r} is a truncated parameter that depends on the bandwidth and \eqn{k(i)} are normalized weights so that they sum to 1.
+
+The method solves 
+\eqn{\hat{\theta} = \arg\min \left[\arg\max_\lambda \frac{1}{n}\sum_{t=1}^n \rho(<g(\theta,x_t),\lambda>) - \rho(0) \right]}
+ }
+
+\value{
+'gel' returns an object of 'class' '"gel"' 
+
+The functions 'summary' is used to obtain and print a summary of the results. 
+
+The object of class "gel" is a list containing:
+
+par: \eqn{k\times 1} vector of parameters
+
+lambda: \eqn{q \times 1} vector of Lagrange multipliers.
+
+\code{vcov_par}: the covariance matrix of "par"
+
+\code{vcov_lambda}: the covariance matrix of "lambda"
+
+pt: The implied probabilities
+
+objective: the value of the objective function.
+
+\code{conv_lambda}: Convergence code for "lambda" (see \code{\link{get_lamb}})
+
+\code{conv_mes}: Convergence message for "lambda" (see \code{\link{get_lamb}})
+
+\code{conv_par}: Convergence code for "par" (see \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}})
+ }
+
+
+\references{
+Anatolyev, S. (2005), GMM, GEL, Serial Correlation, and Asymptotic Bias. \emph{Econometrica}, \bold{73}, 983-1002.
+
+Andrews DWK (1991), Heteroskedasticity and Autocorrelation Consistent Covariance Matrix Estimation.
+\emph{Econometrica}, \bold{59}, 817--858.
+
+Kitamura, Yuichi (1997), Empirical Likelihood Methods With Weakly Dependent Processes.
+\emph{The Annals of Statistics}, \bold{25}, 2084-2102.
+
+Newey, W.K. and Smith, R.J. (2004), Higher Order Properties of GMM and 
+Generalized Empirical Likelihood Estimators. \emph{Econometrica}, \bold{72}, 219-255.
+
+Newey WK & West KD (1987), A Simple, Positive Semi-Definite,
+Heteroskedasticity and Autocorrelation Consistent Covariance
+Matrix. \emph{Econometrica}, \bold{55}, 703--708.
+
+Newey WK & West KD (1994), Automatic Lag Selection in Covariance
+Matrix Estimation. \emph{Review of Economic Studies}, \bold{61}, 631-653.
+
+Schennach, Susanne, M. (2007), Point Estimation with Exponentially Tilted Empirical Likelihood.
+\emph{Econometrica}, \bold{35}, 634-672.
+
+Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
+\emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
+URL \url{http://www.jstatsoft.org/v16/i09/}.
+
+}
+\examples{
+# First, an exemple with the fonction g()
+
+g <- function(tet,x)
+	{
+	n <- nrow(x)
+	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
+	f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
+	return(f)
+	}
+
+Dg <- function(tet,x)
+	{
+	n <- nrow(x)
+	xx <- cbind(rep(1,(n-6)),x[6:(n-1)],x[5:(n-2)])
+        H  <- cbind(rep(1,(n-6)),x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
+	f <- -crossprod(H,xx)/(n-6)
+	return(f)
+	}
+n = 200
+phi<-c(.2,.7)
+thet <- 0.2
+sd <- .2
+set.seed(123)
+x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+
+res <- gel(g,x,c(0,.3,.6),grad=Dg)
+summary(res)
+
+# The same model but with g as a formula....  much simpler in that case
+
+y <- x[7:n]
+ym1 <- x[6:(n-1)]
+ym2 <- x[5:(n-2)]
+
+H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
+g <- y~ym1+ym2
+x <- H
+
+res <- gel(g,x,c(0,.3,.6))
+summary(res)
+
+}
+
