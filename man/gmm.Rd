@@ -58,7 +58,39 @@ itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
 \code{weightsAndrews2} and \code{bwAndrews2} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
 
 If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+\cdots+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}.
+
+The following explains the last example bellow. Thanks to Dieter Rozenich, a student from the Vienna Universtiy of Economics and Business Administration. He suggested that it would help to understand the implementation of the jacobian.  
+
+For the two parameters of a normal distribution \eqn{(\mu,\sigma)} we have the following three moment conditions:
+\deqn{
+m_{1} = \mu - x_{i}
 }
+\deqn{ 
+m_{2} = \sigma^2 - (x_{i}-\mu)^2
+}
+\deqn{ 
+m_{3} = x_{i}^{3} - \mu (\mu^2+3\sigma^{2}) 
+}
+\eqn{m_{1},m_{2}} can be directly obtained by the definition of \eqn{(\mu,\sigma)}. The third moment condition comes from the third derivative of the moment generating function (MGF)
+
+\deqn{
+    M_{X}(t) = exp\Big(\mu t + \frac{\sigma^{2}t^{2}}{2}\Big)
+}
+
+evaluated at \eqn{(t=0)}.
+
+Note that we have more equations (3) than unknown parameters (2).
+
+The Jacobian of these two conditions is (it should be an array but I can't make it work):
+
+\deqn{ 1~~~~~~~~~~ 0 }
+\deqn{ -2\mu+2x ~~~~~ 2\sigma }
+\deqn{-3\mu^{2}-3\sigma^{2} ~~~~ 6\mu\sigma}
+	   
+
+}
+
+
 
 \value{
 'gmm' returns an object of 'class' '"gmm"' 
@@ -150,5 +182,31 @@ summary(res_2s)
 res_iter <- gmm(g,x,type="iterative")
 summary(res_iter)
 
+## The following example has been provided by Dieter Rozenich (see details).
+# It generates normal random numbers and uses the GMM to estimate 
+# mean and sd.
+#-------------------------------------------------------------------------------
+# Random numbers of a normal distribution
+# First we generate normally distributed random numbers and compute the two parameters:
+n <- 1000
+x <- rnorm(n, mean = 4, sd = 2)
+# Implementing the 3 moment conditions
+g <- function(tet,x)
+        {
+        m1 <- (tet[1]-x)
+        m2 <- (tet[2]^2 - (x - tet[1])^2)
+        m3 <- x^3-tet[1]*(tet[1]^2+3*tet[2]^2)
+        f <- cbind(m1,m2,m3)
+        return(f)
+        }
+# Implementing the jacobian
+Dg <- function(tet,x)
+        {
+        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],6*tet[1]*tet[2]), nrow=3,ncol=2)
+        return(jacobian)
+        }
+# Now we want to estimate the two parameters using the GMM.
+require(gmm)
+resgmm <- gmm(g,x,c(0,0),grad=Dg)
 }
 
