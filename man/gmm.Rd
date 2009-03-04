@@ -85,7 +85,7 @@ The Jacobian of these two conditions is (it should be an array but I can't make 
 
 \deqn{ 1~~~~~~~~~~ 0 }
 \deqn{ -2\mu+2x ~~~~~ 2\sigma }
-\deqn{-3\mu^{2}-3\sigma^{2} ~~~~ 6\mu\sigma}
+\deqn{-3\mu^{2}-3\sigma^{2} ~~~~ -6\mu\sigma}
 	   
 
 }
@@ -202,7 +202,7 @@ g <- function(tet,x)
 # Implementing the jacobian
 Dg <- function(tet,x)
         {
-        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],6*tet[1]*tet[2]), nrow=3,ncol=2)
+        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],-6*tet[1]*tet[2]), nrow=3,ncol=2)
         return(jacobian)
         }
 # Now we want to estimate the two parameters using the GMM.

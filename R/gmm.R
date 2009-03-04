@@ -192,24 +192,17 @@ else
 			obj <- crossprod(gbar,solve(w2,gbar))
 			return(obj)
 			}	
-		obj_cue_lin <- function(thet)
-			{
-			if (vcov == "iid")
-				w2 <- iid(thet)
-			if (vcov == "HAC")
-				w2 <- HAC(g(thet,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol)
-			obj <- tetlin(x,w2)$value
-			return(obj)
-			}
 		if (typeg)
 			{
 			if (is.null(t0))
 				t0 <- tetlin(x,diag(rep(1,q)))$par
 			if (optfct == "optim")
-				res2 <- optim(t0,obj_cue_lin, ...)
+				{
+				res2 <- optim(t0,obj_cue, ...)
+				}	
 			else
 				{
-				res2 <- optimize(obj_cue_lin,t0, ...)
+				res2 <- optimize(obj_cue,t0, ...)
 				res2$par <- res2$minimum
 				res2$value <- res2$objective
 				}
