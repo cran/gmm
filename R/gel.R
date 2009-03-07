@@ -79,7 +79,7 @@ get_lamb <- function(g,tet,x,type=c('EL','ET','CUE'),tol_lam=1e-12,maxiterlam=10
 		rho2 <- as.numeric(rho(gt,lamb0,derive=2,type=type)$rhomat)
 		rho1 <- as.numeric(rho(gt,lamb0,derive=1,type=type)$rhomat)
 		gblam <- colMeans(rho1*gt)
-		klam <- crossprod(rho2*gt)/n
+		klam <- crossprod(rho2*gt,gt)/n
 		chklam <- sum(abs(klam))
 		if (!is.null(gblam0))
 			dgblam <- crossprod(gblam)-crossprod(gblam0)
@@ -95,7 +95,7 @@ get_lamb <- function(g,tet,x,type=c('EL','ET','CUE'),tol_lam=1e-12,maxiterlam=10
 			{
 			if (rcond(klam)>tol_cond)
 				{
-				lamb1 <- lamb0+solve(klam,gblam)
+				lamb1 <- lamb0-solve(klam,gblam)
 				crit <- sqrt(crossprod(lamb0-lamb1))
 				lamb0 <- lamb1
 				}
