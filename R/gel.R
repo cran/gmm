@@ -145,7 +145,10 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 		}
 	approx <- match.arg(approx)
 	kernel <- match.arg(kernel)
-	k <- length(tet0)
+	if(optfct=="optim")
+		k <- length(tet0)
+	else
+		k <- 1
 
 	typeg=0
 	if (is(g,"formula"))

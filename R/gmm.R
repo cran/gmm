@@ -242,11 +242,11 @@ else
 		{
 			tet <- res$par
 			if (vcov == "iid")
-				w2 <- iid(tet)
+				w <- iid(tet)
 			if (vcov == "HAC")
-				w2 <- HAC(g(tet,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol)
+				w <- HAC(g(tet,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol)
 			if (typeg)
-				res <- tetlin(x,w2)
+				res <- tetlin(x,w)
 			else
 				{	
 				if (optfct == "optim")
