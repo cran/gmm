@@ -52,7 +52,7 @@ weightsAndrews2 <- function (x, bw = bwAndrews2, kernel = c("Quadratic Spectral"
     if (is.function(bw)) 
         bw <- bw(x, kernel = kernel, prewhite = prewhite, ar.method = ar.method, approx=approx)
     n <- NROW(x) 
-    weights <- kweights(0:(n - 1)/bw, kernel = kernel)
+    weights <- kweights2(0:(n - 1)/bw, kernel = kernel)
     weights <- weights[1:max(which(abs(weights) > tol))]
     return(weights)
 }
@@ -201,6 +201,34 @@ lintest <- function(object,R,c)
 		ans
 		} 
 
+kweights2 <- function(x, kernel = c("Truncated", "Bartlett", "Parzen",
+                     "Tukey-Hanning", "Quadratic Spectral"), normalize = FALSE)
+{
+  kernel <- match.arg(kernel)
+  if(normalize) {
+    ca <- switch(kernel,  
+      "Truncated" = 2,
+      "Bartlett" = 2/3,
+      "Parzen" = .539285,
+      "Tukey-Hanning" = 3/4,
+      "Quadratic Spectral" = 1)
+  } else ca <- 1
+
+  switch(kernel,  
+  "Truncated" = { ifelse(ca * x > 1, 0, 1) },
+  "Bartlett" = { ifelse(ca * x > 1, 0, 1 - abs(ca * x)) },
+  "Parzen" = { 
+    ifelse(ca * x > 1, 0, ifelse(ca * x < 0.5,
+      1 - 6 * (ca * x)^2 + 6 * abs(ca * x)^3, 2 * (1 - abs(ca * x))^3))
+  },
+  "Tukey-Hanning" = {
+    ifelse(ca * x > 1, 0, (1 + cos(pi * ca * x))/2)
+  },
+  "Quadratic Spectral" = {
+    y <- 6 * pi * x/5
+    ifelse(x < 1e-4, 1, 3 * (1/y)^2 * (sin(y)/y - cos(y)))
+  })
+}
 
 		
 

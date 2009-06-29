@@ -12,7 +12,7 @@ lintest(object,R,c)
 \item{R}{A \eqn{r\times k} matrix (see details).}
 \item{c}{A \eqn{r\times 1} matrix (see details).}
 }
-\details{ The class object \code{\ref{gmm}} or \code{\link{gel}} returns a \eqn{k\time 1} vector of estimates. The null hypothesis is \eqn{H0:R\theta=c} which tests r linearly independent restrictions. }
+\details{ The class object \code{\link{gmm}} or \code{\link{gel}} returns a \eqn{k\time 1} vector of estimates. The null hypothesis is \eqn{H0:R\theta=c} which tests r linearly independent restrictions. }
 \value{
 It returns the wald test and the p-value of the test
 }

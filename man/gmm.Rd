@@ -57,7 +57,7 @@ itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
 \details{
 \code{weightsAndrews2} and \code{bwAndrews2} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
 
-If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+\cdots+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}.
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}.
 
 The following explains the last example bellow. Thanks to Dieter Rozenich, a student from the Vienna Universtiy of Economics and Business Administration. He suggested that it would help to understand the implementation of the jacobian.  
 
@@ -135,52 +135,40 @@ objective: the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g
   262-280.
 }
 \examples{
-# First, an exemple with the fonction g()
 
-g <- function(tet,x)
-	{
-	n <- nrow(x)
-	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
-	f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
-	return(f)
-	}
+## CAPM test with GMM
+data(Finance)
+r <- Finance[1:300,1:10]
+rm <- Finance[1:300,"rm"]
+rf <- Finance[1:300,"rf"]
 
-Dg <- function(tet,x)
-	{
-	n <- nrow(x)
-	xx <- cbind(rep(1,(n-6)),x[6:(n-1)],x[5:(n-2)])
-        H  <- cbind(rep(1,(n-6)),x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-	f <- -crossprod(H,xx)/(n-6)
-	return(f)
-	}
-n = 500
-set.seed(123)
-phi<-c(.2,.7)
-thet <- 0.2
-sd <- .2
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+z <- as.matrix(r-rf)
+t <- nrow(z)
+zm <- rm-rf
+h <- matrix(zm,t,1)
+res <- gmm(z~zm,x=h)
+summary(res)$par
 
-res_2s <- gmm(g,x,c(0,.3,.6),gradv=Dg)
-summary(res_2s)
+# The CAPM of Black
+g <- function(theta,x) {
+	e <- x[,2:11]-theta[1]-(x[,1]-theta[1])\%*\%matrix(theta[2:11],1,10)
+	gmat <- cbind(e,e*c(x[,1]))
+	return(gmat) }
 
-res_iter <- gmm(g,x,c(0,.3,.6),gradv=Dg,type="iterative")
-summary(res_iter)
+x <- as.matrix(cbind(rm,r))
+res_black <- gmm(g,x=x,t0=rep(0,11))
 
-# The same model but with g as a formula....  much simpler in that case
+summary(res_black)$par
 
-y <- x[7:n]
-ym1 <- x[6:(n-1)]
-ym2 <- x[5:(n-2)]
 
-H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-g <- y~ym1+ym2
-x <- H
+## APT test with Fama-French factors and GMM
 
-res_2s <- gmm(g,x)
-summary(res_2s)
-
-res_iter <- gmm(g,x,type="iterative")
-summary(res_iter)
+f1 <- zm
+f2 <- Finance[1:300,"hml"]-rf
+f3 <- Finance[1:300,"smb"]-rf
+h <- cbind(f1,f2,f3)
+res2 <- gmm(z~f1+f2+f3,x=h)
+summary(res2)$par
 
 ## The following example has been provided by Dieter Rozenich (see details).
 # It generates normal random numbers and uses the GMM to estimate 
@@ -206,7 +194,6 @@ Dg <- function(tet,x)
         return(jacobian)
         }
 # Now we want to estimate the two parameters using the GMM.
-require(gmm)
 resgmm <- gmm(g,x,c(0,0),grad=Dg)
 }
 

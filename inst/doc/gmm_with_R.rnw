@@ -37,7 +37,7 @@ I present in this paper the package \pkg{gmm} that I  wrote for the object orien
 
 \SweaveOpts{engine=R,eps=FALSE}
 %\VignetteIndexEntry{Computing Generalized Empirical Likelihood and Generalized Method of Moments with R}
-%\VignetteDepends{gmm,tseries,mvtnorm}
+%\VignetteDepends{gmm,mvtnorm}
 %\VignetteKeywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood}
 %\VignettePackage{gmm}
 
@@ -356,10 +356,10 @@ The last example is an application in finance. We want to test one of the implic
 where $R_t$ is a $N\times 1$ vector of returns on stocks, $R_{mt}$ if the return of the market portfolio (a proxy of it), $R_f$ is the risk-free rate and $\epsilon_t$ if a vector error terms with covariance matrix $\Sigma_t$. So $\epsilon_t$ can be heteroskedastic and autocorrelated. The data are the daily returns of ten selected stocks taken from Yahoo-Finance and the risk-free rate and returns of the market portfolio that can be found on Kenneth R. French's web site from January 1993 to February 2009\footnote{The symbols of the stocks taken from \url{http://ca.finance.yahoo.com/} are (WMK, UIS, ORB, MAT, ABAX, T, EMR, JCS, VOXX, ZOOM) and K. R. French's web site is \url{http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data\_library.html}}. One implication of the CAPM is that the vector $\alpha$ should be zero. So we want to test the hypothesis $H_0:~\alpha=0$. The instrument is simply $(R_{mt}-R_f)$ which implies that the model is just identified. 
 <<>>=
 data(Finance)
-r <- Finance$r
-rf <- Finance$rf
-rm <- Finance$rm
-z <- r-rf
+r <- Finance[1:300,1:10]
+rf <- Finance[1:300,"rf"]
+rm <- Finance[1:300,"rm"]
+z <- as.matrix(r-rf)
 t <- nrow(z)
 zm <- matrix(rm-rf,t,1)
 res <- gmm(z~zm,x=zm)

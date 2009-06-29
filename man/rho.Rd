@@ -5,7 +5,7 @@
 \title{Objective function of Generalized Empirical Likelihood (GEL)}
 
 \description{
- It computes the objective function of GEL, its first and second analytical derivatives. It is called by \code{\ref{gel}.}
+ It computes the objective function of GEL, its first and second analytical derivatives. It is called by \code{\link{gel}.}
 }
 \usage{
 rho(x,lamb,derive=0,type=c("EL","ET","CUE"),drop=TRUE)
@@ -37,23 +37,6 @@ Hansen, L.P. and Heaton, J. and Yaron, A.(1996),
 Finit-Sample Properties of Some Alternative GMM Estimators.
 \emph{Journal of Business and Economic Statistics}, \bold{14}
 262-280.
-}
-\examples{
-g <- function(tet,x)
-	{
-	n <- nrow(x)
-	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
-	f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
-	return(f)
-	}
-n = 500
-phi<-c(.2,.7)
-thet <- 0.2
-sd <- .2
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
-gt <- g(thet,x)
-lamb <- rep(0,5)
-rho(gt,lamb,type='EL',derive=0)
 }
 
 

@@ -1,3 +1,9 @@
+Changes in Version 1.0-7
+
+  o Modified some functions to remove dependencies on tseries and sandwich packages
+  o Convert de Finance Data to data frame format 
+
+
 Changes in Version 1.0-6
 
   o Some bugs fixed. Thanks to Justinas Brazys 
