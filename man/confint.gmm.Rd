@@ -1,20 +1,22 @@
-\name{summary.gmm}
-\alias{summary.gmm}
-\title{Method for object of class gmm}
+\name{confint.gmm}
+\alias{confint.gmm}
+\title{Confidence intervals for gmm}
 \description{
- It presents the results from the \code{gmm} estimation in the same fashion as \code{summary} does for the \code{lm} class objects for example. It also compute the J-test for overidentifying restrictions.
-}
+ It produces confidence intervals for the coefficients from \code{gmm} estimation.}
 \usage{
-\method{summary}{gmm}(object, ...)
+\method{confint}{gmm}(object, parm, level=0.95, ...)
 }
 \arguments{
  \item{object}{An object of class \code{gmm} returned by the function \code{\link{gmm}}}
-\item{...}{Other arguments when summary is applied to another classe object}
+\item{level}{The confidence level}
+\item{parm}{a specification of which parameters are to be given confidence intervals, either a vector of numbers or a vector
+          of names.  If missing, all parameters are considered.}
+\item{...}{Other arguments when \code{confint} is applied to an other classe object}
 }
 
 \value{
-It returns a list with the parameter estimates and their standard deviations, t-stat and p-values. It also returns the J-test and p-value for the null hypothesis that \eqn{E(g(\theta,X)=0} 
-}
+It returns a matrix with the first column being the lower bound and the second the upper bound.} 
+
 
 \references{
   Hansen, L.P. (1982),
@@ -45,7 +47,8 @@ x <- H
 
 res <- gmm(g,x)
 
-summary(res)
+confint(res)
+confint(res,level=0.90)
 
 }
 

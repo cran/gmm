@@ -1,3 +1,24 @@
+Changes in version 1.1-0
+
+
+This is a major upgrade of the package. It follows great suggestions from two anonymous reviewers from JSS. 
+The package as been modified so that it is now very close to lm and glm. 
+
+  o The name of the vector of parameters is now "coefficients" instead of "par"
+  o The following methods are now available (see lm): fitted, residuals, vcov, coef, confint  
+  o There are now print methods for gmm, gel and summary.gel and summary.gmm
+  o These modifications allows to use linear.hypothesis from the car package so the function lintest is no longer needed and as been removed
+  o The following are now available from gmm and gel objects when g is a formula: residuals, fitted.values, model.frame, terms, model, the response and model matrix 
+  o Because the presence of the confint method, the option "interval" as been removed from the summary methods
+  o A new plot method is available for both gmm and gel objects. It is a beta version. Comments and suggestions are welcome.
+  o If there is only one instrument it can be provided as a vector. It does not need to be a matrix anymore. 
+  o It is now possible to select nlminb as optimizer. It allows to put restriction on the parameter space.
+  o The package no longer depends on mvtnorm. It is a suggested package as it is only required for examples.
+  o The packages car and fBasics (and therefore MASS, timeDate and timeSeries) are now suggested for examples in the vignette.
+  o The new function charStable has been added. It computes the characteristic function of a stable distribution. An example is shown in the vignette
+  o There was a bug when trying to estimate a model by ETEL with gel and numerical computation of lambda. It is fixed. Thanks to Márcio Laurini.
+  o The vignette as beed rewritten.
+
 Changes in Version 1.0-7
 
   o Modified some functions to remove dependencies on tseries and sandwich packages

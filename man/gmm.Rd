@@ -13,7 +13,7 @@ wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"),
 kernel=c("Quadratic Spectral","Truncated", "Bartlett", 
 "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews2, 
 prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, 
-itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
+itermax=100,optfct=c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, ...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).}
@@ -46,10 +46,9 @@ itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
 
 \item{itermax}{The maximum number of iterations for the iterative GMM. It is unlikely that the algorithm does not converge but we keep it as a safety.}
 
-\item{intercept}{If "g" is a formula, should the model include a constant? It should always be the case but the choice is yours.}
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
 
-\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.}
-
+\item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
 
 \item{...}{More options to give to \code{\link{optim}}.}
 }
@@ -57,7 +56,7 @@ itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
 \details{
 \code{weightsAndrews2} and \code{bwAndrews2} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
 
-If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}.
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
 
 The following explains the last example bellow. Thanks to Dieter Rozenich, a student from the Vienna Universtiy of Economics and Business Administration. He suggested that it would help to understand the implementation of the jacobian.  
 
@@ -86,24 +85,35 @@ The Jacobian of these two conditions is (it should be an array but I can't make 
 \deqn{ 1~~~~~~~~~~ 0 }
 \deqn{ -2\mu+2x ~~~~~ 2\sigma }
 \deqn{-3\mu^{2}-3\sigma^{2} ~~~~ -6\mu\sigma}
-	   
-
 }
-
-
 
 \value{
 'gmm' returns an object of 'class' '"gmm"' 
 
 The functions 'summary' is used to obtain and print a summary of the results.  It also compute the J-test of overidentying restriction
 
-The object of class "gmm" is a list containing:
+The object of class "gmm" is a list containing at least:
 
-par: \eqn{k\times 1} vector of parameters
+\item{coefficients}{\eqn{k\times 1} vector of coefficients}
 
-vcov: the covariance matrix of the parameter
+\item{residuals}{the residuals, that is response minus fitted values if "g" is a formula.}
 
-objective: the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g}\|^2}
+\item{fitted.values}{the fitted mean values if "g" is a formula.}
+
+\item{vcov}{the covariance matrix of the coefficients}
+
+\item{objective}{the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g}\|^2}}
+
+\item{terms}{the \code{\link{terms}} object used when g is a formula.}
+
+\item{call}{the matched call.}
+ 
+\item{y}{if requested, the response used (if "g" is a formula).}
+
+\item{x}{if requested, the model matrix used if "g" is a formula or the data if "g" is a function.}
+
+\item{model}{if requested (the default), the model frame used if "g" is a formula.}
+
  }
 
 
@@ -147,7 +157,13 @@ t <- nrow(z)
 zm <- rm-rf
 h <- matrix(zm,t,1)
 res <- gmm(z~zm,x=h)
-summary(res)$par
+summary(res)
+
+## linear tests can be performed using linear.hypothesis from the car package
+## The CAPM can be tested as follows:
+
+library(car)
+linear.hypothesis(res,cbind(diag(10),matrix(0,10,10)),rep(0,10))
 
 # The CAPM of Black
 g <- function(theta,x) {
@@ -158,7 +174,7 @@ g <- function(theta,x) {
 x <- as.matrix(cbind(rm,r))
 res_black <- gmm(g,x=x,t0=rep(0,11))
 
-summary(res_black)$par
+summary(res_black)$coefficients
 
 
 ## APT test with Fama-French factors and GMM
@@ -168,7 +184,8 @@ f2 <- Finance[1:300,"hml"]-rf
 f3 <- Finance[1:300,"smb"]-rf
 h <- cbind(f1,f2,f3)
 res2 <- gmm(z~f1+f2+f3,x=h)
-summary(res2)$par
+coef(res2)
+summary(res2)$coefficients
 
 ## The following example has been provided by Dieter Rozenich (see details).
 # It generates normal random numbers and uses the GMM to estimate 
@@ -194,6 +211,6 @@ Dg <- function(tet,x)
         return(jacobian)
         }
 # Now we want to estimate the two parameters using the GMM.
-resgmm <- gmm(g,x,c(0,0),grad=Dg)
+gmm(g,x,c(0,0),grad=Dg)
 }
 

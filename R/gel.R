@@ -1,3 +1,16 @@
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 rho <- function(x,lamb,derive=0,type=c("EL","ET","CUE"),drop=TRUE)
 	{
 
@@ -126,7 +139,8 @@ get_lamb <- function(g,tet,x,type=c('EL','ET','CUE'),tol_lam=1e-12,maxiterlam=10
 gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC","iid"), kernel = c("Bartlett", "Parzen", 
   		"Truncated", "Tukey-Hanning"), bw=bwAndrews2, approx = c("AR(1)", 
     		"ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, tol_lam=1e-9, tol_obj = 1e-9, 
-		tol_mom = 1e-9,maxiterlam=1000, constraint=FALSE,intercept=TRUE,optfct=c("optim","optimize"),optlam=c("iter","numeric"),...)
+		tol_mom = 1e-9,maxiterlam=1000, constraint=FALSE,optfct=c("optim","optimize","nlminb"),optlam=c("iter","numeric"),
+		model=TRUE, X=FALSE, Y=FALSE,...)
 	{
 	vcov=match.arg(vcov)
 	type <- match.arg(type)
@@ -154,31 +168,21 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 	if (is(g,"formula"))
 		{
 		typeg=1
-		dat <- get_dat(g,x,intercept=intercept)
+		dat <- get_dat(g,x)
 		x <- dat$x
 		
 		g <- function(tet,x,ny=dat$ny,nh=dat$nh,k=dat$k)
 			{
 			tet <- matrix(tet,ncol=k)
-			if (intercept)
-				{
-				e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
-				gt <- e
+			e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
+			gt <- e*x[,ny+k+1]
+			if (nh > 1)
+				{	
 				for (i in 2:nh)
 					{
 					gt <- cbind(gt,e*x[,(ny+k+i)])
 					}
 				}
-			if (!intercept)
-				e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
-				gt <- e*x[,ny+k+1]
-				if (nh > 1)
-					{	
-					for (i in 2:nh)
-						{
-						gt <- cbind(gt,e*x[,(ny+k+i)])
-						}
-					}
 			return(gt)
 			}
 		gradv <- function(tet,x,ny=dat$ny,nh=dat$nh,k=dat$k)
@@ -199,7 +203,7 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 		rgmm <- gmm(g,x,tet0,wmatrix="ident")
 
 		if (is.function(weights))
-			w <- weights(g(rgmm$par,x),kernel=kernel,bw=bw,prewhite = prewhite,ar.method=ar.method,approx=approx,tol=tol_weights)
+			w <- weights(g(rgmm$coefficients,x),kernel=kernel,bw=bw,prewhite = prewhite,ar.method=ar.method,approx=approx,tol=tol_weights)
 		else
 			w <- weights
 		sg <- function(thet,x)
@@ -233,11 +237,11 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 			gt <- g(tet,x)
 			rhofct <- function(lamb)
 				{
-				rhof <- -sum(rho(gt,lamb,type=typet)$rhomat)
+				rhof <- -sum(rho(gt,lamb,type=typel)$rhomat)
 				return(rhof)
 				}
 			if (ncol(gt)>1)
-				rlamb <- optim(rep(0,ncol(gt)),rhofct,...)
+				rlamb <- optim(rep(0,ncol(gt)),rhofct,control=list(maxit=1000))
 			else
 				{
 				rlamb <- optimize(rhofct,c(-1,1))
@@ -253,28 +257,50 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 		}
 
 	if (!constraint)
+		{
 		if (optfct == "optim")
 			res <- optim(tet0,thetf,...)
-		else
+		if (optfct == "nlminb")
+			res <- nlminb(tet0,thetf,...)
+		
+		if (optfct == "optimize")
 			{
 			res <- optimize(thetf,tet0,...)
 			res$par <- res$minimum
-			res$convergence <- "Pas applicable"
+			res$convergence <- "There is no convergence code for optimize"
 			}
-	else
-		res <- constrOptim(tet0,thetf,...)
+		}
+	if(constraint)
+		res <- constrOptim(tet0,thetf,grad=NULL,...)
 
 
-	rlamb <- get_lamb(g,res$par,x,type=typel,tol_lam=tol_lam,maxiterlam=maxiterlam,tol_obj=tol_obj)
-	z <- list(par=res$par,lambda=rlamb$lam,conv_lambda=rlamb$conv_mes,conv_par=res$convergence)
-	z$foc_lambda <- rlamb$obj
+	if (optlam=="iter")
+		{
+		rlamb <- get_lamb(g,res$par,x,type=typel,tol_lam=tol_lam,maxiterlam=maxiterlam,tol_obj=tol_obj)
+		z <- list(coefficients=res$par,lambda=rlamb$lam,conv_lambda=rlamb$conv_mes,conv_par=res$convergence)
+		z$foc_lambda <- rlamb$obj
+		}
+	if (optlam=="numeric")
+		{
+		gt<-g(res$par,x)
+		rhofct <- function(lamb)
+			{
+			rhof <- -sum(rho(gt,lamb,type=typel)$rhomat)
+			return(rhof)
+			}
+		rlamb <- optim(rep(0,ncol(gt)),rhofct,control=list(maxit=1000))
+		z <- list(coefficients=res$par,conv_par=res$convergence,lambda=rlamb$par)
+		z$conv_lambda=paste("Lambda by optim. Conv. code = ",rlamb$convergence,sep="")
+		rho1 <- as.numeric(rho(gt,z$lambda,derive=1,type=typel)$rhomat)
+		z$foc_lambda <- crossprod(colMeans(rho1*gt))
+		}
+	
 	z$type <- type
-	z$gt <- g(z$par,x)
+	z$gt <- g(z$coefficients,x)
 	rhom <- rho(z$gt,z$lambda,type=typet)
 	z$pt <- -rho(z$gt,z$lambda,type=typet,derive=1)$rhomat/n
 	z$conv_moment <- colSums(as.numeric(z$pt)*z$gt)
 	z$conv_pt <- sum(as.numeric(z$pt))
-	 
 	z$objective <- sum(as.numeric(rhom$rhomat)-rho(1,0,type=typet)$rhomat)/n
 
 	if (type == "EL")	
@@ -298,13 +324,13 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 		return(G)
 		}
 	if (!is.function(gradv)) 
-		G <- Gf(z$par)
+		G <- Gf(z$coefficients)
 	else
-		G <- gradv(z$par,x)
+		G <- gradv(z$coefficients,x)
 	if (vcov == "iid")
 		khat <- crossprod(z$gt)
 	else
-		khat <- HAC(g(z$par,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol_weights)
+		khat <- HAC(g(z$coefficients,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol_weights)
 
 	kg <- solve(khat,G)
 	z$vcov_par <- solve(crossprod(G,kg))/n
@@ -314,7 +340,7 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 
 	if (typeg ==0)
 		{
-		names(z$par) <- paste("Theta[",1:k,"]",sep="")
+		names(z$coefficients) <- paste("Theta[",1:k,"]",sep="")
 		colnames(z$gt) <- paste("gt[",1:ncol(z$gt),"]",sep="")
 		names(z$lambda) <- paste("Lambda[",1:ncol(z$gt),"]",sep="")
 		}
@@ -325,20 +351,38 @@ gel <- function(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"),
 		if (dat$ny > 1)
 			{
 			namey <- colnames(dat$x[,1:dat$ny])
-			names(z$par) <- paste(rep(namey,dat$k),"_",rep(namex,rep(dat$ny,dat$k)),sep="")
+			names(z$coefficients) <- paste(rep(namey,dat$k),"_",rep(namex,rep(dat$ny,dat$k)),sep="")
 			colnames(z$gt) <- paste(rep(namey,dat$nh),"_",rep(nameh,rep(dat$ny,dat$nh)),sep="")
 			names(z$lambda) <- paste("Lam(",rep(namey,dat$nh),"_",rep(nameh,rep(dat$ny,dat$nh)),")",sep="")
 			}
 		if (dat$ny == 1)
 			{
-			names(z$par) <- namex
+			names(z$coefficients) <- namex
 			colnames(z$gt) <- nameh
 			names(z$lambda) <- nameh
 			}
 		}
-	dimnames(z$vcov_par) <- list(names(z$par),names(z$par))
+	dimnames(z$vcov_par) <- list(names(z$coefficients),names(z$coefficients))
 	dimnames(z$vcov_lambda) <- list(names(z$lambda),names(z$lambda))
-
+	if (typeg==1)
+		{
+		b <- z$coefficients
+		y <- as.matrix(model.response(dat$mf, "numeric"))
+		ny <- dat$ny
+		b <- t(matrix(b,nrow=ny))
+		x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+		yhat <- x%*%b
+		z$fitted.values<-yhat	
+		z$residuals<-y-yhat	
+		z$terms<- dat$mt
+		if(model) z$model<-dat$mf
+		if(X) z$x<-x
+		if(Y) z$y<-y
+		}
+	else
+		if(X) z$x<-x
+	
+	z$call <- match.call()
 	class(z) <- "gel"
 	return(z)
 	}

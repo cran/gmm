@@ -27,8 +27,7 @@ get_lamb(g,tet,x,type=c('EL','ET','CUE'),tol_lam=1e-12,maxiterlam=1000,tol_obj=1
 
 }
 \details{
-It solves the problem
-\eqn{\frac{1}{n}\sum_{t=1}^n D\rho(<g(\theta,x_t),\lambda>)g(\theta,x_t)=0}. 
+It solves the problem \eqn{\frac{1}{n}\sum_{t=1}^n D\rho(<g(\theta,x_t),\lambda>)g(\theta,x_t)=0}.
 }
 
 \value{

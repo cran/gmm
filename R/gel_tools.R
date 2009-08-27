@@ -1,3 +1,17 @@
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+
 smooth_g <- function (x, bw = bwAndrews2, prewhite = 1, ar.method = "ols",weights=weightsAndrews2,
 			kernel=c("Bartlett","Parzen","Truncated","Tukey-Hanning"), approx = c("AR(1)","ARMA(1,1)"),
 			tol = 1e-7) 
@@ -73,7 +87,91 @@ bwNeweyWest2 <- function (x, kernel = c("Bartlett", "Parzen",
     return(rval)
 }
 
-summary.gel <- function(object,interval=FALSE, ...)
+confint.gel <- function(object, parm, level=0.95, lambda=FALSE, ...)
+		{
+		z <- object	
+		n <- nrow(z$gt)
+		
+		se_par <- sqrt(diag(z$vcov_par))
+		par <- z$coefficients
+		tval <- par/se_par
+
+		se_parl <- sqrt(diag(z$vcov_lambda))
+		lamb <- z$lambda
+
+		zs <- qnorm((1-level)/2,lower.tail=FALSE)
+		ch <- zs*se_par
+
+		if(!lambda)
+			{
+			ans <- cbind(par-ch,par+ch)
+			dimnames(ans) <- list(names(par),c((1-level)/2,0.5+level/2))
+			}
+		if(lambda)
+			{
+			chl <- zs*se_parl
+			ans <- cbind(lamb-chl,lamb+chl)
+			dimnames(ans) <- list(names(lamb),c((1-level)/2,0.5+level/2))
+			}		
+		if(!missing(parm))
+			ans <- ans[parm,]
+		ans
+		}
+
+coef.gel <- function(object, lambda=FALSE, ...) 
+	{
+	if(!lambda)
+		object$coefficients
+	else
+		object$lambda
+	}
+
+vcov.gel <- function(object, lambda=FALSE, ...) 
+	{
+	if(!lambda)
+		object$vcov_par
+	else
+		object$vcov_lambda
+	}
+
+print.gel <- function(x, digits=5, ...)
+	{
+	cat("Type de GEL: ", x$type,"\n\n")
+	cat("Coefficients:\n")
+	print.default(format(coef(x), digits=digits),
+                      print.gap = 2, quote = FALSE)
+	cat("\n")
+	cat("Lambdas:\n")
+	print.default(format(coef(x,lambda=TRUE), digits=digits),
+                      print.gap = 2, quote = FALSE)
+	invisible(x)
+	}
+
+print.summary.gel <- function(x, digits = 5, ...)
+	{
+	cat("\nCall:\n")
+	cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
+	cat("\nType of GEL: ", x$type,"\n\n")
+	cat("Kernel: ", x$kernel,"\n\n")
+	cat("Coefficients:\n")
+	print.default(format(x$coefficients, digits=digits),
+                      print.gap = 2, quote = FALSE)
+
+	cat("\nLambdas:\n")
+	print.default(format(x$lambda, digits=digits),
+                      print.gap = 2, quote = FALSE)
+
+	cat("\nTests of overidentifying restrictions:\n")
+	print.default(format(x$test, digits=digits),
+                      print.gap = 2, quote = FALSE)
+	cat("\nConvergence code for the coefficients: ",x$conv_par,"\n")
+	cat("\nConvergence code for the lambdas: ",x$conv_lambda,"\n")
+	
+	invisible(x)
+	}
+
+
+summary.gel <- function(object, ...)
 	{
 	z <- object
 	n <- nrow(z$gt)
@@ -81,7 +179,7 @@ summary.gel <- function(object,interval=FALSE, ...)
 	gbar <- colMeans(z$gt)
 	
 	se_par <- sqrt(diag(z$vcov_par))
-	par <- z$par
+	par <- z$coefficients
 	tval <- par/se_par
 
 	se_parl <- sqrt(diag(z$vcov_lambda))
@@ -93,31 +191,19 @@ summary.gel <- function(object,interval=FALSE, ...)
 	J_test <- n*crossprod(gbar,solve(khat,gbar))
 	test <- c(LR_test,LM_test,J_test)
 	vptest <- pchisq(test,(ncol(z$gt)-length(z$par)),lower.tail=FALSE)
-	ans <- list(type=z$type)
+	ans <- list(type=z$type,call=z$call)
 	names(ans$type) <-"Type of GEL"
 	
-	ans$par <- round(cbind(par,se_par, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
+	ans$coefficients <- round(cbind(par,se_par, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
 	ans$lambda <- round(cbind(lamb,se_parl, tvall, 2 * pnorm(abs(tvall), lower.tail = FALSE)),5)
 
-    	dimnames(ans$par) <- list(names(z$par), 
+    	dimnames(ans$coefficients) <- list(names(z$coefficients), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
     	dimnames(ans$lambda) <- list(names(z$lambda), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 
 	ans$test <- cbind(test,vptest)
 	dimnames(ans$test) <- list(c("LR test","LM test","J test"),c("statistics","p-value"))	
-
-	if (interval != FALSE)
-		{
-		zs <- qnorm((1-interval)/2,lower.tail=FALSE)
-		ch <- zs*se_par
-		ans$interval_par <- cbind(par-ch,par+ch)
-		dimnames(ans$interval_par) <- list(names(par),c("Theta_lower","Theta_upper"))
-		chl <- zs*se_parl
-		ans$interval_lam <- cbind(lamb-chl,lamb+chl)
-		dimnames(ans$interval_lam) <- list(names(lamb),c("Lambda_lower","Lambda_upper"))
-		}
-
 
 	if (z$type == "EL")
 		ans$badrho <- z$badrho
@@ -137,7 +223,7 @@ summary.gel <- function(object,interval=FALSE, ...)
 	ans	
 }
 
-get_dat <- function (formula,h,intercept=TRUE) 
+get_dat <- function (formula,h) 
 {
 	cl <- match.call()
 	mf <- match.call(expand.dots = FALSE)
@@ -147,14 +233,15 @@ get_dat <- function (formula,h,intercept=TRUE)
 	mf[[1L]] <- as.name("model.frame")
 	mf <- eval(mf, parent.frame())
 	mt <- attr(mf, "terms")
-	
-	h <- cbind(rep(1,nrow(h)),h)
-	colnames(h) <- c("Intercept",paste("h",1:(ncol(h)-1),sep=""))
+	if (!is.matrix(h))
+		h <- cbind(rep(1,length(h)),h)
+	else	
+		h <- cbind(rep(1,nrow(h)),h)
+	colnames(h) <- c("(Intercept)",paste("h",1:(ncol(h)-1),sep=""))
 	y <- as.matrix(model.response(mf, "numeric"))
 	x <- as.matrix(model.matrix(mt, mf, NULL))
-	if (!intercept)
+	if (attr(mt,"intercept")==0)
 		{
-		x <- as.matrix(x[,2:ncol(x)])
 		h <- as.matrix(h[,2:ncol(h)])
 		}
 	ny <- ncol(y)
@@ -172,6 +259,29 @@ get_dat <- function (formula,h,intercept=TRUE)
 			colnames(y) <- "y"
 		}
 	x <- cbind(y,x,h)
-	return(list(x=x,nh=nh,ny=ny,k=k))
+	return(list(x=x,nh=nh,ny=ny,k=k,mf=mf,mt=mt,cl=cl))
+}
+
+
+residuals.gel <- function(object,...) 
+	{
+	if(is.null(object$model))
+		stop("The residuals method is valid only for g=formula")
+	object$residuals
+	}
+
+fitted.gel <- function(object,...)
+	{
+	if(is.null(object$model))
+		stop("The residuals method is valid only for g=formula")
+	object$fitted.value
+	}
+
+formula.gel <- function(x, ...)
+{
+    if(is.null(x$terms))
+	stop("The gel object was not created by a formula")
+    else
+	formula(x$terms)
 }
 

@@ -1,3 +1,17 @@
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+
 HAC <- function (x, weights = weightsAndrews2, bw = bwAndrews2, prewhite = FALSE, ar.method = "ols", kernel=c("Quadratic Spectral", "Truncated", "Bartlett", "Parzen", "Tukey-Hanning"), approx="AR(1)",tol = 1e-7) 
 {
     n.orig <- n <- nrow(x)
@@ -116,90 +130,44 @@ bwAndrews2 <- function (x, kernel = c("Quadratic Spectral",
    return(rval)
 }
 
-summary.gmm <- function(object, interval=FALSE, ...)
+summary.gmm <- function(object, ...)
 	{
 	z <- object
 	se <- sqrt(diag(z$vcov))
-	par <- z$par
+	par <- z$coefficients
 	tval <- par/se
 	j <- z$objective*z$n
-	ans <- list(met=z$met,kernel=z$kernel,algo=z$algo)
+	ans <- list(met=z$met,kernel=z$kernel,algo=z$algo,call=z$call)
 	names(ans$met) <- "GMM method"
 	names(ans$kernel) <- "kernel for cov matrix"
 		
-	ans$par <- round(cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
+	ans$coefficients <- round(cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
 
-    	dimnames(ans$par) <- list(names(z$par), 
+    	dimnames(ans$coefficients) <- list(names(z$coefficients), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 
 	ans$J_test <- noquote(paste("Test-J degrees of freedom is ",z$df,sep=""))
 	ans$j <- noquote(cbind(j,ifelse(z$df>0,pchisq(j,z$df,lower.tail = FALSE),"*******")))
 	dimnames(ans$j) <- list("Test E(g)=0:  ",c("J-test","Pz(>j)"))
-	
-	if (interval != FALSE)
-		{
-		zs <- qnorm((1-interval)/2,lower.tail=FALSE)
-		ch <- zs*se
-		ans$interval <- cbind(par-ch,par+ch)
-		dimnames(ans$interval) <- list(names(par),c("Theta_lower","Theta_upper"))
-		}
 	class(ans) <- "summary.gmm"
 	ans
 	}
 
-lintest <- function(object,R,c)
+confint.gmm <- function(object, parm, level=0.95, ...)
 		{
 		z <- object
-		dl <- nrow(R)
-		rest <- R%*%z$par - c
-		if (class(z)=="gmm")
-			vcov_par <- z$vcov
-		else
-			vcov_par <- z$vcov_par
-
-		vcov <- R%*%vcov_par%*%t(R)
-		h0 <- matrix(rep(NA,nrow(R)),ncol=1)	
-		for (i in 1:nrow(R))
-			{
-			testnames <- names(z$par)[R[i,]!=0]
-			rn <- R[i,][R[i,]!=0]
-			if (rn[1] != 1)
-				h0[i] <- paste(rn[1],"*",testnames[1],sep="")
-			else
-				h0[i] <- testnames[1]
-			if (length(rn) > 1)
-				{
-				for (j in 2:length(rn))
-					{
-					if (rn[j] >= 0)
-						{	
-						if (rn[j] != 1)					
-							h0[i] <- paste(h0[i]," + ",rn[j],"*",testnames[j],sep="")
-						else
-							h0[i] <- paste(h0[i]," + ",testnames[j],sep="")
-						}
-					else
-						{	
-						if (abs(rn[j]) != 1)					
-							h0[i] <- paste(h0[i]," - ",abs(rn[j]),"*",testnames[j],sep="")					
-						else
-							h0[i] <- paste(h0[i]," - ",testnames[j],sep="")
-						}
-					}
-				}
-			h0[i] <- paste(h0[i]," = ",c[i],sep="")
-			}
-		rh <- solve(vcov,rest)		
-		ans <- list(description <- "Wald test for H0: R(Theta)=c")
-		ans$H0 <- noquote(h0)
-		colnames(ans$H0) <- "Null Hypothesis"		
-		wt <- crossprod(rest,rh)
-		pv <- pchisq(wt,dl,lower.tail=FALSE)
-		res <- cbind(wt,pv)
-		dimnames(res) <- list("Wald test", c("Statistics","P-Value"))
-		ans$result <- res
+		se <- sqrt(diag(z$vcov))
+		par <- z$coefficients
+			
+		zs <- qnorm((1-level)/2,lower.tail=FALSE)
+		ch <- zs*se
+		ans <- cbind(par-ch,par+ch)
+		dimnames(ans) <- list(names(par),c((1-level)/2,0.5+level/2))
+		if(!missing(parm))
+			ans <- ans[parm,]
 		ans
-		} 
+		}
+
 
 kweights2 <- function(x, kernel = c("Truncated", "Bartlett", "Parzen",
                      "Tukey-Hanning", "Quadratic Spectral"), normalize = FALSE)
@@ -231,6 +199,116 @@ kweights2 <- function(x, kernel = c("Truncated", "Bartlett", "Parzen",
 }
 
 		
+residuals.gmm <- function(object,...) 
+	{
+	if(is.null(object$model))
+		stop("The residuals method is valid only for g=formula")
+	object$residuals
+	}
+
+fitted.gmm <- function(object,...)
+	{
+	if(is.null(object$model))
+		stop("The residuals method is valid only for g=formula")
+	object$fitted.value
+	}
+
+print.gmm <- function(x, digits=5, ...)
+	{
+	cat("Method\n", x$met,"\n\n")
+	cat("Objective function value: ",x$objective,"\n\n")
+	print.default(format(coef(x), digits=digits),
+                      print.gap = 2, quote = FALSE)
+	cat("\n")
+	invisible(x)
+	}
+
+coef.gmm <- function(object,...) object$coefficients
+
+vcov.gmm <- function(object,...) object$vcov
+
+
+print.summary.gmm <- function(x, digits = 5, ...)
+	{
+	cat("\nCall:\n")
+	cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
+	cat("\nMethod: ", x$met,"\n\n")
+	cat("Kernel: ", x$kernel,"\n\n")
+	cat("Coefficients:\n")
+	print.default(format(x$coefficients, digits=digits),
+                      print.gap = 2, quote = FALSE)
+
+	cat("\nJ-test:\n")
+	print.default(format(x$j, digits=digits),
+                      print.gap = 2, quote = FALSE)
+	cat("\n")
+	invisible(x)
+	}
+
+charStable <- function(theta,tau,pm=0)
+	{
+	# pm is the type parametrization as described by Nolan(2009)
+	# It takes the value 0 or 1 
+
+	# const can fixe parameters. It is NULL for no constraint or
+	# a matrix in which case the constraint is theta[const[,1]]=const[,2]
+
+	a <- theta[1]
+	b <- theta[2]
+	g <- theta[3]
+	d <- theta[4]
+	if(pm == 0)
+		{
+		if(a == 1)
+			{
+			if(g == 0)
+				{
+				the_car <- exp(complex(ima=d*tau)) 
+				}
+			else
+				{
+				re_p <- -g*abs(tau)
+				im_p <- d*tau
+				im_p[tau!=0] <- im_p[tau!=0] + re_p[tau!=0]*2/pi*b*sign(tau[tau!=0])*log(g*abs(tau[tau!=0]))
+				the_car <- exp(complex(re=re_p,ima=im_p))
+				}
+			}
+		else
+			{
+			if(g == 0)
+				{
+				the_car <- exp(complex(ima=d*tau)) 
+				}
+			else
+				{
+				phi <- tan(pi*a/2)
+				re_p <- -g^a*abs(tau)^a
+				im_p <- d*tau*1i
+				im_p[tau!=0] <- im_p[tau!=0] + re_p*( b*phi*sign(tau[tau!=0])*(abs(g*tau[tau!=0])^(1-a)-1) )
+				the_car <- exp(complex(re=re_p,ima=im_p))
+				}
+			}
+		}
+
+	if(pm == 1)
+		{
+		if(a == 1)
+			{
+			re_p <- -g*abs(tau)
+			im_p <- d*tau
+			im_p[tau!=0] <- im_p[tau!=0]+re_p*(b*2/pi*sign(tau[tau!=0])*log(abs(tau[tau!=0])))			
+			the_car <- exp(complex(re=re_p,ima=im_p))
+			}
+		else
+			{
+			phi <- tan(pi*a/2)
+			re_p <- -g^a*abs(tau)^a
+			im_p <- re_p*(-phi*b*sign(tau))+d*tau
+			the_car <- exp(complex(re=re_p,ima=im_p))
+			}
+		}
+	return(the_car)
+	}
 
 
 

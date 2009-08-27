@@ -67,7 +67,7 @@ Matrix Estimation. \emph{Review of Economic Studies}, \bold{61}, 631-653.
 }
 
 \examples{
-set.seed(123)
+set.seed(345)
 x <- arima.sim(n=200,list(ordre=c(1,0,1),ar=.9,ma=.4))
 y <- 2*x + rnorm(200)
 x = cbind(x,y)

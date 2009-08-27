@@ -1,6 +1,19 @@
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"), 
 	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews2, 
-	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,intercept=TRUE,optfct=c("optim","optimize"), ...)
+	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"), model=TRUE, X=FALSE, 		      Y=FALSE, ...)
 {
 type <- match.arg(type)
 kernel <- match.arg(kernel)
@@ -12,31 +25,20 @@ typeg=0
 	if (is(g,"formula"))
 		{
 		typeg=1
-		dat <- get_dat(g,x,intercept=intercept)
+		dat <- get_dat(g,x)
 		x <- dat$x
-
 		g <- function(tet,x,ny=dat$ny,nh=dat$nh,k=dat$k)
 			{
 			tet <- matrix(tet,ncol=k)
-			if (intercept)
-				{
-				e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
-				gt <- e
+			e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
+			gt <- e*x[,ny+k+1]
+			if (nh > 1)
+				{	
 				for (i in 2:nh)
 					{
 					gt <- cbind(gt,e*x[,(ny+k+i)])
 					}
 				}
-			if (!intercept)
-				e <- x[,1:ny] -  x[,(ny+1):(ny+k)]%*%t(tet)
-				gt <- e*x[,ny+k+1]
-				if (nh > 1)
-					{	
-					for (i in 2:nh)
-						{
-						gt <- cbind(gt,e*x[,(ny+k+i)])
-						}
-					}
 			return(gt)
 			}
 		gradv <- function(x,ny=dat$ny,nh=dat$nh,k=dat$k)
@@ -122,20 +124,25 @@ if (q == k2 | wmatrix == "ident")
 		{
 		w <- diag(q)
 		res <- tetlin(x,w)
-		z = list(par=res$par,objective=res$value)
+		z = list(coefficients=res$par,objective=res$value)
 		}
 	else
 		{
 		w=diag(rep(1,q))
 		if (optfct == "optim")
 			res <- optim(t0,obj1, ...)
-		else
+		if (optfct == "nlminb")
 			{
+			res <- nlminb(t0,obj1, ...)
+			res$value <- res$objective
+			}
+		if (optfct == "optimize")
+					{
 			res <- optimize(obj1,t0, ...)
 			res$par <- res$minimum
 			res$value <- res$objective
 			}	
-		z = list(par=res$par,objective=res$value)	
+		z = list(coefficients=res$par,objective=res$value)	
 		}
 	}
 else
@@ -151,7 +158,12 @@ else
 			{
 			if (optfct == "optim")
 				res1 <- optim(t0,obj1, ...)
-			else
+			if (optfct == "nlminb")
+				{
+				res1 <- nlminb(t0,obj1, ...)
+				res1$value <- res1$objective
+				}
+			if (optfct == "optimize")
 				{
 				res1 <- optimize(obj1,t0, ...)
 				res1$par <- res1$minimum
@@ -170,14 +182,19 @@ else
 			{
 			if (optfct == "optim")
 				res2 <- optim(res1$par,obj1, ...)
-			else
+			if (optfct == "nlminb")
+				{
+				res2 <- nlminb(res1$par,obj1, ...)
+				res2$value <- res2$objective
+				}
+			if (optfct == "optimize")
 				{
 				res2 <- optimize(obj1,t0, ...)
 				res2$par <- res2$minimum
 				res2$value <- res2$objective
 				}	
 			}
-		z = list(par=res2$par,objective=res2$value)	
+		z = list(coefficients=res2$par,objective=res2$value)	
 		}
 	if (type=="cue")
 		{
@@ -197,10 +214,13 @@ else
 			if (is.null(t0))
 				t0 <- tetlin(x,diag(rep(1,q)))$par
 			if (optfct == "optim")
-				{
 				res2 <- optim(t0,obj_cue, ...)
-				}	
-			else
+			if (optfct == "nlminb")
+				{
+				res2 <- nlminb(t0,obj_cue, ...)
+				res2$value <- res2$objective
+				}
+			if (optfct == "optimize")
 				{
 				res2 <- optimize(obj_cue,t0, ...)
 				res2$par <- res2$minimum
@@ -211,14 +231,19 @@ else
 			{
 			if (optfct == "optim")
 				res2 <- optim(t0,obj_cue, ...)
-			else
+			if (optfct == "nlminb")
+				{
+				res2 <- nlminb(t0,obj_cue, ...)
+				res2$value <- res2$objective
+				}
+			if (optfct == "optimize")
 				{
 				res2 <- optimize(obj_cue,t0, ...)
 				res2$par <- res2$minimum
 				res2$value <- res2$objective
 				}	
 			}
-		z = list(par=res2$par,objective=res2$value)	
+		z = list(coefficients=res2$par,objective=res2$value)	
 		}
 	if (type=="iterative")
 		{
@@ -229,7 +254,12 @@ else
 			{
 			if (optfct == "optim")
 				res <- optim(t0,obj1, ...)
-			else
+			if (optfct == "nlminb")
+				{
+				res <- nlminb(t0,obj1, ...)
+				res$value <- res$objective
+				}
+			if (optfct == "optimize")
 				{
 				res <- optimize(obj1,t0, ...)
 				res$par <- res$minimum
@@ -251,7 +281,12 @@ else
 				{	
 				if (optfct == "optim")
 					res <- optim(tet,obj1, ...)
-				else
+				if (optfct == "nlminb")
+					{
+					res <- nlminb(tet,obj1, ...)
+					res$value <- res$objective
+					}
+				if (optfct == "optimize")
 					{
 					res <- optimize(obj1,t0, ...)
 					res$par <- res$minimum
@@ -267,22 +302,22 @@ else
 			j <- j+1	
 		}
 
-		z = list(par=res$par,objective=res$value)	
+		z = list(coefficients=res$par,objective=res$value)	
 		}
 	}
 
 	if (!is.function(gradv)) 
-		G <- Gf(z$par)
+		G <- Gf(z$coefficients)
 	else
 		if (typeg)
 			G <- gradv(x)
 		else	
-			G <- gradv(z$par,x)
+			G <- gradv(z$coefficients,x)
 
 	if (vcov == "iid")
-		v <- iid(z$par)/n
+		v <- iid(z$coefficients)/n
 	else
-		v <- HAC(g(z$par,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol)/n
+		v <- HAC(g(z$coefficients,x), kernel=kernel, bw=bw,prewhite=prewhite,ar.method=ar.method,approx=approx,tol=tol)/n
 	
 	if (wmatrix == "optimal")
 		{
@@ -294,9 +329,9 @@ else
 		z$vcov <- GGG%*%v%*%t(GGG)
 		}
 
-z$gt <- g(z$par,x)
+z$gt <- g(z$coefficients,x)
 if (typeg==0)
-	names(z$par) <- paste("Theta[",1:k,"]",sep="")
+	names(z$coefficients) <- paste("Theta[",1:k,"]",sep="")
 if (typeg == 1)
 	{
 	namex <- colnames(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
@@ -304,22 +339,50 @@ if (typeg == 1)
 	if (dat$ny > 1)
 		{
 		namey <- colnames(dat$x[,1:dat$ny])
-		names(z$par) <- paste(rep(namey,dat$k),"_",rep(namex,rep(dat$ny,dat$k)),sep="")
+		names(z$coefficients) <- paste(rep(namey,dat$k),"_",rep(namex,rep(dat$ny,dat$k)),sep="")
 		colnames(z$gt) <- paste(rep(namey,dat$nh),"_",rep(nameh,rep(dat$ny,dat$nh)),sep="")
 		}
 	if (dat$ny == 1)
 		{
-		names(z$par) <- namex
+		names(z$coefficients) <- namex
 		colnames(z$gt) <- nameh
 		}
 	}
 
-dimnames(z$vcov) <- list(names(z$par),names(z$par))
+dimnames(z$vcov) <- list(names(z$coefficients),names(z$coefficients))
 z$df <- df
 z$k <- k
 z$n <- n
+if(typeg==1)
+	{
+	b <- z$coefficients
+	y <- as.matrix(model.response(dat$mf, "numeric"))
+	ny <- dat$ny
+	b <- t(matrix(b,nrow=ny))
+	x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+	yhat <- x%*%b
+	z$fitted.values<-yhat	
+	z$residuals<-y-yhat	
+	z$terms<- dat$mt
+	if(model) z$model<-dat$mf
+	if(X) z$x<-x
+	if(Y) z$y<-y
+	}
+if(typeg==0)
+	if(X) z$x <- x
+
+z$call<-match.call()
 z$met <- type
 z$kernel <- kernel
+z$coefficients <- c(z$coefficients)
 class(z) <- "gmm"
 z
+}
+
+formula.gmm <- function(x, ...)
+{
+    if(is.null(x$terms))
+	stop("The gmm object was not created by a formula")
+    else
+	formula(x$terms)
 }

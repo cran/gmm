@@ -2,19 +2,18 @@
 \alias{summary.gel}
 \title{Method for object of class gel}
 \description{
- It presents the results from the \code{gel} estimation in the same fashion as summary does for the lm class objects for example. It also compute the J-test, LM and LR tests for overidentifying restriction.
+ It presents the results from the \code{gel} estimation in the same fashion as \code{summary} does for the \code{lm} class objects. It also compute the J-test, LM and LR tests for overidentifying restriction.
 }
 \usage{
-\method{summary}{gel}(object, interval=FALSE, ...)
+\method{summary}{gel}(object, ...)
 }
 \arguments{
- \item{object}{An object of class gmm returned by the function \code{gmm}}
-\item{interval}{Should the results include the confidence intervals of \eqn{\hat{\theta}} and \eqn{\hat{\lambda}}. If so, "interval" should be equal to the confidence level.}
+ \item{object}{An object of class \code{gel} returned by the function \code{\link{gel}}}
 \item{...}{Other arguments when summary is applied to an other classe object}
 }
 
 \value{
-It returns a list with the parameter estimates and theirs standard deviations, t-stat and p-values. It also returns the three tests (J, LM and LR) and p-value for the null hypothesis that \eqn{E(g(\theta,X)=0} 
+It returns a list with the parameter estimates and their standard deviations, t-stats and p-values. It also returns the three tests (J, LM and LR) and p-values for the null hypothesis that \eqn{E(g(\theta,X)=0} and several convergence codes. 
 }
 
 \references{
@@ -32,6 +31,7 @@ Generalized Empirical Likelihood Estimators. \emph{Econometrica}, \bold{72}, 219
 
 
 \examples{
+
 n = 500
 phi<-c(.2,.7)
 thet <- 0
@@ -47,9 +47,7 @@ x <- H
 t0 <- c(0,.5,.5)
 
 res <- gel(g,x,t0)
-
 summary(res)
-summary(res,interval=0.95)
 
 }
 

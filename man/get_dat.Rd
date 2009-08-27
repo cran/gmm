@@ -5,14 +5,13 @@
 It extract the data from a formula y~z with instrument h and put everything in a matrix. It helps redefine the function \eqn{g(\theta,x)} that is required by \code{\link{gmm}} and \code{\link{gel}}.
 }
 \usage{
-get_dat(formula,h,intercept=TRUE) 
+get_dat(formula,h) 
 }
 \arguments{
 \item{formula}{A formula that defines the linear model to be estimated (see details).}
 \item{h}{A \eqn{n\times nh} matrix of intruments(see details).}
-\item{intercept}{Should the model include a constant? It should always be the case but the choice is yours.}
 }
-\details{The model to be estimated is based on the moment conditions \eqn{<h,(y-z\theta)>=0}. It adds a column of ones to z and h if "intercept" is TRUE.}
+\details{The model to be estimated is based on the moment conditions \eqn{<h,(y-z\theta)>=0}. It adds a column of ones to z and h by default. They are removed if -1 is added to the formula}
 \value{
 x: A \eqn{n \times l} matrix, where \eqn{l = ncol(y)+ncol(z)+ncol(h)+2} if "intercept" is TRUE and \eqn{ncol(y)+ncol(z)+xcol(h)} if "intercept" is FALSE. 
 

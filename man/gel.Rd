@@ -12,7 +12,7 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
     kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), bw=bwAndrews2, 
     approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, 
     tol_lam=1e-9, tol_obj = 1e-9, tol_mom = 1e-9,maxiterlam=1000,constraint=FALSE,
-    intercept=TRUE,optfct=c("optim","optimize"), optlam=c("iter","numeric"),...)
+    optfct=c("optim","optimize","nlminb"), optlam=c("iter","numeric"), model=TRUE, X=FALSE, Y=FALSE,...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).  }
@@ -47,15 +47,15 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
 
 \item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{get_lamb}}).}
 
-\item{intercept}{If "g" is a formula, should the model include a constant? It should always be the case but the choice is yours.}
-
-\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.}
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
 
 \item{constraint}{If set to TRUE, the constraint optimization algorithm is used. See \code{\link{constrOptim}} to learn how it works. In particular, if you choose to use it, you need to provide "ui" and "ci" in order to impose the constraint \eqn{ui \theta - ci \geq 0}.}
 
 \item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
 
 \item{optlam}{The default is "iter" which solves for \eqn{\lambda} using the Newton iterative method \code{\link{get_lamb}}. If set to "numeric", the algorithm \code{\link{optim}} is used to compute \eqn{\lambda} instead.}
+
+\item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
 
 \item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
 
@@ -64,7 +64,7 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
 \details{
 \code{\link{weightsAndrews2}} and \code{\link{bwAndrews2}} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
 
-If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}.
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
 
 If "smooth" is set to TRUE, the sample moment conditions \eqn{\sum_{t=1}^n g(\theta,x_t)} is replaced by:
 \eqn{\sum_{t=1}^n g^k(\theta,x_t)},
@@ -81,26 +81,41 @@ The method solves
 
 The functions 'summary' is used to obtain and print a summary of the results. 
 
-The object of class "gel" is a list containing:
+The object of class "gel" is a list containing at least the following:
 
-par: \eqn{k\times 1} vector of parameters
+\item{coefficients}{\eqn{k\times 1} vector of parameters}
 
-lambda: \eqn{q \times 1} vector of Lagrange multipliers.
+\item{residuals}{the residuals, that is response minus fitted values if "g" is a formula.}
 
-\code{vcov_par}: the covariance matrix of "par"
+\item{fitted.values}{the fitted mean values if "g" is a formula.}
 
-\code{vcov_lambda}: the covariance matrix of "lambda"
+\item{lambda}{\eqn{q \times 1} vector of Lagrange multipliers.}
 
-pt: The implied probabilities
+\item{vcov_par}{the covariance matrix of "coefficients"}
 
-objective: the value of the objective function.
+\item{vcov_lambda}{the covariance matrix of "lambda"}
 
-\code{conv_lambda}: Convergence code for "lambda" (see \code{\link{get_lamb}})
+\item{pt}{The implied probabilities}
 
-\code{conv_mes}: Convergence message for "lambda" (see \code{\link{get_lamb}})
+\item{objective}{the value of the objective function}
 
-\code{conv_par}: Convergence code for "par" (see \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}})
- }
+\item{conv_lambda}{Convergence code for "lambda" (see \code{\link{get_lamb}})}
+
+\item{conv_mes}{Convergence message for "lambda" (see \code{\link{get_lamb}})}
+
+\item{conv_par}{Convergence code for "coefficients" (see \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}})}
+
+\item{terms}{the \code{\link{terms}} object used when g is a formula.}
+
+\item{call}{the matched call.}
+ 
+\item{y}{if requested, the response used (if "g" is a formula).}
+
+\item{x}{if requested, the model matrix used if "g" is a formula or the data if "g" is a function.}
+
+\item{model}{if requested (the default), the model frame used if "g" is a formula.}
+
+}
 
 
 \references{
