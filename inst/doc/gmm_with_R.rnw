@@ -5,7 +5,6 @@
 \newtheorem{lem}{Lemma}
 \newtheorem{ass}{Assumption}
 
-\usepackage[active]{srcltx}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
