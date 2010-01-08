@@ -53,7 +53,7 @@ plot.gmm <- function (x, which = c(1L:3),
 	ylim <- extendrange(r= ylim, f = 0.08)
 	plot(yh, r, xlab = "Fitted", ylab = "Residuals", main = main[1L],
 	     ylim = ylim, type = "n", ...)
-	panel(yh, r, ...)
+	panel(yh, r)
 	abline(h = 0, lty = 3, col = "gray")
     }
     if (show[2L]) { ## Normal

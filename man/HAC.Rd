@@ -7,7 +7,7 @@
 \usage{
 HAC(x, weights = weightsAndrews2, bw = bwAndrews2, prewhite = FALSE, ar.method = "ols", 
     kernel=c("Quadratic Spectral", "Truncated", "Bartlett", "Parzen", "Tukey-Hanning"), 
-    approx="AR(1)",tol = 1e-7)
+    approx = "AR(1)", tol = 1e-7)
 
 }
 \arguments{
@@ -50,9 +50,9 @@ typical element \eqn{\bar{x}_i = \frac{1}{n}\sum_{j=1}^nx_{ji}}. This function i
 }
 
 \examples{
-x <- arima.sim(n=200,list(order=c(1,0,1),ar=.5,ma=.3,sd=.5))
-y <- .4*x+rnorm(200)
-x <- cbind(x,y)
+x <- arima.sim(n = 200, list(order = c(1, 0, 1), ar = .5, ma = .3, sd = .5))
+y <- .4*x + rnorm(200)
+x <- cbind(x, y)
 vcov <- HAC(x)
 }
 

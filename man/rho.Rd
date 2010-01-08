@@ -8,7 +8,7 @@
  It computes the objective function of GEL, its first and second analytical derivatives. It is called by \code{\link{gel}.}
 }
 \usage{
-rho(x,lamb,derive=0,type=c("EL","ET","CUE"),drop=TRUE)
+rho(x, lamb, derive = 0, type = c("EL", "ET", "CUE"), drop = TRUE, k = 1)
 }
 \arguments{
 \item{x}{A \eqn{n\times q} matrix with typical element \eqn{(t,i)}, \eqn{g_i(\theta,x_t)}}
@@ -20,6 +20,8 @@ rho(x,lamb,derive=0,type=c("EL","ET","CUE"),drop=TRUE)
 \item{type}{"EL" for empirical likelihood, "ET" for exponential tilting and "CUE" for continuous updated estimator.}
 
 \item{drop}{Because the solution may not be in the domain of \eqn{\rho(v)} \eqn{\forall t} in small sample, we can drop those observations to avoid the return of NaN}
+
+\item{k}{It represents the ratio k1/k2, where \eqn{k1=\int_{-\infty}^{\infty} k(s)ds} and \eqn{k2=\int_{-\infty}^{\infty} k(s)^2 ds}. See Smith(2004).}
 }
 \details{
 The objective function is \eqn{\frac{1}{n}\sum_{t=1}^n \rho(<g(\theta,x_t),\lambda>)}, where \eqn{\rho(v)=\log{(1-v)}} for empirical likelihood, \eqn{-e^v} for exponential tilting and \eqn{(-v-0.5v^2)} for continuous updated estimator. 
@@ -37,6 +39,10 @@ Hansen, L.P. and Heaton, J. and Yaron, A.(1996),
 Finit-Sample Properties of Some Alternative GMM Estimators.
 \emph{Journal of Business and Economic Statistics}, \bold{14}
 262-280.
+
+Smith, R.J. (2004), GEL Criteria for Moment Condition Models. \emph{Working paper, CEMMAP}.
+
+
 }
 
 

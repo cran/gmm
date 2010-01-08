@@ -8,12 +8,12 @@
  Function to estimate a vector of parameters based on moment conditions using the GMM method of Hansen(82). 
 }
 \usage{
-gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), 
-wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"), 
-kernel=c("Quadratic Spectral","Truncated", "Bartlett", 
-"Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews2, 
-prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, 
-itermax=100,optfct=c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, ...)
+gmm(g, x, t0 = NULL, gradv = NULL, type = c("twoStep","cue","iterative"), 
+wmatrix = c("optimal","ident"), vcov = c("HAC","iid"), 
+kernel = c("Quadratic Spectral","Truncated", "Bartlett", 
+"Parzen", "Tukey-Hanning"), crit = 10e-7, bw = bwAndrews2, 
+prewhite = FALSE, ar.method = "ols", approx = "AR(1)", tol = 1e-7, 
+itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", ...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).}
@@ -49,6 +49,8 @@ itermax=100,optfct=c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE,
 \item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
 
 \item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
+
+\item{TypeGmm}{The name of the class object created by the method \code{getModel}. It allows developers to extand the package and create other GMM methods.}
 
 \item{...}{More options to give to \code{\link{optim}}.}
 }
@@ -148,15 +150,15 @@ The object of class "gmm" is a list containing at least:
 
 ## CAPM test with GMM
 data(Finance)
-r <- Finance[1:300,1:10]
-rm <- Finance[1:300,"rm"]
-rf <- Finance[1:300,"rf"]
+r <- Finance[1:300, 1:10]
+rm <- Finance[1:300, "rm"]
+rf <- Finance[1:300, "rf"]
 
 z <- as.matrix(r-rf)
 t <- nrow(z)
 zm <- rm-rf
-h <- matrix(zm,t,1)
-res <- gmm(z~zm,x=h)
+h <- matrix(zm, t, 1)
+res <- gmm(z ~ zm, x = h)
 summary(res)
 
 ## linear tests can be performed using linear.hypothesis from the car package
@@ -166,13 +168,13 @@ library(car)
 linear.hypothesis(res,cbind(diag(10),matrix(0,10,10)),rep(0,10))
 
 # The CAPM of Black
-g <- function(theta,x) {
-	e <- x[,2:11]-theta[1]-(x[,1]-theta[1])\%*\%matrix(theta[2:11],1,10)
-	gmat <- cbind(e,e*c(x[,1]))
+g <- function(theta, x) {
+	e <- x[,2:11] - theta[1] - (x[,1] - theta[1]) \%*\% matrix(theta[2:11], 1, 10)
+	gmat <- cbind(e, e*c(x[,1]))
 	return(gmat) }
 
-x <- as.matrix(cbind(rm,r))
-res_black <- gmm(g,x=x,t0=rep(0,11))
+x <- as.matrix(cbind(rm, r))
+res_black <- gmm(g, x = x, t0 = rep(0, 11))
 
 summary(res_black)$coefficients
 
@@ -180,10 +182,10 @@ summary(res_black)$coefficients
 ## APT test with Fama-French factors and GMM
 
 f1 <- zm
-f2 <- Finance[1:300,"hml"]-rf
-f3 <- Finance[1:300,"smb"]-rf
-h <- cbind(f1,f2,f3)
-res2 <- gmm(z~f1+f2+f3,x=h)
+f2 <- Finance[1:300, "hml"] - rf
+f3 <- Finance[1:300, "smb"] - rf
+h <- cbind(f1, f2, f3)
+res2 <- gmm(z ~ f1 + f2 + f3, x = h)
 coef(res2)
 summary(res2)$coefficients
 
@@ -196,21 +198,21 @@ summary(res2)$coefficients
 n <- 1000
 x <- rnorm(n, mean = 4, sd = 2)
 # Implementing the 3 moment conditions
-g <- function(tet,x)
+g <- function(tet, x)
         {
-        m1 <- (tet[1]-x)
+        m1 <- (tet[1] - x)
         m2 <- (tet[2]^2 - (x - tet[1])^2)
-        m3 <- x^3-tet[1]*(tet[1]^2+3*tet[2]^2)
-        f <- cbind(m1,m2,m3)
+        m3 <- x^3 - tet[1]*(tet[1]^2 + 3*tet[2]^2)
+        f <- cbind(m1, m2, m3)
         return(f)
         }
 # Implementing the jacobian
-Dg <- function(tet,x)
+Dg <- function(tet, x)
         {
         jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],-6*tet[1]*tet[2]), nrow=3,ncol=2)
         return(jacobian)
         }
 # Now we want to estimate the two parameters using the GMM.
-gmm(g,x,c(0,0),grad=Dg)
+gmm(g, x, c(0, 0), grad = Dg)
 }
 

@@ -8,11 +8,12 @@
 Function to estimate a vector of parameters based on moment conditions using the GEL method as presented by Newey-Smith(2004) and Anatolyev(2005).
 }
 \usage{
-gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC","iid"), 
-    kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), bw=bwAndrews2, 
+gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"), 
+    kernel = c("Truncated", "Bartlett"), bw = bwAndrews2, 
     approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, 
-    tol_lam=1e-9, tol_obj = 1e-9, tol_mom = 1e-9,maxiterlam=1000,constraint=FALSE,
-    optfct=c("optim","optimize","nlminb"), optlam=c("iter","numeric"), model=TRUE, X=FALSE, Y=FALSE,...)
+    tol_lam = 1e-9, tol_obj = 1e-9, tol_mom = 1e-9, maxiterlam = 100, constraint = FALSE,
+    optfct = c("optim", "optimize", "nlminb"), optlam = c("iter","numeric"), model = TRUE, 
+    X = FALSE, Y = FALSE, TypeGel = "baseGel",...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).  }
@@ -27,9 +28,7 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
 
 \item{type}{"EL" for empirical likelihood, "ET" for exponential tilting, "CUE" for continuous updated estimator and "ETEL" for exponentially tilted empirical likelihood of Schennach(2007).}
 
-\item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will only avoid using the HAC matrix to compute the covariance matrix of the parameter.}
-
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{HAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE.}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{HAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
 
 \item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews2}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest2}} of Newey-West(1994).}
 
@@ -41,11 +40,11 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
 
 \item{tol_weights}{numeric. Weights that exceed \code{tol} are used for computing the covariance matrix, all other weights are treated as 0.}
 
-\item{tol_lam}{Tolerance for \eqn{\lambda} between two iterations. The algorithm stops when \eqn{\|\lambda_i -\lambda_{i-1}\|} reaches \code{tol_lamb} (see \code{\link{get_lamb}}) }
+\item{tol_lam}{Tolerance for \eqn{\lambda} between two iterations. The algorithm stops when \eqn{\|\lambda_i -\lambda_{i-1}\|} reaches \code{tol_lamb} (see \code{\link{getLamb}}) }
 
-\item{maxiterlam}{The algorithm to compute \eqn{\lambda} stops if there is no convergence after "maxiterlam" iterations (see \code{\link{get_lamb}}).}
+\item{maxiterlam}{The algorithm to compute \eqn{\lambda} stops if there is no convergence after "maxiterlam" iterations (see \code{\link{getLamb}}).}
 
-\item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{get_lamb}}).}
+\item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{getLamb}}).}
 
 \item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
 
@@ -53,9 +52,11 @@ gel(g,x,tet0,gradv=NULL,smooth=FALSE,type=c("EL","ET","CUE","ETEL"), vcov=c("HAC
 
 \item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
 
-\item{optlam}{The default is "iter" which solves for \eqn{\lambda} using the Newton iterative method \code{\link{get_lamb}}. If set to "numeric", the algorithm \code{\link{optim}} is used to compute \eqn{\lambda} instead.}
+\item{optlam}{The default is "iter" which solves for \eqn{\lambda} using the Newton iterative method \code{\link{getLamb}}. If set to "numeric", the algorithm \code{\link{optim}} is used to compute \eqn{\lambda} instead.}
 
 \item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
+
+\item{TypeGel}{The name of the class object created by the method \code{getModel}. It allows developers to extand the package and create other GEL methods.}
 
 \item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
 
@@ -99,9 +100,9 @@ The object of class "gel" is a list containing at least the following:
 
 \item{objective}{the value of the objective function}
 
-\item{conv_lambda}{Convergence code for "lambda" (see \code{\link{get_lamb}})}
+\item{conv_lambda}{Convergence code for "lambda" (see \code{\link{getLamb}})}
 
-\item{conv_mes}{Convergence message for "lambda" (see \code{\link{get_lamb}})}
+\item{conv_mes}{Convergence message for "lambda" (see \code{\link{getLamb}})}
 
 \item{conv_par}{Convergence code for "coefficients" (see \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}})}
 
@@ -130,6 +131,8 @@ Kitamura, Yuichi (1997), Empirical Likelihood Methods With Weakly Dependent Proc
 Newey, W.K. and Smith, R.J. (2004), Higher Order Properties of GMM and 
 Generalized Empirical Likelihood Estimators. \emph{Econometrica}, \bold{72}, 219-255.
 
+Smith, R.J. (2004), GEL Criteria for Moment Condition Models. \emph{Working paper, CEMMAP}.
+
 Newey WK & West KD (1987), A Simple, Positive Semi-Definite,
 Heteroskedasticity and Autocorrelation Consistent Covariance
 Matrix. \emph{Econometrica}, \bold{55}, 703--708.
@@ -148,30 +151,30 @@ URL \url{http://www.jstatsoft.org/v16/i09/}.
 \examples{
 # First, an exemple with the fonction g()
 
-g <- function(tet,x)
+g <- function(tet, x)
 	{
 	n <- nrow(x)
 	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
-	f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
+	f <- cbind(u, u*x[4:(n-3)], u*x[3:(n-4)], u*x[2:(n-5)], u*x[1:(n-6)])
 	return(f)
 	}
 
 Dg <- function(tet,x)
 	{
 	n <- nrow(x)
-	xx <- cbind(rep(1,(n-6)),x[6:(n-1)],x[5:(n-2)])
-        H  <- cbind(rep(1,(n-6)),x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-	f <- -crossprod(H,xx)/(n-6)
+	xx <- cbind(rep(1, (n-6)), x[6:(n-1)], x[5:(n-2)])
+        H  <- cbind(rep(1, (n-6)), x[4:(n-3)], x[3:(n-4)], x[2:(n-5)], x[1:(n-6)])
+	f <- -crossprod(H, xx)/(n-6)
 	return(f)
 	}
 n = 200
-phi<-c(.2,.7)
+phi<-c(.2, .7)
 thet <- 0.2
 sd <- .2
 set.seed(123)
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+x <- matrix(arima.sim(n = n, list(order = c(2, 0, 1), ar = phi, ma = thet, sd = sd)), ncol = 1)
 
-res <- gel(g,x,c(0,.3,.6),grad=Dg)
+res <- gel(g, x, c(0, .3, .6), grad = Dg)
 summary(res)
 
 # The same model but with g as a formula....  much simpler in that case
@@ -180,11 +183,11 @@ y <- x[7:n]
 ym1 <- x[6:(n-1)]
 ym2 <- x[5:(n-2)]
 
-H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-g <- y~ym1+ym2
+H <- cbind(x[4:(n-3)], x[3:(n-4)], x[2:(n-5)], x[1:(n-6)])
+g <- y ~ ym1 + ym2
 x <- H
 
-res <- gel(g,x,c(0,.3,.6))
+res <- gel(g, x, c(0, .3, .6))
 summary(res)
 
 }

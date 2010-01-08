@@ -1,8 +1,11 @@
 Import(stats)
 
-export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm,rho,smooth_g,get_dat,bwNeweyWest2,summary.gel,get_lamb,gel,
+export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm,rho,smoothG,getDat,bwNeweyWest2,summary.gel,getLamb,gel,
 	print.gmm,coef.gmm,vcov.gmm,print.summary.gmm, confint.gel, print.gel, print.summary.gel, vcov.gel, coef.gel, fitted.gmm, 
-	residuals.gmm, fitted.gel, residuals.gel, plot.gmm, plot.gel,formula.gmm, formula.gel, charStable)
+	residuals.gmm, fitted.gel, residuals.gel, plot.gmm, plot.gel,formula.gmm, formula.gel, charStable, specTest, 
+	specTest.gmm, specTest.gel, print.specTest, momentEstim.baseGmm.twoStep, momentEstim.baseGmm.twoStep.formula,
+        momentEstim.baseGmm.iterative.formula, momentEstim.baseGmm.iterative, momentEstim.baseGmm.cue.formula, 
+	momentEstim.baseGmm.cue, getModel.baseGmm, getModel.baseGel, FinRes.baseGmm.res, momentEstim.baseGel.mod, momentEstim.baseGel.modFormula)
  
 S3method(summary, gmm)
 S3method(summary, gel)
@@ -24,8 +27,19 @@ S3method(fitted, gel)
 S3method(residuals, gel)
 S3method(plot, gel)
 S3method(formula, gel)
-
-
-  
+S3method(specTest, gmm)
+S3method(specTest, gel)
+S3method(print, specTest)
+S3method(FinRes, baseGmm.res)
+S3method(getModel, baseGmm)
+S3method(getModel, baseGel)
+S3method(momentEstim, baseGmm.twoStep)
+S3method(momentEstim, baseGmm.twoStep.formula)
+S3method(momentEstim, baseGmm.iterative.formula)
+S3method(momentEstim, baseGmm.iterative)
+S3method(momentEstim, baseGmm.cue.formula)
+S3method(momentEstim, baseGmm.cue)
+S3method(momentEstim, baseGel.mod)
+S3method(momentEstim, baseGel.modFormula)
 
 

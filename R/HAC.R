@@ -11,6 +11,78 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+kweights2 <- function(x, kernel = c("Truncated", "Bartlett", "Parzen",
+                     "Tukey-Hanning", "Quadratic Spectral"), normalize = FALSE)
+{
+  kernel <- match.arg(kernel)
+  if(normalize) {
+    ca <- switch(kernel,  
+      "Truncated" = 2,
+      "Bartlett" = 2/3,
+      "Parzen" = .539285,
+      "Tukey-Hanning" = 3/4,
+      "Quadratic Spectral" = 1)
+  } else ca <- 1
+
+  switch(kernel,  
+  "Truncated" = { ifelse(ca * x > 1, 0, 1) },
+  "Bartlett" = { ifelse(ca * x > 1, 0, 1 - abs(ca * x)) },
+  "Parzen" = { 
+    ifelse(ca * x > 1, 0, ifelse(ca * x < 0.5,
+      1 - 6 * (ca * x)^2 + 6 * abs(ca * x)^3, 2 * (1 - abs(ca * x))^3))
+  },
+  "Tukey-Hanning" = {
+    ifelse(ca * x > 1, 0, (1 + cos(pi * ca * x))/2)
+  },
+  "Quadratic Spectral" = {
+    y <- 6 * pi * x/5
+    ifelse(x < 1e-4, 1, 3 * (1/y)^2 * (sin(y)/y - cos(y)))
+  })
+}
+
+
+
+bwNeweyWest2 <- function (x, kernel = c("Bartlett", "Parzen", 
+    "Quadratic Spectral", "Truncated", "Tukey-Hanning"), 
+    prewhite = 1, ar.method = "ols",...) 
+{
+    kernel <- match.arg(kernel)
+    if (kernel %in% c("Truncated", "Tukey-Hanning")) 
+        stop(paste("Automatic bandwidth selection only available for ", 
+            dQuote("Bartlett"), ", ", dQuote("Parzen"), " and ", 
+            dQuote("Quadratic Spectral"), " kernel. Use ", sQuote("bwAndrews2"), 
+            " instead.", sep = ""))
+    prewhite <- as.integer(prewhite)
+    n <- nrow(x)
+    k <- ncol(x)
+    weights <- rep(1, k)
+    if (length(weights) < 2) 
+        weights <- 1
+    mrate <- switch(kernel, Bartlett = 2/9, Parzen = 4/25, "Quadratic Spectral" = 2/25)
+    m <- floor(ifelse(prewhite > 0, 3, 4) * (n/100)^mrate)
+    if (prewhite > 0) {
+        x <- as.matrix(na.omit(ar(x, order.max = prewhite, 
+            demean = FALSE, aic = FALSE, method = ar.method)$resid))
+        n <- n - prewhite
+    }
+    hw <- x %*% weights
+    sigmaj <- function(j) sum(hw[1:(n - j)] * hw[(j + 1):n])/n
+    sigma <- sapply(0:m, sigmaj)
+    s0 <- sigma[1] + 2 * sum(sigma[-1])
+    s1 <- 2 * sum(1:m * sigma[-1])
+    s2 <- 2 * sum((1:m)^2 * sigma[-1])
+    qrate <- 1/(2 * ifelse(kernel == "Bartlett", 1, 2) + 1)
+    rval <- switch(kernel, Bartlett = {
+        1.1447 * ((s1/s0)^2)^qrate
+    }, Parzen = {
+        2.6614 * ((s2/s0)^2)^qrate
+    }, "Quadratic Spectral" = {
+        1.3221 * ((s2/s0)^2)^qrate
+    })
+    rval <- rval * (n + prewhite)^qrate
+    return(rval)
+}
+
 
 HAC <- function (x, weights = weightsAndrews2, bw = bwAndrews2, prewhite = FALSE, ar.method = "ols", kernel=c("Quadratic Spectral", "Truncated", "Bartlett", "Parzen", "Tukey-Hanning"), approx="AR(1)",tol = 1e-7) 
 {
@@ -129,196 +201,4 @@ bwAndrews2 <- function (x, kernel = c("Quadratic Spectral",
     })
    return(rval)
 }
-
-summary.gmm <- function(object, ...)
-	{
-	z <- object
-	se <- sqrt(diag(z$vcov))
-	par <- z$coefficients
-	tval <- par/se
-	j <- z$objective*z$n
-	ans <- list(met=z$met,kernel=z$kernel,algo=z$algo,call=z$call)
-	names(ans$met) <- "GMM method"
-	names(ans$kernel) <- "kernel for cov matrix"
-		
-	ans$coefficients <- round(cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
-
-    	dimnames(ans$coefficients) <- list(names(z$coefficients), 
-        c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
-
-	ans$J_test <- noquote(paste("Test-J degrees of freedom is ",z$df,sep=""))
-	ans$j <- noquote(cbind(j,ifelse(z$df>0,pchisq(j,z$df,lower.tail = FALSE),"*******")))
-	dimnames(ans$j) <- list("Test E(g)=0:  ",c("J-test","Pz(>j)"))
-	class(ans) <- "summary.gmm"
-	ans
-	}
-
-confint.gmm <- function(object, parm, level=0.95, ...)
-		{
-		z <- object
-		se <- sqrt(diag(z$vcov))
-		par <- z$coefficients
-			
-		zs <- qnorm((1-level)/2,lower.tail=FALSE)
-		ch <- zs*se
-		ans <- cbind(par-ch,par+ch)
-		dimnames(ans) <- list(names(par),c((1-level)/2,0.5+level/2))
-		if(!missing(parm))
-			ans <- ans[parm,]
-		ans
-		}
-
-
-kweights2 <- function(x, kernel = c("Truncated", "Bartlett", "Parzen",
-                     "Tukey-Hanning", "Quadratic Spectral"), normalize = FALSE)
-{
-  kernel <- match.arg(kernel)
-  if(normalize) {
-    ca <- switch(kernel,  
-      "Truncated" = 2,
-      "Bartlett" = 2/3,
-      "Parzen" = .539285,
-      "Tukey-Hanning" = 3/4,
-      "Quadratic Spectral" = 1)
-  } else ca <- 1
-
-  switch(kernel,  
-  "Truncated" = { ifelse(ca * x > 1, 0, 1) },
-  "Bartlett" = { ifelse(ca * x > 1, 0, 1 - abs(ca * x)) },
-  "Parzen" = { 
-    ifelse(ca * x > 1, 0, ifelse(ca * x < 0.5,
-      1 - 6 * (ca * x)^2 + 6 * abs(ca * x)^3, 2 * (1 - abs(ca * x))^3))
-  },
-  "Tukey-Hanning" = {
-    ifelse(ca * x > 1, 0, (1 + cos(pi * ca * x))/2)
-  },
-  "Quadratic Spectral" = {
-    y <- 6 * pi * x/5
-    ifelse(x < 1e-4, 1, 3 * (1/y)^2 * (sin(y)/y - cos(y)))
-  })
-}
-
-		
-residuals.gmm <- function(object,...) 
-	{
-	if(is.null(object$model))
-		stop("The residuals method is valid only for g=formula")
-	object$residuals
-	}
-
-fitted.gmm <- function(object,...)
-	{
-	if(is.null(object$model))
-		stop("The residuals method is valid only for g=formula")
-	object$fitted.value
-	}
-
-print.gmm <- function(x, digits=5, ...)
-	{
-	cat("Method\n", x$met,"\n\n")
-	cat("Objective function value: ",x$objective,"\n\n")
-	print.default(format(coef(x), digits=digits),
-                      print.gap = 2, quote = FALSE)
-	cat("\n")
-	invisible(x)
-	}
-
-coef.gmm <- function(object,...) object$coefficients
-
-vcov.gmm <- function(object,...) object$vcov
-
-
-print.summary.gmm <- function(x, digits = 5, ...)
-	{
-	cat("\nCall:\n")
-	cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
-	cat("\nMethod: ", x$met,"\n\n")
-	cat("Kernel: ", x$kernel,"\n\n")
-	cat("Coefficients:\n")
-	print.default(format(x$coefficients, digits=digits),
-                      print.gap = 2, quote = FALSE)
-
-	cat("\nJ-test:\n")
-	print.default(format(x$j, digits=digits),
-                      print.gap = 2, quote = FALSE)
-	cat("\n")
-	invisible(x)
-	}
-
-charStable <- function(theta,tau,pm=0)
-	{
-	# pm is the type parametrization as described by Nolan(2009)
-	# It takes the value 0 or 1 
-
-	# const can fixe parameters. It is NULL for no constraint or
-	# a matrix in which case the constraint is theta[const[,1]]=const[,2]
-
-	a <- theta[1]
-	b <- theta[2]
-	g <- theta[3]
-	d <- theta[4]
-	if(pm == 0)
-		{
-		if(a == 1)
-			{
-			if(g == 0)
-				{
-				the_car <- exp(complex(ima=d*tau)) 
-				}
-			else
-				{
-				re_p <- -g*abs(tau)
-				im_p <- d*tau
-				im_p[tau!=0] <- im_p[tau!=0] + re_p[tau!=0]*2/pi*b*sign(tau[tau!=0])*log(g*abs(tau[tau!=0]))
-				the_car <- exp(complex(re=re_p,ima=im_p))
-				}
-			}
-		else
-			{
-			if(g == 0)
-				{
-				the_car <- exp(complex(ima=d*tau)) 
-				}
-			else
-				{
-				phi <- tan(pi*a/2)
-				re_p <- -g^a*abs(tau)^a
-				im_p <- d*tau*1i
-				im_p[tau!=0] <- im_p[tau!=0] + re_p*( b*phi*sign(tau[tau!=0])*(abs(g*tau[tau!=0])^(1-a)-1) )
-				the_car <- exp(complex(re=re_p,ima=im_p))
-				}
-			}
-		}
-
-	if(pm == 1)
-		{
-		if(a == 1)
-			{
-			re_p <- -g*abs(tau)
-			im_p <- d*tau
-			im_p[tau!=0] <- im_p[tau!=0]+re_p*(b*2/pi*sign(tau[tau!=0])*log(abs(tau[tau!=0])))			
-			the_car <- exp(complex(re=re_p,ima=im_p))
-			}
-		else
-			{
-			phi <- tan(pi*a/2)
-			re_p <- -g^a*abs(tau)^a
-			im_p <- re_p*(-phi*b*sign(tau))+d*tau
-			the_car <- exp(complex(re=re_p,ima=im_p))
-			}
-		}
-	return(the_car)
-	}
-
-
-
-
-
-
-
-
-
-
-		
-
 

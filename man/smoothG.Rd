@@ -1,12 +1,12 @@
-\name{smooth_g}
-\alias{smooth_g}
+\name{smoothG}
+\alias{smoothG}
 \title{Kernel smoothing of a matrix of time series}
 \description{
  It applies the required kernel smoothing to the moment function in order for the GEL estimator to be valid. It is used by the \code{gel} function.}
 \usage{
-smooth_g(x, bw = bwAndrews2, prewhite = 1, ar.method = "ols",weights=weightsAndrews2,
-	kernel=c("Bartlett","Parzen","Truncated","Tukey-Hanning"), 
-	approx = c("AR(1)","ARMA(1,1)"),tol = 1e-7) 
+smoothG(x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weights = weightsAndrews2,
+	kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), 
+	approx = c("AR(1)", "ARMA(1,1)"), tol = 1e-7) 
 }
 \arguments{
  \item{x}{a \eqn{n\times q} matrix of time series, where n is the sample size.}
@@ -59,20 +59,20 @@ URL \url{http://www.jstatsoft.org/v16/i09/}.
 }
 
 \examples{
-g <- function(tet,x)
+g <- function(tet, x)
 	{
 	n <- nrow(x)
 	u <- (x[7:n] - tet[1] - tet[2]*x[6:(n-1)] - tet[3]*x[5:(n-2)])
-	f <- cbind(u,u*x[4:(n-3)],u*x[3:(n-4)],u*x[2:(n-5)],u*x[1:(n-6)])
+	f <- cbind(u, u*x[4:(n-3)], u*x[3:(n-4)], u*x[2:(n-5)], u*x[1:(n-6)])
 	return(f)
 	}
 n = 500
-phi<-c(.2,.7)
+phi<-c(.2, .7)
 thet <- 0.2
 sd <- .2
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
-gt <- g(c(0,phi),x) 
-sgt <- smooth_g(gt)$smoothx
+x <- matrix(arima.sim(n = n, list(order = c(2, 0, 1), ar = phi, ma = thet, sd = sd)), ncol = 1)
+gt <- g(c(0, phi), x) 
+sgt <- smoothG(gt)$smoothx
 plot(gt[,1])
 lines(sgt[,1])
 }

@@ -1,14 +1,16 @@
-\name{confint.gel}
+\name{confint}
 \alias{confint.gel}
-\title{Confidence intervals for GEL}
+\alias{confint.gmm}
+\title{Confidence intervals for GMM or GEL}
 \description{
- It produces confidence intervals for the coefficients and the lambdas from \code{gel} estimation.
+It produces confidence intervals for the coefficients from \code{gel} or \code{gmm} estimation.
 }
 \usage{
-\method{confint}{gel}(object, parm, level=0.95, lambda=FALSE, ...)
+\method{confint}{gel}(object, parm, level = 0.95, lambda = FALSE, ...)
+\method{confint}{gmm}(object, parm, level = 0.95, ...)
 }
 \arguments{
- \item{object}{An object of class \code{gel} returned by the function \code{\link{gel}}}
+ \item{object}{An object of class \code{gel} or \code{gmm} returned by the function \code{\link{gel}} or \code{\link{gmm}}}
 \item{parm}{A specification of which parameters are to be given confidence intervals, either a vector of numbers or a vector
           of names.  If missing, all parameters are considered.}
 \item{level}{The confidence level}
@@ -34,25 +36,33 @@ It returns a matrix with the first column being the lower bound and the second t
 
 
 \examples{
+#################
 n = 500
 phi<-c(.2,.7)
 thet <- 0
 sd <- .2
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+x <- matrix(arima.sim(n = n, list(order = c(2,0,1), ar = phi, ma = thet, sd = sd)), ncol = 1)
 y <- x[7:n]
 ym1 <- x[6:(n-1)]
 ym2 <- x[5:(n-2)]
 
-H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-g <- y~ym1+ym2
+H <- cbind(x[4:(n-3)], x[3:(n-4)], x[2:(n-5)], x[1:(n-6)])
+g <- y ~ ym1 + ym2
 x <- H
 t0 <- c(0,.5,.5)
 
-res <- gel(g,x,t0)
+res <- gel(g, x, t0)
 
 confint(res)
-confint(res,level=0.90)
-confint(res,lambda=TRUE)
+confint(res, level = 0.90)
+confint(res, lambda = TRUE)
+
+########################
+
+res <- gmm(g, x)
+
+confint(res)
+confint(res, level = 0.90)
 
 }
 

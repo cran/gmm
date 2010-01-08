@@ -1,8 +1,9 @@
-\name{plot.gel}
+\name{plot}
 \alias{plot.gel}
-\title{Plot Diagnostics for a gel Object}
+\alias{plot.gmm}
+\title{Plot Diagnostics for gel and gmm objects}
 \description{
- It is a plot method for \code{gel} objects.
+ It is a plot method for \code{gel} or \code{gmm} objects.
 }
 \usage{
 \method{plot}{gel}(x, which = c(1L:4),
@@ -11,11 +12,19 @@
 	    panel = if(add.smooth) panel.smooth else points,
 	    ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...,
 	    add.smooth = getOption("add.smooth"))
+
+\method{plot}{gmm}(x, which = c(1L:3),
+	    main = list("Residuals vs Fitted values", "Normal Q-Q",
+	    "Response variable and fitted values"),
+	    panel = if(add.smooth) panel.smooth else points,
+	    ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...,
+	    add.smooth = getOption("add.smooth"))
+
 }
 \arguments{
-  \item{x}{\code{gel} object, typically result of \code{\link{gel}}.}
+  \item{x}{\code{gel} or \code{gmm} object, typically result of \code{\link{gel}} or \code{\link{gmm}}.}
   \item{which}{if a subset of the plots is required, specify a subset of
-    the numbers \code{1:4}.}
+    the numbers \code{1:4} for \code{gel} or \code{1:3} for \code{gmm}.}
   \item{main}{Vector of titles for each plot.
   }
   \item{panel}{panel function.  The useful alternative to
@@ -34,22 +43,29 @@ The first two plots are the same as the ones provided by \code{plot.lm}, the thi
 }
 
 \examples{
+
+# GEL #
 n = 500
 phi<-c(.2,.7)
 thet <- 0
 sd <- .2
-x <- matrix(arima.sim(n=n,list(order=c(2,0,1),ar=phi,ma=thet,sd=sd)),ncol=1)
+x <- matrix(arima.sim(n = n,list(order = c(2,0,1), ar = phi, ma = thet, sd = sd)), ncol = 1)
 y <- x[7:n]
 ym1 <- x[6:(n-1)]
 ym2 <- x[5:(n-2)]
 
-H <- cbind(x[4:(n-3)],x[3:(n-4)],x[2:(n-5)],x[1:(n-6)])
-g <- y~ym1+ym2
+H <- cbind(x[4:(n-3)], x[3:(n-4)], x[2:(n-5)], x[1:(n-6)])
+g <- y ~ ym1 + ym2
 x <- H
 t0 <- c(0,.5,.5)
 
-res <- gel(g,x,t0)
+res <- gel(g, x, t0)
 
-plot(res,which=3)
-plot(res,which=4)
+plot(res, which = 3)
+plot(res, which = 4)
+
+# GMM #
+
+res <- gmm(g, x)
+plot(res, which = 3)
 }

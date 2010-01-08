@@ -17,7 +17,7 @@ bwAndrews2(x, kernel = c("Quadratic Spectral",
 
 bwNeweyWest2(x, kernel = c("Bartlett", "Parzen", 
             "Quadratic Spectral", "Truncated", "Tukey-Hanning"), 
-             prewhite = 1, ar.method = "ols",...) 
+             prewhite = 1, ar.method = "ols", ...) 
 }
 \arguments{
   \item{x}{A \eqn{n\times q} matrix of time series from which we want to compute the covariance matrix.}
@@ -68,13 +68,13 @@ Matrix Estimation. \emph{Review of Economic Studies}, \bold{61}, 631-653.
 
 \examples{
 set.seed(345)
-x <- arima.sim(n=200,list(ordre=c(1,0,1),ar=.9,ma=.4))
+x <- arima.sim(n = 200, list(ordre = c(1, 0, 1), ar = .9, ma = .4))
 y <- 2*x + rnorm(200)
-x = cbind(x,y)
+x = cbind(x, y)
 w <- weightsAndrews2(x, bw = bwAndrews2, kernel = "Quadratic")
-plot(w,type='l')
+plot(w, type = 'l')
 w2 <- weightsAndrews2(x, bw = bwNeweyWest2, kernel = "Bartlett")
-plot(w2,type='l')
+plot(w2, type = 'l')
 }
 
 
