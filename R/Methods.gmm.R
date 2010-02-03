@@ -102,11 +102,31 @@ coef.gmm <- function(object,...) object$coefficients
 
 vcov.gmm <- function(object,...) object$vcov
 
+estfun.gmmFct <- function(x, y = NULL, theta = NULL, ...)
+	{
+	if (is(x, "function"))
+		{
+		gmat <- x(y, theta)
+		return(gmat)
+		}
+	else
+		return(x)
+	}
 
+estfun.gmm <- function(x, ...)
+  {
+  foc <- x$gt %*% x$w %*% x$G
+  return(foc)
+  }
 
-
-
-
+bread.gmm <- function(x, ...)
+  {
+  GWG <- crossprod(x$G, x$w %*% x$G)
+  b <- try(solve(GWG), silent = TRUE)
+  if (class(b) == "try-error")
+    stop("The bread matrix is singular")
+  return(b)
+  }
 
 
 

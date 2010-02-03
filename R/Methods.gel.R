@@ -160,3 +160,15 @@ formula.gel <- function(x, ...)
 	formula(x$terms)
 }
 
+estfun.gel <- function(x, ...)
+  {
+  stop("estfun is not yet available for gel objects")
+  }
+
+bread.gel <- function(x, ...)
+  {
+  stop("Bread is not yet available for gel objects")
+  }
+
+
+

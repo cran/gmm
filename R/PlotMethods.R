@@ -78,7 +78,7 @@ plot.gmm <- function (x, which = c(1L:3),
 		plot(pt, type='l',main = main[4L],ylab="Implied Prob.", ...)
 		emp_pt <- rep(1/length(pt),length(pt))
 		lines(emp_pt,col=2)
-		legend("topright",c("Imp. Prob.","Empirical (1/T)"),col=1:2,lty=c(1,1))
+		legend("topleft",c("Imp. Prob.","Empirical (1/T)"),col=1:2,lty=c(1,1))
     		}
 	}
 

@@ -12,9 +12,9 @@
 #  http://www.r-project.org/Licenses/
 
 gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"), 
-	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews2, 
+	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
 	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"),
-	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", ...)
+	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, ...)
 {
 
 type <- match.arg(type)
@@ -24,6 +24,7 @@ wmatrix <- match.arg(wmatrix)
 optfct <- match.arg(optfct)
 all_args<-list(g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
                    crit = crit, bw = bw, prewhite = prewhite, ar.method = ar.method, approx = approx, 
+                   weightsMatrix = weightsMatrix, centeredVcov = centeredVcov,
                    tol = tol, itermax = itermax, optfct = optfct, model = model, X = X, Y = Y, call = match.call())
 class(all_args)<-TypeGmm
 Model_info<-getModel(all_args)
@@ -119,10 +120,19 @@ getDat <- function (formula,h)
   gt <- P$g(thet,x)
   gbar <- as.vector(colMeans(gt))
   if (P$vcov == "iid")
-    w2 <- P$iid(thet, x, P$g)
+    w2 <- P$iid(thet, x, P$g, P$centeredVcov)
   if (P$vcov == "HAC")
-    w2 <- HAC(P$g(thet,x), kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
-            ar.method = P$ar.method, approx = P$approx, tol = P$tol)
+    {
+    if(P$centeredVcov)
+        gmat <- lm(P$g(thet,x)~1)
+    else
+      {
+        gmat <- P$g(thet,x)
+        class(gmat) <- "gmmFct"
+      }
+    w2 <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
+            ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)
+   }
   obj <- crossprod(gbar,solve(w2,gbar))
   return(obj)
 }	

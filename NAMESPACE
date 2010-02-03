@@ -1,6 +1,8 @@
-Import(stats)
+import(stats)
+importFrom(sandwich, estfun, bread)
 
-export(HAC,gmm,weightsAndrews2,bwAndrews2,summary.gmm,rho,smoothG,getDat,bwNeweyWest2,summary.gel,getLamb,gel,
+
+export(gmm,summary.gmm,rho,smoothG,getDat,summary.gel,getLamb,gel, estfun.gmmFct, estfun.gmm, estfun.gel, bread.gel, bread.gmm, 
 	print.gmm,coef.gmm,vcov.gmm,print.summary.gmm, confint.gel, print.gel, print.summary.gel, vcov.gel, coef.gel, fitted.gmm, 
 	residuals.gmm, fitted.gel, residuals.gel, plot.gmm, plot.gel,formula.gmm, formula.gel, charStable, specTest, 
 	specTest.gmm, specTest.gel, print.specTest, momentEstim.baseGmm.twoStep, momentEstim.baseGmm.twoStep.formula,
@@ -41,5 +43,12 @@ S3method(momentEstim, baseGmm.cue.formula)
 S3method(momentEstim, baseGmm.cue)
 S3method(momentEstim, baseGel.mod)
 S3method(momentEstim, baseGel.modFormula)
+S3method(estfun, gmmFct)
+S3method(estfun, gmm)
+S3method(estfun, gel)
+S3method(bread, gmm)
+S3method(bread, gel)
+
+
 
 

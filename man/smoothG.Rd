@@ -4,22 +4,22 @@
 \description{
  It applies the required kernel smoothing to the moment function in order for the GEL estimator to be valid. It is used by the \code{gel} function.}
 \usage{
-smoothG(x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weights = weightsAndrews2,
+smoothG(x, bw = bwAndrews, prewhite = 1, ar.method = "ols", weights = weightsAndrews,
 	kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), 
 	approx = c("AR(1)", "ARMA(1,1)"), tol = 1e-7) 
 }
 \arguments{
  \item{x}{a \eqn{n\times q} matrix of time series, where n is the sample size.}
- \item{bw}{The method to compute the bandwidth parameter. By default, it uses the bandwidth proposed by Andrews(1991). As an alternative, we can choose bw=bwNeweyWest2 (without "") which is proposed by Newey-West(1996).}
+ \item{bw}{The method to compute the bandwidth parameter. By default, it uses the bandwidth proposed by Andrews(1991). As an alternative, we can choose bw=bwNeweyWest (without "") which is proposed by Newey-West(1996).}
  \item{prewhite}{logical or integer. Should the estimating functions
     be prewhitened? If \code{TRUE} or greater than 0 a VAR model of
     order \code{as.integer(prewhite)} is fitted via \code{ar} with
     method \code{"ols"} and \code{demean = FALSE}.}
 \item{ar.method}{character. The \code{method} argument passed to
    \code{\link{ar}} for prewhitening.}
-\item{weights}{The smoothing weights can be computed by \code{\link{weightsAndrews2}} of it can be provided manually. If provided, it has to be a \eqn{r\times 1}vector (see details). }
+\item{weights}{The smoothing weights can be computed by \code{\link{weightsAndrews}} of it can be provided manually. If provided, it has to be a \eqn{r\times 1}vector (see details). }
 \item{approx}{a character specifying the approximation method if the
-    bandwidth has to be chosen by \code{bwAndrews2}.}
+    bandwidth has to be chosen by \code{bwAndrews}.}
 \item{tol}{numeric. Weights that exceed \code{tol} are used for computing
    the covariance matrix, all other weights are treated as 0.}
 \item{kernel}{The choice of kernel}
@@ -27,8 +27,6 @@ smoothG(x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weights = weightsAn
 
 
 \details{
-\code{HAC} is simply a modified version of \code{meatHAC} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
-
 The sample moment conditions \eqn{\sum_{t=1}^n g(\theta,x_t)} is replaced by:
 \eqn{\sum_{t=1}^n g^k(\theta,x_t)}, where \eqn{g^k(\theta,x_t)=\sum_{i=-r}^r k(i) g(\theta,x_{t+i})},
 where \eqn{r} is a truncated parameter that depends on the bandwidth and \eqn{k(i)} are normalized weights so that they sum to 1.

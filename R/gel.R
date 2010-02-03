@@ -139,7 +139,7 @@ getLamb <- function(g, tet, x, type = c('EL', 'ET', 'CUE'), tol_lam = 1e-12, max
 	return(z)
 	}
 
-smoothG <- function (x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weights = weightsAndrews2,
+smoothG <- function (x, bw = bwAndrews, prewhite = 1, ar.method = "ols", weights = weightsAndrews,
 			kernel = c("Bartlett", "Parzen", "Truncated", "Tukey-Hanning"), approx = c("AR(1)", "ARMA(1,1)"),
 			tol = 1e-7) 
 	{
@@ -149,6 +149,7 @@ smoothG <- function (x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weight
 	n <- nrow(x)
 	if (is.function(weights))
 		{
+                        class(x) <- "gmmFct"
 			w <- weights(x, bw = bw, kernel = kernel,  
 			prewhite = prewhite, ar.method = ar.method, tol = tol, 
 			verbose = FALSE, approx = approx)
@@ -175,7 +176,7 @@ smoothG <- function (x, bw = bwAndrews2, prewhite = 1, ar.method = "ols", weight
 
 
 gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "CUE", "ETEL"), 
-                kernel = c("Truncated", "Bartlett"), bw = bwAndrews2, approx = c("AR(1)", 
+                kernel = c("Truncated", "Bartlett"), bw = bwAndrews, approx = c("AR(1)", 
     		"ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, tol_lam = 1e-9, tol_obj = 1e-9, 
 		tol_mom = 1e-9, maxiterlam = 100, constraint = FALSE, optfct = c("optim", "optimize", "nlminb"), 
                 optlam = c("iter", "numeric"), model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", ...)
@@ -184,14 +185,14 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
 	type <- match.arg(type)
 	optfct <- match.arg(optfct)
 	optlam <- match.arg(optlam)
-	weights <- weightsAndrews2
+	weights <- weightsAndrews
 	approx <- match.arg(approx)
 	kernel <- match.arg(kernel)
 
 	all_args <- list(g = g, x = x, tet0 = tet0, gradv = gradv, smooth = smooth, type = type,
                 kernel = kernel, bw = bw, approx = approx, prewhite = prewhite, ar.method = ar.method, 
 		tol_weights = tol_weights, tol_lam = tol_lam, tol_obj = tol_obj, tol_mom = tol_mom, 
-		maxiterlam = maxiterlam, constraint = constraint, optfct = optfct, weights = weightsAndrews2,
+		maxiterlam = maxiterlam, constraint = constraint, optfct = optfct, weights = weights,
                 optlam = optlam, model = model, X = X, Y = Y, TypeGel = TypeGel, call = match.call())
 
 	class(all_args)<-TypeGel

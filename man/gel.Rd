@@ -9,7 +9,7 @@ Function to estimate a vector of parameters based on moment conditions using the
 }
 \usage{
 gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"), 
-    kernel = c("Truncated", "Bartlett"), bw = bwAndrews2, 
+    kernel = c("Truncated", "Bartlett"), bw = bwAndrews, 
     approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, 
     tol_lam = 1e-9, tol_obj = 1e-9, tol_mom = 1e-9, maxiterlam = 100, constraint = FALSE,
     optfct = c("optim", "optimize", "nlminb"), optlam = c("iter","numeric"), model = TRUE, 
@@ -28,15 +28,15 @@ gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"),
 
 \item{type}{"EL" for empirical likelihood, "ET" for exponential tilting, "CUE" for continuous updated estimator and "ETEL" for exponentially tilted empirical likelihood of Schennach(2007).}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{HAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
 
-\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews2}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest2}} of Newey-West(1994).}
+\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest}} of Newey-West(1994).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
 \item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
 
-\item{approx}{a character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews2}.}
+\item{approx}{a character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
 \item{tol_weights}{numeric. Weights that exceed \code{tol} are used for computing the covariance matrix, all other weights are treated as 0.}
 
@@ -63,8 +63,6 @@ gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"),
 }
 
 \details{
-\code{\link{weightsAndrews2}} and \code{\link{bwAndrews2}} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
-
 If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
 
 If "smooth" is set to TRUE, the sample moment conditions \eqn{\sum_{t=1}^n g(\theta,x_t)} is replaced by:
@@ -146,6 +144,10 @@ Schennach, Susanne, M. (2007), Point Estimation with Exponentially Tilted Empiri
 Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
 \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
 URL \url{http://www.jstatsoft.org/v16/i09/}.
+
+Pierre Chausse (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
+ \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
+ URL \url{http://www.jstatsoft.org/v34/i11/}.
 
 }
 \examples{

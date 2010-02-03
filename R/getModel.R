@@ -22,7 +22,13 @@ getModel.baseGmm <- function(object, ...)
     {
     object$gradvf <- FALSE
     dat <- getDat(object$g, object$x)
-    clname <- paste(class(object), ".", object$type, ".formula", sep = "")
+    if(is.null(object$weightsMatrix))
+      clname <- paste(class(object), ".", object$type, ".formula", sep = "")
+    else
+      {
+      clname <- "fixedW.formula"
+      object$type <- "One step GMM with fixed W"
+      }
     object$gform<-object$g
     g <- function(tet, x, ny = dat$ny, nh = dat$nh, k = dat$k)
       {
@@ -44,7 +50,10 @@ getModel.baseGmm <- function(object, ...)
     }
   else
     {
-    clname<-paste(class(object), "." ,object$type, sep = "")
+    if(is.null(object$weightsMatrix))
+      clname <- paste(class(object), "." ,object$type, sep = "")
+    else
+      clname <- "fixedW"
     if (!is.function(object$gradv))
       { 
       gradv <- .Gf
@@ -57,9 +66,10 @@ getModel.baseGmm <- function(object, ...)
       }
     }
 	
-  iid <- function(thet, x, g)
+  iid <- function(thet, x, g, centeredVcov)
     {
     gt <- g(thet,x)
+    if(centeredVcov) gt <- residuals(lm(gt~1))
     n <- ifelse(is.null(nrow(x)), length(x), nrow(x))
     v <- crossprod(gt,gt)/n
     return(v)
@@ -157,9 +167,9 @@ getModel.baseGel <- function(object, ...)
     rgmm <- gmm(P$g, x, P$tet0, wmatrix = "ident")
 
 
-    P$bwVal <- P$bw(P$g(rgmm$coefficients, x), kernel = P$wkernel, prewhite = P$prewhite, 
+    P$bwVal <- P$bw(lm(P$g(rgmm$coefficients, x)~1), kernel = P$wkernel, prewhite = P$prewhite, 
                ar.method = P$ar.method, approx = P$approx)
-    P$w <- P$weights(P$g(rgmm$coefficients, x), kernel = P$kernel, bw = P$bwVal, prewhite = P$prewhite, 
+    P$w <- P$weights(lm(P$g(rgmm$coefficients, x)~1), kernel = P$kernel, bw = P$bwVal, prewhite = P$prewhite, 
                ar.method = P$ar.method, approx = P$approx, tol = P$tol_weights)
 
     P$g <- function(thet, x, g1 = P$g1, w = P$w)

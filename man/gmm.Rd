@@ -11,9 +11,10 @@
 gmm(g, x, t0 = NULL, gradv = NULL, type = c("twoStep","cue","iterative"), 
 wmatrix = c("optimal","ident"), vcov = c("HAC","iid"), 
 kernel = c("Quadratic Spectral","Truncated", "Bartlett", 
-"Parzen", "Tukey-Hanning"), crit = 10e-7, bw = bwAndrews2, 
+"Parzen", "Tukey-Hanning"), crit = 10e-7, bw = bwAndrews, 
 prewhite = FALSE, ar.method = "ols", approx = "AR(1)", tol = 1e-7, 
-itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", ...)
+itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, 
+TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, ...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).}
@@ -30,17 +31,17 @@ itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=F
 
 \item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will avoid using the HAC matrix which will accelerate the estimation if one is ready to make that assumption.}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{HAC}} for more details)}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details)}
 
 \item{crit}{The stoping rule for the iterative GMM. It can be reduce to increase the precision.}
 
-\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews2}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest2}} of Newey-West(1994).}
+\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest}} of Newey-West(1994).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
 \item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
 
-\item{approx}{A character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews2}.}
+\item{approx}{A character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
 \item{tol}{Weights that exceed \code{tol} are used for computing the covariance matrix, all other weights are treated as 0.}
 
@@ -52,12 +53,14 @@ itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=F
 
 \item{TypeGmm}{The name of the class object created by the method \code{getModel}. It allows developers to extand the package and create other GMM methods.}
 
+\item{centeredVcov}{Should the moment function be centered when computing its covariance matrix. Doing so may improve inference.}
+
+\item{weightsMatrix}{It allows users to provide \code{gmm} with a fixed weighting matrix. This matrix must be \eqn{q \times q}, symmetric and strictly positive definite. When provided, the \code{type} option becomes irrelevant. }
+
 \item{...}{More options to give to \code{\link{optim}}.}
 }
 
 \details{
-\code{weightsAndrews2} and \code{bwAndrews2} are simply modified version of \code{weightsAndrews} and \code{bwAndrews} from the package sandwich. The modifications have been made so that the argument x can be a matrix instead of an object of class lm or glm. The details on how is works can be found on the sandwich manual.
-
 If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
 
 The following explains the last example bellow. Thanks to Dieter Rozenich, a student from the Vienna Universtiy of Economics and Business Administration. He suggested that it would help to understand the implementation of the jacobian.  
@@ -123,6 +126,10 @@ The object of class "gmm" is a list containing at least:
   Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
   \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
   URL \url{http://www.jstatsoft.org/v16/i09/}.
+
+ Pierre Chausse (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
+ \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
+ URL \url{http://www.jstatsoft.org/v34/i11/}.
 
  Andrews DWK (1991),
   Heteroskedasticity and Autocorrelation Consistent Covariance Matrix Estimation.
