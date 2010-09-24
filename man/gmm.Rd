@@ -168,11 +168,11 @@ h <- matrix(zm, t, 1)
 res <- gmm(z ~ zm, x = h)
 summary(res)
 
-## linear tests can be performed using linear.hypothesis from the car package
+## linear tests can be performed using linearHypothesis from the car package
 ## The CAPM can be tested as follows:
 
 library(car)
-linear.hypothesis(res,cbind(diag(10),matrix(0,10,10)),rep(0,10))
+linearHypothesis(res,cbind(diag(10),matrix(0,10,10)),rep(0,10))
 
 # The CAPM of Black
 g <- function(theta, x) {

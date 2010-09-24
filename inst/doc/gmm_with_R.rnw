@@ -312,10 +312,10 @@ t0<-c(alpha = 2, beta = 0, gamma = sd(x3)/sqrt(2),delta = 0)
 res3 <- gmm(g2,x3,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
 summary(res3)
 @
-For this sub-sample, the hypothesis that the return follows a stable distribution is not rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linear.hypothesis} from the \pkg{car} package:
+For this sub-sample, the hypothesis that the return follows a stable distribution is not rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
 <<>>=
 library(car)
-linear.hypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
+linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
 @
 It is clearly rejected. The result is even stronger if the whole sample is used. In that case, the stable distribution hypothesis is also rejected.
 
@@ -481,12 +481,12 @@ res <- gmm(z~zm,x=zm)
 coef(res)
 R <- cbind(diag(5),matrix(0,5,5))
 c <- rep(0,5)
-linear.hypothesis(res,R,c,test = "Chisq")
+linearHypothesis(res,R,c,test = "Chisq")
 @
 where the asymptotic chi-square is used since the default distribution requires a normality assumption. The same test could have been performed using the names of the coefficients:
 <<eval=false>>=
 test <- paste(names(coef(res)[1:5])," = 0",sep="")
-linear.hypothesis(res,test)
+linearHypothesis(res,test)
 @
 Another way to test the CAPM is to estimate the restricted model ($\alpha=0$), which is over-identified,  and to perform a J-test. Adding $-1$ to the formula removes the intercept. In that case, a column of ones has to be added to the matrix of instruments:
 <<>>=
