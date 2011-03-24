@@ -14,7 +14,7 @@
 gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"), 
 	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
 	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"),
-	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, ...)
+	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, data, ...)
 {
 
 type <- match.arg(type)
@@ -22,18 +22,21 @@ kernel <- match.arg(kernel)
 vcov <- match.arg(vcov)
 wmatrix <- match.arg(wmatrix)
 optfct <- match.arg(optfct)
-all_args<-list(g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
+if(missing(data))
+	data<-NULL
+all_args<-list(data = data, g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
                    crit = crit, bw = bw, prewhite = prewhite, ar.method = ar.method, approx = approx, 
                    weightsMatrix = weightsMatrix, centeredVcov = centeredVcov,
                    tol = tol, itermax = itermax, optfct = optfct, model = model, X = X, Y = Y, call = match.call())
 class(all_args)<-TypeGmm
 Model_info<-getModel(all_args)
 z <- momentEstim(Model_info, ...)
+
 z <- FinRes(z, Model_info)
 z
 }
 
-getDat <- function (formula,h) 
+getDat <- function (formula, h, data) 
 {
 	cl <- match.call()
 	mf <- match.call(expand.dots = FALSE)
@@ -43,17 +46,38 @@ getDat <- function (formula,h)
 	mf[[1L]] <- as.name("model.frame")
 	mf <- eval(mf, parent.frame())
 	mt <- attr(mf, "terms")
-	if (!is.matrix(h))
-		h <- cbind(rep(1,length(h)),h)
-	else	
-		h <- cbind(rep(1,nrow(h)),h)
-	colnames(h) <- c("h.(Intercept)",paste("h",1:(ncol(h)-1),sep=""))
+
+	if (inherits(h,'formula'))
+		{
+		mfh <- match.call(expand.dots = FALSE)
+		mh <- match(c("h", "data"), names(mfh), 0L)
+		mfh <- mfh[c(1L, mh)]
+		mfh$formula <- mfh$h
+		mfh$h <- NULL
+		mfh$drop.unused.levels <- TRUE
+		mfh[[1L]] <- as.name("model.frame")
+		mfh <- eval(mfh, parent.frame())
+		mth <- attr(mfh, "terms")
+		h <- as.matrix(model.matrix(mth, mfh, NULL))
+		}
+	else
+		{		
+		if (!is.matrix(h))
+			h <- cbind(rep(1,length(h)),h)
+		else	
+			h <- cbind(rep(1,nrow(h)),h)
+			
+		if(is.null(colnames(h)))
+			colnames(h) <- c("h.(Intercept)",paste("h",1:(ncol(h)-1),sep=""))
+		else
+			attr(h,'dimnames')[[2]][1] <- "h.(Intercept)"
+		if (attr(mt,"intercept")==0)
+			{
+			h <- as.matrix(h[,2:ncol(h)])
+			}
+		}
 	y <- as.matrix(model.response(mf, "numeric"))
 	xt <- as.matrix(model.matrix(mt, mf, NULL))
-	if (attr(mt,"intercept")==0)
-		{
-		h <- as.matrix(h[,2:ncol(h)])
-		}
 	ny <- ncol(y)
 	k <- ncol(xt)
 	nh <- ncol(h)
@@ -74,17 +98,54 @@ getDat <- function (formula,h)
 }
 
 
-.tetlin <- function(x, w, ny, nh, k, gradv, g)
+.tetlin <- function(x, w, ny, nh, k, gradv, g, type=NULL)
   {
   n <- nrow(x)
   ym <- as.matrix(x[,1:ny])
   xm <- as.matrix(x[,(ny+1):(ny+k)])
   hm <- as.matrix(x[,(ny+k+1):(ny+k+nh)])
-  whx <- solve(w, (crossprod(hm, xm) %x% diag(ny)))
-  wvecyh <- solve(w, matrix(crossprod(ym, hm), ncol = 1))
-  dg <- gradv(NULL,x, ny, nh, k)
-  xx <- crossprod(dg, whx)
-  par <- solve(xx, crossprod(dg, wvecyh))
+  if (!is.null(type))
+  	{
+  	if(type=="2sls")
+	  	{
+  		fsls <- lm(xm~hm-1)$fitted
+  	     par <- lm(ym~fsls-1)$coef
+		if (ny == 1)
+		{
+  	     	e2sls <- ym-xm%*%par
+ 	     	v2sls <- lm(e2sls~hm-1)$fitted
+  	     	value <- sum(v2sls^2)/sum(e2sls^2)
+  	     }
+  	     else
+  	     {
+  	     	par <- c(t(par))	
+  	     	g2sls <- g(par, x, ny, nh, k)
+  	     	w <- crossprod(g2sls)/n
+  	     	gb <- matrix(colMeans(g2sls), ncol = 1)
+   			value <- crossprod(gb, solve(w, gb)) 
+  	     }
+	  	}
+  	}
+  else
+  	{
+  if (ny>1)
+  	{
+     whx <- solve(w, (crossprod(hm, xm) %x% diag(ny)))
+     wvecyh <- solve(w, matrix(crossprod(ym, hm), ncol = 1))
+     dg <- gradv(NULL,x, ny, nh, k)
+     xx <- crossprod(dg, whx)
+     par <- solve(xx, crossprod(dg, wvecyh))
+     }
+  else
+  	{   
+     if (nh>k)
+     	{
+     	xzwz <- crossprod(xm,hm)%*%w%*%t(hm)
+     	par <- solve(xzwz%*%xm,xzwz%*%ym)	
+	     }
+	else
+		par <- solve(crossprod(hm,xm),crossprod(hm,ym))  	}
+	}
   gb <- matrix(colSums(g(par, x, ny, nh, k))/n, ncol = 1)
   value <- crossprod(gb, solve(w, gb)) 
   res <- list(par = par, value = value)

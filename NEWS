@@ -1,3 +1,16 @@
+Changes in version 1.3-5
+
+o Bug fixed when estimating linear model with Z=X (OLS with robust matrix)
+
+Changes in version 1.3-4
+
+o It is now possible to enter the instruments in x either as a matrix 
+   (like before) or as a formula. See details and examples in gmm help  
+o  A data argument is added to the gmm function. Therefore, it is no longer required 
+   that the variables in data.frames be attached before using gmm(). You just need to add the option data=your_data.frame.   
+o  2SLS is now implemented in a more efficient way for linear models. Just add the option vcov="iid". An example as been included for that case 
+
+
 Changes in version 1.3-3
 
  o It is a very small modification to avoid errors in the installation. The function linear.hypothesis of the car package is now deprecated. They have be changed to linearHypothesis. 

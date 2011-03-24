@@ -5,11 +5,12 @@
 It extract the data from a formula y~z with instrument h and put everything in a matrix. It helps redefine the function \eqn{g(\theta,x)} that is required by \code{\link{gmm}} and \code{\link{gel}}.
 }
 \usage{
-getDat(formula, h) 
+getDat(formula, h, data) 
 }
 \arguments{
 \item{formula}{A formula that defines the linear model to be estimated (see details).}
 \item{h}{A \eqn{n\times nh} matrix of intruments(see details).}
+\item{data}{A data.frame or a matrix with colnames (Optionnal).}
 }
 \details{The model to be estimated is based on the moment conditions \eqn{<h,(y-z\theta)>=0}. It adds a column of ones to z and h by default. They are removed if -1 is added to the formula}
 \value{

@@ -22,7 +22,7 @@ summary.gmm <- function(object, ...)
 	names(ans$met) <- "GMM method"
 	names(ans$kernel) <- "kernel for cov matrix"
 		
-	ans$coefficients <- round(cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE)),5)
+	ans$coefficients <- cbind(par,se, tval, 2 * pnorm(abs(tval), lower.tail = FALSE))
     	dimnames(ans$coefficients) <- list(names(z$coefficients), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 	ans$stest <- specTest(z)
