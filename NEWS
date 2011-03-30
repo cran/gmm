@@ -1,3 +1,11 @@
+Changes in version 1.3-6
+
+o Bug fixed when estimating model with timeSeries objects
+o When NA were present in the data and the instruments, gmm() was not working when omitting them created different dimension. 
+  If by chance it created the same dimensions, the data were not correctly aligned. Now it is aligned and the observations
+  associated with the NA's are removed. When it happens, a warning message is displayed.     
+
+
 Changes in version 1.3-5
 
 o Bug fixed when estimating linear model with Z=X (OLS with robust matrix)

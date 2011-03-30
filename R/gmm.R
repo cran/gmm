@@ -43,6 +43,7 @@ getDat <- function (formula, h, data)
 	m <- match(c("formula", "data"), names(mf), 0L)
 	mf <- mf[c(1L, m)]
 	mf$drop.unused.levels <- TRUE
+	mf$na.action <- "na.pass"	
 	mf[[1L]] <- as.name("model.frame")
 	mf <- eval(mf, parent.frame())
 	mt <- attr(mf, "terms")
@@ -55,6 +56,7 @@ getDat <- function (formula, h, data)
 		mfh$formula <- mfh$h
 		mfh$h <- NULL
 		mfh$drop.unused.levels <- TRUE
+		mfh$na.action <- "na.pass"
 		mfh[[1L]] <- as.name("model.frame")
 		mfh <- eval(mfh, parent.frame())
 		mth <- attr(mfh, "terms")
@@ -66,7 +68,7 @@ getDat <- function (formula, h, data)
 			h <- cbind(rep(1,length(h)),h)
 		else	
 			h <- cbind(rep(1,nrow(h)),h)
-			
+		h <- as.matrix(h)	
 		if(is.null(colnames(h)))
 			colnames(h) <- c("h.(Intercept)",paste("h",1:(ncol(h)-1),sep=""))
 		else
@@ -81,6 +83,7 @@ getDat <- function (formula, h, data)
 	ny <- ncol(y)
 	k <- ncol(xt)
 	nh <- ncol(h)
+
 	if (nrow(y) != nrow(xt) | nrow(xt) != nrow(h) | nrow(y)!=nrow(h))
 		stop("The number of observations of X, Y and H must be the same")
 	if (nh<k)
@@ -92,7 +95,16 @@ getDat <- function (formula, h, data)
 		if (ny == 1) 
 			colnames(y) <- "y"
 		}
+	rownames(xt) <- rownames(y)
+	rownames(h) <- rownames(y)
 	x <- cbind(y,xt,h)
+	if(any(is.na(x)))
+		{
+		warning("There are missing values. Associated observations have been removed")
+		x <- na.omit(x)
+		if (nrow(x)<=k)
+			stop("The number of observations must be greater than the number of coefficients")		
+		}
 	colnames(x)<-c(colnames(y),colnames(xt),colnames(h))
 	return(list(x=x,nh=nh,ny=ny,k=k,mf=mf,mt=mt,cl=cl))
 }
