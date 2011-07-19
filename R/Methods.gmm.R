@@ -26,7 +26,7 @@ summary.gmm <- function(object, ...)
     	dimnames(ans$coefficients) <- list(names(z$coefficients), 
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 	ans$stest <- specTest(z)
-
+        ans$algoInfo <- z$algoInfo
 	class(ans) <- "summary.gmm"
 	ans
 	}
@@ -45,6 +45,20 @@ print.summary.gmm <- function(x, digits = 5, ...)
 	print.default(format(x$stest$test, digits=digits),
                       print.gap = 2, quote = FALSE)
 	cat("\n")
+	if(!is.null(x$algoInfo))
+		{	
+		cat("#############\n")
+ 		cat("Information related to the numerical optimization\n")
+		}
+	if(!is.null(x$algoInfo$convergence))
+		cat("Convergence code = ", x$algoInfo$convergence,"\n")
+	if(!is.null(x$algoInfo$counts))
+		{	
+		cat("Function eval. = ",x$algoInfo$counts[1],"\n")
+		cat("Gradian eval. = ",x$algoInfo$counts[2],"\n")
+		}	
+	if(!is.null(x$algoInfo$message))
+		cat("Message: ",x$algoInfo$message,"\n")
 	invisible(x)
 	}
 
@@ -71,8 +85,6 @@ confint.gmm <- function(object, parm, level=0.95, ...)
 			ans <- ans[parm,]
 		ans
 		}
-
-
 		
 residuals.gmm <- function(object,...) 
 	{
@@ -95,6 +107,8 @@ print.gmm <- function(x, digits=5, ...)
 	print.default(format(coef(x), digits=digits),
                       print.gap = 2, quote = FALSE)
 	cat("\n")
+	if(!is.null(x$algoInfo$convergence))
+		cat("Convergence code = ", x$algoInfo$convergence,"\n")
 	invisible(x)
 	}
 

@@ -9,7 +9,7 @@
 }
 \usage{
 gmm(g, x, t0 = NULL, gradv = NULL, type = c("twoStep","cue","iterative"), 
-wmatrix = c("optimal","ident"), vcov = c("HAC","iid"), 
+wmatrix = c("optimal","ident"), vcov = c("HAC","iid","TrueFixed"), 
 kernel = c("Quadratic Spectral","Truncated", "Bartlett", 
 "Parzen", "Tukey-Hanning"), crit = 10e-7, bw = bwAndrews, 
 prewhite = FALSE, ar.method = "ols", approx = "AR(1)", tol = 1e-7, 
@@ -23,13 +23,13 @@ TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, data,  ...)
 
 \item{t0}{A \eqn{k \times 1} vector of starting values. It is required only when "g" is a function because only then a numerical algorithm is used to minimize the objective function. If the dimension of \eqn{\theta} is one, see the argument "optfct".}
 
-\item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradiant is used compute the asymptotic covariance matrix of \eqn{\hat{\theta}}. If "g" is a formula, the gradiant is not required (see the details below).}
+\item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradiant is used to compute the asymptotic covariance matrix of \eqn{\hat{\theta}} and to obtain the analytical gradiant of the objective function if the method is set to "CG" or "BFGS" in \code{\link{optim}} and if "type" is not set to "cue". If "g" is a formula, the gradiant is not required (see the details below).}
 
 \item{type}{The GMM method: "twostep" is the two step GMM proposed by Hansen(1982) and the "cue" and "iterative" are respectively the continuous updated and the iterative GMM proposed by Hansen, Eaton et Yaron (1996)}
 
 \item{wmatrix}{Which weighting matrix should be used in the objective function. By default, it is the inverse of the covariance matrix of \eqn{g(\theta,x)}. The other choice is the identity matrix which is usually used to obtain a first step estimate of \eqn{\theta} }
 
-\item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will avoid using the HAC matrix which will accelerate the estimation if one is ready to make that assumption.}
+\item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will avoid using the HAC matrix which will accelerate the estimation if one is ready to make that assumption. The option "TrueFixed" is used only when the matrix of weights is provided and it is the optimal one.}
 
 \item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details)}
 
@@ -120,6 +120,8 @@ The object of class "gmm" is a list containing at least:
 \item{x}{if requested, the model matrix used if "g" is a formula or the data if "g" is a function.}
 
 \item{model}{if requested (the default), the model frame used if "g" is a formula.}
+
+\item{algoInfo}{Information produced by either \code{\link{optim}} or \code{\link{nlminb}} related to the convergence if "g" is a function. It is printed by the \code{summary.gmm} method.}
 
  }
 

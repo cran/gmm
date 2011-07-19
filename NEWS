@@ -1,3 +1,19 @@
+Changes in version 1.3-8
+
+o A bug was found in the computation of linear GMM. The weighting matrix was not use properly. It is now fixed.
+
+Changes in version 1.3-7
+
+o Until now there was no way to know whether optim or nlminb has converged in case of nonlinear GMM. The convergence code
+  is now printed by print.gmm and the message and function evaluation by print.summary.gmm  
+o For cases in which the weighting matrix is provided, you have the choice of assuming that it is just a fixed matrix
+  not necessary equal to the inverse of the covariance matrix of the moment conditions (the default) or setting 
+  vcov="TrueFixed" if it is the inverse of the estimated covariance matrix.
+o If gradv is provided, it is not only used to compute the covariance matrix. It is also used to compute the 
+  gradiant of the objective function when the method is set to "CG" or "BFGS" in optim. For CUE, it is only used for the 
+  first step estimate because the gradiant can hardly be obtained analytically in that case.
+
+
 Changes in version 1.3-6
 
 o Bug fixed when estimating model with timeSeries objects

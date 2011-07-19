@@ -39,8 +39,11 @@ FinRes.baseGmm.res <- function(z, object, ...)
     G <- gradv(z$coefficients, x, g = object$g)
 
   if (P$vcov == "iid")
-    v <- iid(z$coefficients, x, z$g, P$centeredVcov)/n
-  else
+    {
+    v <- iid(z$coefficients, x, z$g, P$centeredVcov)
+    z$v <- v
+    }
+  else if(P$vcov == "HAC")
     {
     if(P$centeredVcov) 
 	gmat <- lm(z$gt~1)
@@ -50,16 +53,44 @@ FinRes.baseGmm.res <- function(z, object, ...)
        class(gmat) <- "gmmFct"
        }
     v <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
-		ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)/n
+		ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)
+    z$v <- v
     }
 
-  z$vcov <- try(solve(crossprod(G, solve(v, G))), silent = TRUE)
-  if(class(z$vcov) == "try-error")
-    {
-    z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
-    warning("The covariance matrix of the coefficients is singular")
-    }
+  if (P$vcov == "TrueFixed") 
+	{
+	z$vcov=try(solve(crossprod(G, P$weightsMatrix) %*% G)/n, silent = TRUE)
+        if(class(z$vcov) == "try-error")
+           {
+           z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
+           warning("The covariance matrix of the coefficients is singular")
+           }
+	}
+  else if (is.null(P$weigthsMatrix) & (P$wmatrix != "ident") )
+	{
+ 	z$vcov <- try(solve(crossprod(G, solve(v, G)))/n, silent = TRUE)
+        if(class(z$vcov) == "try-error")
+           {
+           z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
+           warning("The covariance matrix of the coefficients is singular")
+           }
+	}
+   else
+     {
+     if (is.null(P$weigthsMatrix))
+	w <- diag(ncol(z$gt))
+     else
+	w <- P$weightsMatrix
 
+     T1 <- try(solve(t(G)%*%w%*%G,t(G)%*%w), silent = TRUE)
+     if(class(T1) == "try-error")
+           {
+           z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
+           warning("The covariance matrix of the coefficients is singular")
+           }
+     else
+     	   z$vcov <- T1%*%v%*%t(T1)/n	
+     }
   dimnames(z$vcov) <- list(names(z$coefficients), names(z$coefficients))
   z$call <- P$call
   
@@ -78,6 +109,9 @@ FinRes.baseGmm.res <- function(z, object, ...)
   else
     z$w <- P$weightsMatrix
 
+  z$weightsMatrix <- P$weightsMatrix
+  z$infVcov <- P$vcov
+  z$infWmatrix <- P$wmatrix
   z$G <- G
   z$met <- P$type
   z$kernel <- P$kernel

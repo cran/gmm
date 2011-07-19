@@ -37,7 +37,27 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
   w=diag(q)
   if (P$optfct == "optim")
     {
-    res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    if (P$gradvf)
+      {
+      gradvOptim <- P$gradv
+      gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+      argDots <- list(...)
+      allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+      allArgOptim <- c(allArgOptim,argDots)
+      res <- do.call(optim,allArgOptim)
+      }
+    else
+      res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
     }
   if (P$optfct == "nlminb")
     {
@@ -51,7 +71,13 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
     res$value <- res$objective
     }	
   if (q == k2 | P$wmatrix == "ident")
+    {
     z = list(coefficients = res$par, objective = res$value, k=k, k2=k2, n=n, q=q, df=df)	
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+    }
   else
     {
     if (P$vcov == "iid")
@@ -72,7 +98,30 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
      }
 
     if (P$optfct == "optim")
-      res2 <- optim(res$par, .obj1, x = P$x, w = w, gf = P$g, ...)
+      {
+      argDots <- list(...)
+      if (P$gradvf)
+        {
+        gradvOptim <- P$gradv
+        gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+	argDots <- list(...)
+        allArgOptim <- list(par = res$par, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- c(allArgOptim,argDots)
+        res2 <- do.call(optim,allArgOptim)
+        }
+      else
+        res2 <- optim(res$par, .obj1, x = P$x, w = w, gf = P$g, ...)
+      }
 
     if (P$optfct == "nlminb")
       {
@@ -87,7 +136,11 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
       res2$value <- res2$objective
       }	
 
-     z = list(coefficients = res2$par, objective = res2$value, k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients = res2$par, objective = res2$value, k=k, k2=k2, n=n, q=q, df=df)	
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
     }
 
   if(is.null(names(P$t0)))
@@ -301,7 +354,30 @@ momentEstim.baseGmm.iterative <- function(object, ...)
   df <- q - k
   w=diag(q)
   if (P$optfct == "optim")
-    res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    {
+    if (P$gradvf)
+        {
+        gradvOptim <- P$gradv
+        gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+      argDots <- list(...)
+      allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+      allArgOptim <- c(allArgOptim,argDots)
+      res <- do.call(optim,allArgOptim)
+      }
+    else
+      res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    }
+    
   if (P$optfct == "nlminb")
     {
     res <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -317,6 +393,10 @@ momentEstim.baseGmm.iterative <- function(object, ...)
   if (q == k2 | P$wmatrix == "ident")
     {
     z <- list(coefficients = res$par, objective = res$value, k=k, k2=k2, n=n, q=q, df=df)
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
     }	
   else
     {
@@ -341,7 +421,31 @@ momentEstim.baseGmm.iterative <- function(object, ...)
         }
 
       if (P$optfct == "optim")
-        res <- optim(tet, .obj1, x = P$x, w = w, gf = P$g, ...)
+        {
+        if (P$gradvf)
+          {
+          gradvOptim <- P$gradv
+          gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+   	  argDots <- list(...)
+          allArgOptim <- list(par = tet, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+          argDots$gr <- NULL
+          allArgOptim <- c(allArgOptim,argDots)
+          res <- do.call(optim,allArgOptim)
+          }
+        else
+          res <- optim(tet, .obj1, x = P$x, w = w, gf = P$g, ...)
+        }
+
       if (P$optfct == "nlminb")
         {
         res <- nlminb(tet, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -362,6 +466,11 @@ momentEstim.baseGmm.iterative <- function(object, ...)
         j <- j+1	
       }
     z = list(coefficients = res$par, objective = res$value,k=k, k2=k2, n=n, q=q, df=df)	
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+
     }
 
   if(is.null(names(P$t0)))
@@ -419,6 +528,8 @@ momentEstim.baseGmm.cue.formula <- function(object, ...)
       res2$value <- res2$objective
       }
     z = list(coefficients = res2$par, objective = res2$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
+    if (P$optfct != "optimize")
+	z$convergence = res2$convergence
     }
 
   z$gt <- g(z$coefficients, x) 
@@ -478,7 +589,30 @@ momentEstim.baseGmm.cue <- function(object, ...)
   df <- q - k
   w=diag(q)
   if (P$optfct == "optim")
-    res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+   {
+   if (P$gradvf)
+      {
+      gradvOptim <- P$gradv
+      gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+      argDots <- list(...)
+      allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+      argDots$gr <- NULL
+      allArgOptim <- c(allArgOptim,argDots)
+      res <- do.call(optim,allArgOptim)
+      }
+    else
+      res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    }
   if (P$optfct == "nlminb")
     {
     res <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -494,14 +628,20 @@ momentEstim.baseGmm.cue <- function(object, ...)
   if (q == k2 | P$wmatrix == "ident")
     {
     z <- list(coefficients = res$par, objective = res$value, k=k, k2=k2, n=n, q=q, df=df)
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
     }	
   else
     {
     if (P$optfct == "optim")
-      res2 <- optim(P$t0, .objCue, x = x, P = P, ...)
+      {
+      res2 <- optim(res$par, .objCue, x = x, P = P, ...)
+      }
     if (P$optfct == "nlminb")
       {
-      res2 <- nlminb(P$t0, .objCue, x = x, P = P, ...)
+      res2 <- nlminb(res$par, .objCue, x = x, P = P, ...)
       res2$value <- res2$objective
       }
     if (P$optfct == "optimize")
@@ -511,6 +651,11 @@ momentEstim.baseGmm.cue <- function(object, ...)
       res2$value <- res2$objective
       }
     z = list(coefficients=res2$par,objective=res2$value, k=k, k2=k2, n=n, q=q, df=df)	
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
+
     }
 
   if(is.null(names(P$t0)))
@@ -757,15 +902,16 @@ momentEstim.fixedW.formula <- function(object, ...)
   w <- P$weightsMatrix
   if(!all(dim(w) == c(q,q)))
     stop("The matrix of weights must be qxq")
-  if(!is.real(eigen(w)$values))
-    stop("The matrix of weights must be strictly positive definite")
-  if(is.real(eigen(w)$values))
+  eigenW <- svd(w)$d
+  if(!is.real(eigenW))
+    warning("The matrix of weights is not strictly positive definite")
+  if(is.real(eigenW))
     {
-    if(sum(eigen(w)$values<=0)!=0)
-      stop("The matrix of weights must be strictly positive definite")
+    if(any(eigenW<=0))
+      warning("The matrix of weights is not strictly positive definite")
     }
   
-  res2 <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+  res2 <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g, inv=FALSE)
   z = list(coefficients = res2$par, objective = res2$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df)	
 
   z$gt <- g(z$coefficients, x) 
@@ -826,30 +972,59 @@ momentEstim.fixedW <- function(object, ...)
   w <- P$weightsMatrix
   if(!all(dim(w) == c(q,q)))
     stop("The matrix of weights must be qxq")
-  if(!is.real(eigen(w)$values))
-    stop("The matrix of weights must be strictly positive definite")
-  if(is.real(eigen(w)$values))
+  eigenW <- svd(w)$d
+  if(!is.real(eigenW))
+    warning("The matrix of weights is not strictly positive definite")
+  if(is.real(eigenW))
     {
-    if(sum(eigen(w)$values<=0)!=0)
-      stop("The matrix of weights must be strictly positive definite")
+    if(any(eigenW<=0))
+      warning("The matrix of weights is not strictly positive definite")
     }
 
   if (P$optfct == "optim")
-    res2 <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    {
+    if (P$gradvf)
+        {
+        gradvOptim <- P$gradv
+        gr2 <- function(thet, x,  w, gf, INV)
+		{
+		gt <- gf(thet, x)
+		Gbar <- gradvOptim(thet, x) 
+		gbar <- as.vector(colMeans(gt))
+		if (INV)		
+		  	obj <- crossprod(Gbar, solve(w, gbar))
+		else
+			obj <- crossprod(Gbar,w)%*%gbar
+		return(obj*2)
+		}
+      argDots <- list(...)
+      allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = FALSE)
+      argDots$gr <- NULL
+      allArgOptim <- c(allArgOptim,argDots)
+      res2 <- do.call(optim,allArgOptim)
+      }
+    else
+      res2 <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, INV = FALSE,  ...)
+    }
 
   if (P$optfct == "nlminb")
     {
-    res2 <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+    res2 <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, INV = FALSE, ...)
     res2$value <- res2$objective
     }
   if (P$optfct == "optimize")
     {
-    res2 <- optimize(.obj1, P$t0, x = P$x, w = w, gf = P$g, ...)
+    res2 <- optimize(.obj1, P$t0, x = P$x, w = w, gf = P$g, INV = FALSE, ...)
     res2$par <- res2$minimum
     res2$value <- res2$objective
     }	
   z = list(coefficients = res2$par, objective = res2$value, k=k, k2=k2, n=n, q=q, df=df)	
-  
+  if (P$optfct == "optim")
+     z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
+  else if(P$optfct == "nlminb")
+     z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
+
+
   if(is.null(names(P$t0)))
     names(z$coefficients) <- paste("Theta[" ,1:k, "]", sep = "")
   else

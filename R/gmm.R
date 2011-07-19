@@ -11,7 +11,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid"), 
+gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid","TrueFixed"), 
 	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
 	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"),
 	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, data, ...)
@@ -22,6 +22,12 @@ kernel <- match.arg(kernel)
 vcov <- match.arg(vcov)
 wmatrix <- match.arg(wmatrix)
 optfct <- match.arg(optfct)
+
+if(vcov=="TrueFixed" & is.null(weightsMatrix))
+	stop("TrueFixed vcov only for fixed weighting matrix")
+if(!is.null(weightsMatrix))
+	wmatrix <- "optimal"
+
 if(missing(data))
 	data<-NULL
 all_args<-list(data = data, g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
@@ -110,7 +116,7 @@ getDat <- function (formula, h, data)
 }
 
 
-.tetlin <- function(x, w, ny, nh, k, gradv, g, type=NULL)
+.tetlin <- function(x, w, ny, nh, k, gradv, g, type=NULL, inv=TRUE)
   {
   n <- nrow(x)
   ym <- as.matrix(x[,1:ny])
@@ -142,8 +148,16 @@ getDat <- function (formula, h, data)
   	{
   if (ny>1)
   	{
-     whx <- solve(w, (crossprod(hm, xm) %x% diag(ny)))
-     wvecyh <- solve(w, matrix(crossprod(ym, hm), ncol = 1))
+     if (inv) 
+	{
+	whx <- solve(w, (crossprod(hm, xm) %x% diag(ny)))
+	wvecyh <- solve(w, matrix(crossprod(ym, hm), ncol = 1))	
+	}
+     else
+        {
+	whx <- w%*% (crossprod(hm, xm) %x% diag(ny))
+	wvecyh <- w%*%matrix(crossprod(ym, hm), ncol = 1)
+        }
      dg <- gradv(NULL,x, ny, nh, k)
      xx <- crossprod(dg, whx)
      par <- solve(xx, crossprod(dg, wvecyh))
@@ -152,24 +166,34 @@ getDat <- function (formula, h, data)
   	{   
      if (nh>k)
      	{
-     	xzwz <- crossprod(xm,hm)%*%w%*%t(hm)
+	if(inv)
+           xzwz <- crossprod(xm,hm)%*%solve(w,t(hm))	
+	else
+     	   xzwz <- crossprod(xm,hm)%*%w%*%t(hm)
      	par <- solve(xzwz%*%xm,xzwz%*%ym)	
 	     }
 	else
 		par <- solve(crossprod(hm,xm),crossprod(hm,ym))  	}
 	}
   gb <- matrix(colSums(g(par, x, ny, nh, k))/n, ncol = 1)
-  value <- crossprod(gb, solve(w, gb)) 
+  if(inv)
+	  value <- crossprod(gb, solve(w, gb)) 
+  else
+	  value <- crossprod(gb, w%*%gb) 
+
   res <- list(par = par, value = value)
   return(res)
   }
 
 
-.obj1 <- function(thet, x, w, gf)
+.obj1 <- function(thet, x, w, gf, INV = TRUE)
   {
   gt <- gf(thet, x)
   gbar <- as.vector(colMeans(gt))
-  obj <- crossprod(gbar, solve(w, gbar))
+  if (INV)		
+  	obj <- crossprod(gbar, solve(w, gbar))
+  else
+	obj <- crossprod(gbar,w)%*%gbar
   return(obj)
   }
 
@@ -209,4 +233,5 @@ getDat <- function (formula, h, data)
   obj <- crossprod(gbar,solve(w2,gbar))
   return(obj)
 }	
+
 

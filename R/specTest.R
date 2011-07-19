@@ -5,7 +5,19 @@ specTest <- function(x, ...)
 
 specTest.gmm <- function(x, ...)
 	{
-	j <- x$objective*x$n
+	if (x$infWmatrix == "ident")
+		{
+		gb <- colMeans(x$gt)
+		j <- crossprod(gb,solve(x$v,gb))*x$n
+		}
+	else if ( (x$infVcov!="TrueFixed") & !is.null(x$weightsMatrix) )
+		{
+		gb <- colMeans(x$gt)
+		j <- crossprod(gb,solve(x$v,gb))*x$n
+		}
+	else
+		j <- x$objective*x$n
+
 	J_test <- noquote(paste("J-Test: degrees of freedom is ",x$df,sep=""))
 	j <- noquote(cbind(j, ifelse(x$df>0,pchisq(j,x$df, lower.tail = FALSE),"*******")))
 	dimnames(j) <- list("Test E(g)=0:  ", c("J-test", "P-value"))

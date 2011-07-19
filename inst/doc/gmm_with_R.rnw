@@ -382,7 +382,7 @@ The procedure iterates until the difference between the estimates of two success
 
 The third method is CUE. As you can see, the estimates from ITGMM is used as starting values. However, the starting values are required only when \code{g} is a function. When \code{g} is a formula, the default starting values are the ones obtained by setting the matrix of weights equal to the identity matrix.  
 <<>>=
-res3 <- gmm(g3,x=h,res2$pcoef,type='cue')
+res3 <- gmm(g3,x=h,res2$coef,type='cue')
 coef(res3)
 @
 It is possible to produce confidence intervals by using the method \code{confint}:
@@ -606,7 +606,7 @@ where $\hat{G}=d\bar{g}(\hat{\theta})/d\theta$ and $\hat{V}$ is obtained using \
 \[
 (\hat{G}'W\hat{G})^{-1}\hat{G}'W\hat{V}W\hat{G}(\hat{G}'W\hat{G})^{-1}/n.
 \]
-A \code{bread()} and \code{estfun()} methods are available for \code{gmm} objects which allows to compute the above matrix using the \pkg{sandwich} package. The \code{bread()} method computes $(\hat{G}'W\hat{G})^{-1}$ while the \code{estfun()} method returns a $T\times q$ matrix with the $t^{th}$ row equals to $g(\hat{\theta}, x_t) W \hat{G}$. The \code{meatHAC()} method applied to the latter produces the right meat.  Let us consider the example of section (\ref{ar}). Suppose we want to use the identity matrix to eliminate one source of bias, at the cost of lower efficiency. In that case, a consistent estimate of the covariance matrix is 
+A \code{bread()} and \code{estfun()} methods are available for \code{gmm} objects which allows to compute the above matrix using the \pkg{sandwich} package. The \code{bread()} method computes $(\hat{G}'W\hat{G})^{-1}$ while the \code{estfun()} method returns a $T\times q$ matrix with the $t^{th}$ row equals to $g(\hat{\theta}, x_t) W \hat{G}$. The \code{meatHAC()} method applied to the latter produces the right meat.  Let us consider the example of section (\ref{ar}). Suppose we want to use the identity matrix to eliminate one source of bias, at the cost of lower efficiency. In that case, a consistent estimate of the covariance matrix is 
 \[
 (\hat{G}'\hat{G})^{-1}\hat{G}'\hat{V}\hat{G}(\hat{G}'\hat{G})^{-1}/n,
 \]
