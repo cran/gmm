@@ -1,3 +1,43 @@
+Changes in version 1.4-0
+
+o The method for GMM-CUE has been modified. Before, the weights for the kernel estimation of the weighting matrix
+  were flexible inside the optimizer which was making the algorithm long and unstable. It is now fixed using either the starting 
+  values provided by the user (for linear cases) or the first step GMM. 
+o You can now trace the convergence of the iterative GMM with the option traceIter=T
+o The weights for the kernel are also fixed for iter-GMM. It is faster and I don't think it should change at each iteration. I am open to comments on that.
+o A function tsls() has been added to facilitate the estimation by 2SLS. The user does not have to worry about selecting the right gmm options
+o summary and print Methods have been added for tsls objects. The summary prints the f-statistics of the first stage LS
+o SmoothG for GEL uses now the kernapply() function which is more efficient.
+o Something the GMM converge to weird values which is sometimes caused by bad first step estimates used to compute the weighting matrix. 
+  Summary() prints the initial values to have more infortmation when convergence fails.
+o There was a bug in specTest() for GEL.  The degrees of freedom for the J-test were wrong. It is fixed.
+o For GEL type CUE the implied probabilities are computed according to Antoine, Bonnal, and Renault (2007) which solves the 
+  problem of negative probabilities.
+o The data file Finance has been resaved which implies that the package depends now on R version ­2.10.0 and higher
+o The function rho() had been changed to .rho() because it is not useful outside the gel() function
+o The function getLamb() has been modified. It is now more efficient. The default for the gel() option optlam is now nlminb.
+  The gradient and the hessian is provided which makes it much faster to solve for lambda. The argument of the function also changed.
+  Instead of providing the function g() and the vector of coefficients, we provide the matrix gt. I may be useful to call the function
+  sometimes to solve for lambda and it is easier that way.
+o The choice "iter" from the option optlam is kept for cases in which the optimizer fails to solve for lambda. It is often the case 
+  when type="ETEL" is chosen which tends to produce NA's.
+o For GEL of type "EL" and optfct="optim", the algorith constrOptim() is launched to make sure lambda'gt is always greater than 1
+  and avoid NA's when computing log(1-lambda'gt). The algorithm checks first with optim(), and swith to constrOptim() is optim() fails 
+o Sometimes, problems happen in GMM estimation because of the bad first step estimates used to compute the weighting matrix.
+  The first step estimates are usually computed using the identity matrix. The vector is now printed for better control. 
+o Cleaned the codes. The data are in object$dat and we can get the moment matrix by calling gt <- object$g(object$coef,object$dat) for linear and 
+  non-linear models, where object is of class gmm.
+o We can now impose equality constraints of the type theta_i=c_i with the option eqConst=. See help(gmm) which includes examples.
+o The K statistics for weakly identified models of Kleiberben (2005) has been added. See ?KTest.
+o (gmm only) The bandwidth for the HAC estimation is set by the first step estimate. Its value, along with the weights, 
+  is saved in attr(obj$w0,"Spec"). If the user is not satisfied with this automatic bw selection, bw can be set to any fixed number when
+  calling gmm(). See ?gmm for more details and examples.
+o The function gmmWithConst() reestimate an unrestricted model by imposing linear constraints, using the same specification. 
+  It also use the same bandwidth for the estimation of the HAC matrix
+o A regularized version of GEL based on Chausse(2011) is now implemented. The Lagrange multiplier can be regularized by setting the option
+  "alpha=" to a number. The regularization can stabilize the GEL estimator. A preliminary paper will be available on my web site that analyze 
+  the properties of such modification.  A method for selecting alpha will be implemented in future version.   
+
 Changes in version 1.3-8
 
 o A bug was found in the computation of linear GMM. The weighting matrix was not use properly. It is now fixed.

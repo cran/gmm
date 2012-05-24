@@ -11,34 +11,22 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-rho <- function(x, lamb, derive = 0, type = c("EL", "ET", "CUE"), drop = TRUE, k = 1)
+.rho <- function(x, lamb, derive = 0, type = c("EL", "ET", "CUE"), k = 1)
 	{
 
 	type <- match.arg(type)
 	lamb <- matrix(lamb, ncol = 1)
 	gml <- x%*%lamb*k
-	ch <- 0
 	if (derive == 0)
 		{
 		if (type == "EL")
 			{
-			ch <- sum(gml >= 1)
-			if (drop)
-				{				
-				gml <- (gml < 1)*gml
-				rhomat <- log(1 - gml) 
-				}
-			else
-				{
-				if (ch > 0)
-					rhomat <- NaN
-				else
-					rhomat <- log(1 - gml) 
-				}
+			if (any(gml>=1))
+				stop("Computation of Lambda fails because NAs produced by log(1-gt*l)")
+			rhomat <- log(1 - gml) 
 			}
 		if (type == "ET")
 			rhomat <- -exp(gml)
-		
 		if (type == "CUE")
 			rhomat <- -gml -0.5*gml^2
 		}
@@ -46,10 +34,8 @@ rho <- function(x, lamb, derive = 0, type = c("EL", "ET", "CUE"), drop = TRUE, k
 		{
 		if (type == "EL")
 			rhomat <- -1/(1 - gml) 
-			
 		if (type == "ET")
 			rhomat <- -exp(gml)
-		
 		if (type == "CUE")
 			rhomat <- -1 - gml
 		}
@@ -62,81 +48,124 @@ rho <- function(x, lamb, derive = 0, type = c("EL", "ET", "CUE"), drop = TRUE, k
 			rhomat <- -exp(gml)
 		
 		if (type == "CUE")
-			rhomat <- -1
+			rhomat <- -rep(1,nrow(x))
 		}
-	rhom <-list(ch = ch, rhomat = rhomat) 
-	return(rhom)
+	return(c(rhomat))
 	}
 
-getLamb <- function(g, tet, x, type = c('EL', 'ET', 'CUE'), tol_lam = 1e-12, maxiterlam = 1000, tol_obj = 1e-7, k = 1)
+.getCgelLam <- function(gt, l0, type = c('EL', 'ET', 'CUE'), method = c("nlminb", "optim", "constrOptim"), control=list(), k = 1, alpha = 0.01)
 	{
-	type <- match.arg(type)	
-	gt <- g(tet, x)
+	type <- match.arg(type)
+	method <- match.arg(method)
+	fct <- function(l, X)
+		{
+		r1 <- colMeans(.rho(gt,l,derive=1,type=type,k=k)*X)
+		crossprod(r1) + alpha*crossprod(l)
+		}
+	Dfct <- function(l, X)
+		{
+		r2 <- .rho(X,l,derive=2,type=type,k=k)
+		r1 <- .rho(X,l,derive=1,type=type,k=k)
+		H <- t(X*r2)%*%X/nrow(X)
+		2*H%*%colMeans(r1*X) + 2*alpha*l
+		}
 
-	n <- nrow(gt)
-	tol_cond=1e-12
-	gb <- colMeans(gt)
-	khat <- crossprod(gt)/n
-	lamb0 <- -solve(khat,gb)
+	if (method == "nlminb")
+		res <- nlminb(l0, fct, Dfct, X = gt, control = control) 
+	if (method == "optim")
+		res <- optim(l0, fct, Dfct, X = gt, method="BFGS", control = control) 
+	if (method == "constrOptim")
+		{
+		ci <- -rep(1,nrow(gt))
+		res <- constrOptim(rep(0,ncol(gt)),fct,Dfct,-gt,ci,control=control,X=gt)
+		}
+	if (method == "optim")
+		{
+		conv <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+	} else {
+		conv <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+		}
 
-	conv_mes <- "Normal convergence" 
-	singular <-0
-	crit <-1e30
-	crit0 <- crit
-	dcrit <- 10
-	dgblam <- -10
-	gblam0 <- NULL
+	return(list(lambda = res$par, convergence = conv, 
+			obj = mean(.rho(gt,res$par, derive=0,type=type,k=k))))	
+	}
 
-	j <- 1
-	while ((crit > tol_lam*( 1 + sqrt( crossprod(lamb0) ) ) ) & (j <= maxiterlam))
-		{ 
-		rho2 <- as.numeric(rho(gt, lamb0, derive = 2, type = type, k = k)$rhomat)
-		rho1 <- as.numeric(rho(gt, lamb0, derive = 1, type = type, k = k)$rhomat)
-		gblam <- colMeans(rho1*gt)
-		klam <- crossprod(rho2*gt, gt)/n
-		chklam <- sum(abs(klam))
-		if (!is.null(gblam0))
-			dgblam <- crossprod(gblam) - crossprod(gblam0)
-		
-		#if (is.na(chklam) | chklam == 0 | chklam == Inf |  dgblam > 0 | dgblam == Inf | is.na(dgblam) | dcrit < 0)
-		if (is.na(chklam) | chklam == 0 | chklam == Inf | dgblam == Inf | is.na(dgblam))
+getLamb <- function(gt, l0, type = c('EL', 'ET', 'CUE', "ETEL"), tol_lam = 1e-7, maxiterlam = 100, tol_obj = 1e-7, 
+		k = 1, 	method = c("nlminb", "optim", "iter"), control=list())
+	{
+	method <- match.arg(method)
+	if(is.null(dim(gt)))
+		gt <- matrix(gt,ncol=1)
+
+	if (method == "iter")
+		{
+		for (i in 1:maxiterlam)
 			{
-			lamb1 <- rep(0, length(lamb0))
-			crit <- 0
-			singular=2
-			conv_mes <- "The algorithm produced singular system,  NaN or Inf" 
+			r1 <- .rho(gt,l0,derive=1,type=type,k=k)
+			r2 <- .rho(gt,l0,derive=2,type=type,k=k)
+			F <- -colMeans(r1*gt)
+			J <- crossprod(r2*gt,gt)
+			if (sum(abs(F))<tol_obj)
+				{
+				conv <- list(convergence="Tolerance for the FOC reached")
+				break
+				}
+			P <- solve(J,F)
+			if (sum(abs(P))<tol_lam)
+				{
+				conv <- list(convergence="Tolerance on lambda reached")	
+				break
+				}
+			l0 <- l0 + P
+			conv <- list(convergence="maxiterlam reached")
+			}
+		}
+	 else
+		{
+		fct <- function(l,X)
+			{
+			r0 <- .rho(X,l,derive=0,type=type,k=k)
+			-mean(r0)
+			}
+		Dfct <- function(l,X)
+			{
+			r1 <- .rho(X,l,derive=1,type=type,k=k)
+		        -colMeans(r1*X)
+			}
+		DDfct <- function(l,X)
+			{
+			r2 <- .rho(X,l,derive=2,type=type,k=k)
+			-t(X*r2)%*%X/nrow(X)
+			}
+		if (type == "ETEL")
+			{
+			type = "ET"
+			ci <- -rep(1,nrow(gt))
+			res <- constrOptim(rep(0,ncol(gt)),fct,Dfct,-gt,ci,control=control,X=gt)
 			}
 		else
 			{
-			if (rcond(klam) > tol_cond)
+			if (method=="optim")
 				{
-				lamb1 <- lamb0 - solve(klam, gblam)
-                                crit <- sqrt(crossprod(lamb0 - lamb1))
-				lamb0 <- lamb1
+				if (type != "EL")
+					res <- optim(rep(0,ncol(gt)),fct,gr=Dfct,X=gt,method="BFGS",control=control)
+				else
+					{		
+					ci <- -rep(1,nrow(gt))
+					res <- constrOptim(rep(0,ncol(gt)),fct,Dfct,-gt,ci,control=control,X=gt)
+					}
 				}
 			else
-				{
-				lamb1 <- rep(0 , length(lamb0))
-				crit <- 0
-				singular <- 2
-				conv_mes <- "The algorithm produced singular system" 
-				}
+				res <- nlminb(rep(0,ncol(gt)), fct, gradient = Dfct, hessian = DDfct, X = gt, control = control)
 			}
-		gblam0 <- gblam
-		j <- j + 1
-		dcrit<- crit0 - crit
-		crit0 <- crit
+
+		l0 <- res$par
+		if (method == "optim" | method == "constrOptim")
+			conv <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+		if(method == "nlminb")
+			conv <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
 		}
-	z <- list("lambda" = lamb1, singular = singular, conv_mes = conv_mes)
-	if (j > maxiterlam)
-		{
-		singular <- 1
-		conv_mes <- "No convergence after 'maxiterlam' iterations"
-		z$singular <- singular
-                stop("Maxiterlam reached.\n Increase it, try other starting values \n or use the option optlam=\"numeric\".")		
-		}
-		z$obj <- crossprod(gblam)
-	return(z)
+	return(list(lambda = l0, convergence = conv, obj = mean(.rho(gt,l0,derive=0,type=type,k=k))))
 	}
 
 smoothG <- function (x, bw = bwAndrews, prewhite = 1, ar.method = "ols", weights = weightsAndrews,
@@ -161,16 +190,22 @@ smoothG <- function (x, bw = bwAndrews, prewhite = 1, ar.method = "ols", weights
 	rt <- length(w)
 	if (rt >= 2)
 		{
-		w <- c(w[rt:2], w)
-		w <- w / sum(w)
-		rt <- rt - 1
-		sgt <- function(t) crossprod(x[(t-rt):(t+rt),], w)
-		x[(rt+1):(n-rt),] <- t(sapply((rt + 1):(n - rt), sgt))
+		rt <- length(w)
+		if (rt>1)
+			{
+			w <- c(w[rt:2], w)
+			w <- w / sum(w)
+			w <- kernel(w[rt:length(w)])
+			}
+		else
+			w <- kernel(1)
+
+		x <- kernapply(x,w)		
 		sx <- list("smoothx" = x, "kern_weights" = w)
 		return(sx)		
 		}
 	else
-		sx <- list("smoothx" = x,"kern_weights" = 1)
+		sx <- list("smoothx" = x,"kern_weights" = kernel(1))
 		return(sx)		
 	}
 
@@ -179,7 +214,7 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
                 kernel = c("Truncated", "Bartlett"), bw = bwAndrews, approx = c("AR(1)", 
     		"ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, tol_lam = 1e-9, tol_obj = 1e-9, 
 		tol_mom = 1e-9, maxiterlam = 100, constraint = FALSE, optfct = c("optim", "optimize", "nlminb"), 
-                optlam = c("iter", "numeric"), model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", ...)
+                optlam = c("nlminb", "optim", "iter"), Lambdacontrol = list(), model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", alpha = NULL, ...)
 	{
 
 	type <- match.arg(type)
@@ -193,7 +228,8 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
                 kernel = kernel, bw = bw, approx = approx, prewhite = prewhite, ar.method = ar.method, 
 		tol_weights = tol_weights, tol_lam = tol_lam, tol_obj = tol_obj, tol_mom = tol_mom, 
 		maxiterlam = maxiterlam, constraint = constraint, optfct = optfct, weights = weights,
-                optlam = optlam, model = model, X = X, Y = Y, TypeGel = TypeGel, call = match.call())
+                optlam = optlam, model = model, X = X, Y = Y, TypeGel = TypeGel, call = match.call(), 
+		Lambdacontrol = Lambdacontrol, alpha = alpha)
 
 	class(all_args)<-TypeGel
 	Model_info<-getModel(all_args)
@@ -204,52 +240,43 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
 	}
 
 
-  .thetf <- function(tet, P)
+  .thetf <- function(tet, P, output=c("obj","all"), l0Env)
     {
-    if(!is.null(P$gform))
-      {
-      dat <- P$dat
-      x <- dat$x
-      }
+    output <- match.arg(output)
+    gt <- P$g(tet, P$dat)
+    l0 <- get("l0",envir=l0Env)
+    if (is.null(P$CGEL))
+	{
+	if (P$optlam != "optim" & P$type == "EL") 
+	    {
+	    lamb <- try(getLamb(gt, l0, type = P$type, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, 
+			tol_obj = P$tol_obj, k = P$k1/P$k2, control = P$Lambdacontrol, 
+			method = P$optlam), silent = TRUE)
+            if(class(lamb) == "try-error")
+		    lamb <- getLamb(gt, l0, type = P$type, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, 
+			tol_obj = P$tol_obj, k = P$k1/P$k2, control = P$Lambdacontrol, method = "optim")
+	    }
+	    else
+		    lamb <- getLamb(gt, l0, type = P$type, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, 
+			tol_obj = P$tol_obj, k = P$k1/P$k2, control = P$Lambdacontrol, method = P$optlam)
+	}
     else
-      x <- P$x
-
-    if (P$optlam == "iter")
-      {
-      lamblist <- getLamb(P$g, tet, x, type = P$typel, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, tol_obj = P$tol_obj, k = P$k1/P$k2)
-      lamb <- lamblist$lambda
-      gt <- P$g(tet, x)
-      pt <- -rho(gt, lamb, type = P$typet, derive = 1, k = P$k1/P$k2)$rhomat/nrow(gt)
-      checkmom <- sum(as.numeric(pt)*gt)
-      if (lamblist$singular == 0)		
-        p <- sum(rho(gt, lamb, type = P$typet, k = P$k1/P$k2)$rhomat) + abs(checkmom)/P$tol_mom
-      if (lamblist$singular == 1)		
-        p <- sum(rho(gt, lamb, type = P$typet, k = P$k1/P$k2)$rhomat) + abs(checkmom)/P$tol_mom + lamblist$obj/P$tol_mom
-      if (lamblist$singular == 2)		
-        p <- 1e50*proc.time()[3]
-      }
+	{
+	if (P$type=="ETEL")
+		stop("CGEL not implemented for ETEL")
+	lamb <- try(.getCgelLam(gt, l0, type = P$type, method = "nlminb", control=P$Lambdacontrol, 
+			k = P$k1/P$k2, alpha = P$CGEL),silent=TRUE)
+	if (class(lamb) == "try-error")
+		lamb <- try(.getCgelLam(gt, l0, type = P$type, method = "constrOptim", control=P$Lambdacontrol, 
+			k = P$k1/P$k2, alpha = P$CGEL),silent=TRUE)
+	}
+	
+    obj <- mean(.rho(gt, lamb$lambda, type = P$typet, derive = 0, k = P$k1/P$k2))
+    assign("l0",lamb$lambda,envir=l0Env)
+    if(output == "obj")
+	    return(obj)
     else
-      {
-      gt <- P$g(tet, x)
-      rhofct <- function(lamb)
-        {
-        rhof <- -sum(rho(gt, lamb, type = P$typel, k = P$k1/P$k2)$rhomat)
-        return(rhof)
-        }
-      if (ncol(gt) > 1)
-        rlamb <- optim(rep(0, ncol(gt)), rhofct, control = list(maxit = 1000))
-      else
-        {
-        rlamb <- optimize(rhofct, c(-1,1))
-        rlamb$par <- rlamb$minimum
-        rlamb$value <- rlamb$objective
-        }
-      lamb <- rlamb$par
-      pt <- -rho(gt, lamb, type = P$typet, derive = 1, k = P$k1/P$k2)$rhomat/nrow(gt)
-      checkmom <- sum(as.numeric(pt)*gt)
-      p <- -rlamb$value + (checkmom)^2/P$tol_mom + (sum(as.numeric(pt)) - 1)^2/P$tol_mom
-      }
-    return(p)
+	    return(list(obj = obj, lambda = lamb, gt = gt))
     }
 
 

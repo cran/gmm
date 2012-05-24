@@ -12,23 +12,24 @@
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 %% need no \usepackage{Sweave.sty}
+\SweaveOpts{keep.source=TRUE} 
 
-\author{Pierre Chaussé}
+\author{Pierre Chauss\'e}
 \title{Computing Generalized Method of Moments and Generalized Empirical Likelihood with \proglang{R}}
-\Plainauthor{Pierre Chaussé}
+\Plainauthor{Pierre Chauss\'e}
 \Plaintitle{Computing Generalized Method of Moments and Generalized Empirical Likelihood with R} 
 \Shorttitle{GMM and GEL with R} 
 
-\Abstract{This paper shows how to estimate models by the generalized method of moments and the generalized empirical likelihood using the \proglang{R} package \pkg{gmm}. A brief discussion is offered on the theoretical aspects of both methods and the functionality of the package is presented through several examples in economics and finance. It is a slightly modified version of \cite{chausse10} published in the Journal of Statistical Software.  
+\Abstract{This paper shows how to estimate models by the generalized method of moments and the generalized empirical likelihood using the \proglang{R} package \pkg{gmm}. A brief discussion is offered on the theoretical aspects of both methods and the functionality of the package is presented through several examples in economics and finance. It is a modified version of \cite{chausse10} published in the Journal of Statistical Software. It has been adapted to the version 1.4-0.  
 }
 \Keywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood, \proglang{R}}
 \Plainkeywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood, R}
 
 \Address{
-  Pierre Chaussé\\
-  Département des sciences économiques\\
-  Université du Québec à Montréal\\
-  315, Ste-Catherine Est, Montréal, (Québec), Canada\\
+  Pierre Chaus\'e\\
+  Department of Economics\\
+  University of Waterloo\\
+  Waterloo (Ontario), Canada\\
   E-mail: \email{pierre.chausse@uqam.ca}\\
   URL: \url{http://www.er.uqam.ca/nobel/k34115/}
 }
@@ -219,6 +220,8 @@ The \code{summary} method prints more results from the estimation:
 <<>>=
 summary(res)
 @
+The section "Initial values of the coefficients" shows the first step estimates used to either compute the weighting matrix in the 2-step GMM or the fixed bandwidth in CUE or iterative GMM.
+
 The J-test of over-identifying restrictions can also be extracted by using the method \code{specTest}:
 <<>>=
 specTest(res)
@@ -299,7 +302,7 @@ The result is not very close to the true parameters. But we can see why by looki
 <<>>=
 summary(res)
 @
-The null hypothesis that the moment conditions are satisfied is rejected. For nonlinear models, a significant J-test may indicate that we have not reached the global minimum. Furthermore, the standard deviations of the coefficients indicate that the covariance matrix is singular. We could try different starting values or use \code{nlminb} which allows to put restrictions on the parameter space. The former would work but the latter will allow us to see how to select another optimizer. The option \code{optfct} can be modified to use this algorithm instead of \code{optim}. In that case, we can specify the upper and lower bounds of $\theta$. 
+The null hypothesis that the moment conditions are satisfied is rejected. For nonlinear models, a significant J-test may indicate that we have not reached the global minimum. Furthermore, the standard deviation of the coefficient of $\delta$ indicates that the covariance matrix is nearly singular. Notice also that the convergence code is equal to 1, which indicates that the algorithm did not converge. We could try different starting values, increase the number of iterations in the control option of \code{optim} or use \code{nlminb} which allows to put restrictions on the parameter space. The former would work but the latter will allow us to see how to select another optimizer. The option \code{optfct} can be modified to use this algorithm instead of \code{optim}. In that case, we can specify the upper and lower bounds of $\theta$. 
 <<>>= 
 res2 <- gmm(g2,x2,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
 summary(res2)
@@ -307,17 +310,17 @@ summary(res2)
 We conclude this example by estimating the parameters for a vector of stock returns from the data set \code{Finance} that comes with the \pkg{gmm} package.
 <<>>=
 data(Finance)
-x3 <- Finance[1:500,"WMK"]
+x3 <- Finance[1:1500,"WMK"]
 t0<-c(alpha = 2, beta = 0, gamma = sd(x3)/sqrt(2),delta = 0)
-res3 <- gmm(g2,x3,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
+res3 <- gmm(g2,x3,t0,optfct="nlminb")
 summary(res3)
 @
-For this sub-sample, the hypothesis that the return follows a stable distribution is not rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
+For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
 <<>>=
 library(car)
 linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
 @
-It is clearly rejected. The result is even stronger if the whole sample is used. In that case, the stable distribution hypothesis is also rejected.
+It is clearly rejected. The result is even stronger if the whole sample is used. 
 
 \subsection{A linear model with iid moment conditions}
 
@@ -445,7 +448,7 @@ diag(vcov(res3))^.5
 diag(vcov(res4))^.5
 diag(vcov(res5))^.5
 @
-which shows, for this example, that the Bartlett kernel generates the estimates with the smallest variances. 
+which shows, for this example, that the Bartlett kernel generates the estimates with the smallest variances. However, it does not mean it is better. We have to run simulations and compute the true variance if we want to compare them. In fact, we do not know which one produces the most accurate estimate of the variance. 
 
 The second options is for the bandwidth selection. By default it is the automatic selection proposed by \cite{andrews91}. It is also possible to choose  the automatic selection of \cite{newey-west94} by adding \code{bw=bwNeweyWest} (without quotes because \code{bwNeweyWest} is a function). A prewhitened kernel estimator can also be computed using the option \code{prewhite=p}, where $p$ is the order of the vector auto-regressive (VAR) used to compute it.  By default, it is set to \code{FALSE}. \cite{andrews-monahan92} show that a prewhitened kernel estimator improves the properties of hypothesis tests on parameters. 
 
@@ -721,9 +724,11 @@ coef(res_cue)
 @
 A fourth method is available which is called the exponentially tilted empirical likelihood (ETEL) and was proposed by \cite{schennach07}. However, it does not belong to the family of GEL estimators. It solves the problem of misspecified models. In such models there may not exist any pseudo value to which $\hat{\theta}$ converges as the sample size increases. ETEL uses the $\rho()$ of ET to solve for $\lambda$ and the $\rho()$ of EL to solve for $\theta$. \cite{schennach07} shows that ETEL shares the same asymptotic properties of EL without having to impose restrictions on the domain of $\rho(v)$ when solving for $\lambda$. 
 <<>>=
-res <- gel(g1,x1,tet0,type="ETEL")
-coef(res)
+res_etel <- gel(g1,x1,c(mu=1,sig=1),type="ETEL")
+coef(res_etel)
 @
+The type ETEL is experimental for now. Although it is supposed to be more stable because no restrictions are required to solve for $\lambda$, once we substitute $\lambda(\theta)$ in the EL objective function to estimate $\theta$, we still need to restrict $\lambda'g_t$ to avoid having NA's. The solution used in gel() is to obtain $\lambda(\theta)$ with \code{constrOptim} with the restriction $\lambda'gt > 1$ even if it is not required by ET ($\rho(v)=-\exp{(v)}$). It is however sensitive to starting values. That's the reason why we used different ones above.    
+
 \subsection{Estimating the AR coefficients of an ARMA process}
 
 Because the moment conditions are weakly dependent, we need to set the option \code{smooth=TRUE}. Before going to the estimation procedure, we need to understand the relationship between the smoothing kernel and the HAC estimator. The reason why we need to smooth the moment function is that GEL estimates the covariance matrix of $\bar{g}(\theta,x_t)$, as if we had iid observations, using the expression $(1/T)\sum_{t=1}^T(g_tg_t')$. We can show that substituting $g_t$ by $g^w_t$ in this expression results in an HAC estimator. However, the relationship between the smoothing kernel and the kernel that appears in the HAC estimator is not obvious. For example, we can show that if the smoothing kernel is Truncated, then the kernel in the HAC estimator is the Bartlett. Let us consider the truncated kernel with a bandwidth of 2. This implies that $w(s)=1/5$ for $|s|\leq 2$ and 0 otherwise. Then, the expression for the covariance matrix becomes:
@@ -767,15 +772,19 @@ ci <- -1
 @
 and rerun the estimation as
 <<eval=false>>=
-res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",constraint=TRUE, ui=ui,ci=ci)
+res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",
+constraint=TRUE, ui=ui,ci=ci)
 @
 The result, which is not shown, is identical. 
 
-If we want to compare the results with the method in which $\lambda$ is solved using \code{optim}, we proceed as follows:
+They are also many option to compute the $\lambda$'s. From version 1.4-0, the default algorithm is \code{nlminb} because the gradient and Hessian matrix are well defined analytically which speed up convergence. The other choices are \code{optim} or "iter" which uses a Newton method to solve the first order condition. If the option optlam is set to "optim" and the type is EL, \code{contrOptim} is selected automatically to restrict $\lambda'g_t$ to be less than 1. It is also possible to change the default values in the control list of the optimizer with the option LambdaControl (see \code{?nlminb} or \code{?optim}). Here are some examples:  
 <<eval=false>>=
-res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",optlam="numeric")
+res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim")
+res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim",
+LambdaControl=list(trace=TRUE, parscale=rep(.1,5)))
 @
-which produce in this case almost identical results. However, it takes much more time than using the iterative method. 
+
+
 
 \subsection{Comments}
 
@@ -789,7 +798,7 @@ The package also offers an interface which is comparable to the least squares me
 
 \section{Computational Details}
 
-The package \pkg{gmm} is written entirely in \proglang{R} and S3-classes with methods are used. It can be found on the comprehensive \proglang{R} archive network (CRAN,\url{http://CRAN.R-project.org/}). It is also hosted on R-Forge (\url{http://r-forge.r-project.org/projects/gmm}). It is shipped with a NAMESPACE. The version used to produce this paper is 1.3-2. It depends on the \pkg{sandwich} package of \cite{zeileis06}, which is used to compute de HAC matrices. The packages \pkg{car} (\cite{car}), \pkg{mvtnorm} (\cite{mvtnorm}), \pkg{fBasics} (\cite{fBasics}), \pkg{MASS} (\cite{MASS}), \pkg{timeDate} (\cite{timeDate}) and \pkg{timeSeries} (\cite{timeSeries}) are suggested in order to reproduce the examples.
+The package \pkg{gmm} is written entirely in \proglang{R} and S3-classes with methods are used. It can be found on the comprehensive \proglang{R} archive network (CRAN,\url{http://CRAN.R-project.org/}). It is also hosted on R-Forge (\url{http://r-forge.r-project.org/projects/gmm}). It is shipped with a NAMESPACE. The version used to produce this paper is 1.4-0. It depends on the \pkg{sandwich} package of \cite{zeileis06}, which is used to compute de HAC matrices. The packages \pkg{car} (\cite{car}), \pkg{mvtnorm} (\cite{mvtnorm}), \pkg{fBasics} (\cite{fBasics}), \pkg{MASS} (\cite{MASS}), \pkg{timeDate} (\cite{timeDate}) and \pkg{timeSeries} (\cite{timeSeries}) are suggested in order to reproduce the examples.
 
 \section*{Acknowledgments}
 

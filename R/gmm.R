@@ -14,7 +14,7 @@
 gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid","TrueFixed"), 
 	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
 	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"),
-	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, data, ...)
+	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, ...)
 {
 
 type <- match.arg(type)
@@ -22,6 +22,9 @@ kernel <- match.arg(kernel)
 vcov <- match.arg(vcov)
 wmatrix <- match.arg(wmatrix)
 optfct <- match.arg(optfct)
+
+if (!is.null(eqConst))
+	TypeGmm <- "constGmm"
 
 if(vcov=="TrueFixed" & is.null(weightsMatrix))
 	stop("TrueFixed vcov only for fixed weighting matrix")
@@ -33,14 +36,46 @@ if(missing(data))
 all_args<-list(data = data, g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
                    crit = crit, bw = bw, prewhite = prewhite, ar.method = ar.method, approx = approx, 
                    weightsMatrix = weightsMatrix, centeredVcov = centeredVcov,
-                   tol = tol, itermax = itermax, optfct = optfct, model = model, X = X, Y = Y, call = match.call())
+                   tol = tol, itermax = itermax, optfct = optfct, model = model, X = X, Y = Y, call = match.call(), traceIter = traceIter, eqConst = eqConst)
 class(all_args)<-TypeGmm
-Model_info<-getModel(all_args)
+Model_info<-getModel(all_args, ...)
 z <- momentEstim(Model_info, ...)
 
 z <- FinRes(z, Model_info)
 z
 }
+
+tsls <- function(g,x,data)
+{
+if(class(g) != "formula")
+	stop("2SLS is for linear models expressed as formula only")
+ans <- gmm(g,x,data=data,vcov="iid")
+class(ans) <- c("tsls","gmm")
+return(ans)
+}
+
+
+.myKernHAC <- function(gmat, obj)
+	{
+        if(obj$centeredVcov) 
+          gmat <- lm(gmat~1)
+        else
+          class(gmat) <- "gmmFct"
+	AllArg <- obj$WSpec$sandwich
+	AllArg$x <- gmat
+	if (is.function(AllArg$bw))
+		{
+		bw <- AllArg$bw(gmat, order.by = AllArg$order.by, kernel = AllArg$kernel, 
+			prewhite = AllArg$prewhite, ar.method = AllArg$ar.method)
+		AllArg$bw <- bw
+		}
+	weights <- do.call(weightsAndrews,AllArg)
+	AllArg$sandwich <- FALSE
+	AllArg$weights <- weights
+	w <- do.call(vcovHAC, AllArg)
+	attr(w,"Spec") <- list(weights = weights, bw = AllArg$bw, kernel = AllArg$kernel)
+	w
+	}
 
 getDat <- function (formula, h, data) 
 {
@@ -116,8 +151,12 @@ getDat <- function (formula, h, data)
 }
 
 
-.tetlin <- function(x, w, ny, nh, k, gradv, g, type=NULL, inv=TRUE)
+.tetlin <- function(dat, w, gradv, g, type=NULL, inv=TRUE)
   {
+  x <- dat$x
+  ny <- dat$ny
+  nh <- dat$nh
+  k <- dat$k
   n <- nrow(x)
   ym <- as.matrix(x[,1:ny])
   xm <- as.matrix(x[,(ny+1):(ny+k)])
@@ -126,8 +165,9 @@ getDat <- function (formula, h, data)
   	{
   	if(type=="2sls")
 	  	{
-  		fsls <- lm(xm~hm-1)$fitted
-  	     par <- lm(ym~fsls-1)$coef
+		restsls <- lm(xm~hm-1)
+  		fsls <- restsls$fitted
+  	     	par <- lm(ym~fsls-1)$coef
 		if (ny == 1)
 		{
   	     	e2sls <- ym-xm%*%par
@@ -137,7 +177,7 @@ getDat <- function (formula, h, data)
   	     else
   	     {
   	     	par <- c(t(par))	
-  	     	g2sls <- g(par, x, ny, nh, k)
+  	     	g2sls <- g(par, dat)
   	     	w <- crossprod(g2sls)/n
   	     	gb <- matrix(colMeans(g2sls), ncol = 1)
    			value <- crossprod(gb, solve(w, gb)) 
@@ -158,7 +198,7 @@ getDat <- function (formula, h, data)
 	whx <- w%*% (crossprod(hm, xm) %x% diag(ny))
 	wvecyh <- w%*%matrix(crossprod(ym, hm), ncol = 1)
         }
-     dg <- gradv(NULL,x, ny, nh, k)
+     dg <- gradv(dat)
      xx <- crossprod(dg, whx)
      par <- solve(xx, crossprod(dg, wvecyh))
      }
@@ -175,13 +215,18 @@ getDat <- function (formula, h, data)
 	else
 		par <- solve(crossprod(hm,xm),crossprod(hm,ym))  	}
 	}
-  gb <- matrix(colSums(g(par, x, ny, nh, k))/n, ncol = 1)
+  gb <- matrix(colSums(g(par, dat))/n, ncol = 1)
   if(inv)
 	  value <- crossprod(gb, solve(w, gb)) 
   else
 	  value <- crossprod(gb, w%*%gb) 
 
   res <- list(par = par, value = value)
+  if (!is.null(type))
+     {    
+     if (type == "2sls")
+     res$fsRes <- summary(restsls)
+     }
   return(res)
   }
 
@@ -197,7 +242,7 @@ getDat <- function (formula, h, data)
   return(obj)
   }
 
-.Gf <- function(thet, x, g)
+.Gf <- function(thet, x, g, pt = NULL)
   {
   myenv <- new.env()
   assign('x', x, envir = myenv)
@@ -205,7 +250,11 @@ getDat <- function (formula, h, data)
   barg <- function(x, thet)
     {
     gt <- g(thet, x)
-    gbar <- as.vector(colMeans(gt))
+    if (is.null(pt))
+	    gbar <- as.vector(colMeans(gt))
+    else
+	    gbar <- as.vector(colSums(c(pt)*gt))
+
     return(gbar)
     }
   G <- attr(numericDeriv(quote(barg(x, thet)), "thet", myenv), "gradient")
@@ -217,20 +266,10 @@ getDat <- function (formula, h, data)
   gt <- P$g(thet,x)
   gbar <- as.vector(colMeans(gt))
   if (P$vcov == "iid")
-    w2 <- P$iid(thet, x, P$g, P$centeredVcov)
+    w <- P$iid(thet, x, P$g, P$centeredVcov)
   if (P$vcov == "HAC")
-    {
-    if(P$centeredVcov)
-        gmat <- lm(P$g(thet,x)~1)
-    else
-      {
-        gmat <- P$g(thet,x)
-        class(gmat) <- "gmmFct"
-      }
-    w2 <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
-            ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)
-   }
-  obj <- crossprod(gbar,solve(w2,gbar))
+    w <- .myKernHAC(gt, P)
+  obj <- crossprod(gbar,solve(w,gbar))
   return(obj)
 }	
 

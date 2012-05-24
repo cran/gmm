@@ -85,16 +85,8 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
 
     if (P$vcov == "HAC")
      {
-     if(P$centeredVcov) 
-      	gmat <- lm(P$g(res$par, P$x)~1)
-     else
-       {
-       gmat <- P$g(res$par, P$x)
-       class(gmat) <- "gmmFct"
-       }
-      w <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
-		ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)
-
+     gmat <- P$g(res$par, P$x)
+     w <- .myKernHAC(gmat, P)
      }
 
     if (P$optfct == "optim")
@@ -115,17 +107,17 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
 		return(obj*2)
 		}
 	argDots <- list(...)
-        allArgOptim <- list(par = res$par, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
         allArgOptim <- c(allArgOptim,argDots)
         res2 <- do.call(optim,allArgOptim)
         }
       else
-        res2 <- optim(res$par, .obj1, x = P$x, w = w, gf = P$g, ...)
+        res2 <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
       }
 
     if (P$optfct == "nlminb")
       {
-      res2 <- nlminb(res$par, .obj1, x = P$x, w = w, gf = P$g, ...)
+      res2 <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
       res2$value <- res2$objective
       }
 
@@ -136,25 +128,31 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
       res2$value <- res2$objective
       }	
 
-    z = list(coefficients = res2$par, objective = res2$value, k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients = res2$par, objective = res2$value, k=k, k2=k2, n=n, q=q, df=df, initTheta = res$par)	
     if (P$optfct == "optim")
 	z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
     else if(P$optfct == "nlminb")
 	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
     }
 
-  if(is.null(names(P$t0)))
-    names(z$coefficients) <- paste("Theta[" ,1:k, "]", sep = "")
-  else
-    names(z$coefficients) <- names(P$t0)
+ if (length(as.list(args(P$gradv))) == 3)
+	    z$G <- P$gradv(z$coefficients, P$x)
+ else
+	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
-  z$x <- P$x
+  z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
- 
+  z$WSpec <- P$WSpec
+
+  names(z$coefficients) <- P$namesCoef
+  if (is.null(colnames(z$gt)))
+	colnames(z$gt) <- paste("gt",1:ncol(z$gt),sep="")
   class(z) <- paste(P$TypeGmm,".res",sep="")	
+  z$specMod <- P$specMod 
+  z$w0 <- w
   return(z)
   }
 
@@ -162,10 +160,7 @@ momentEstim.baseGmm.twoStep.formula <- function(object, ...)
   {
   P <- object
   g <- P$g
-  if (is.null(P$data))
-    	dat <- getDat(P$gform, P$x)
-    else
-    	dat <- getDat(P$gform, P$x, P$data)
+  dat <- P$x
   
   x <- dat$x
   k <- dat$k
@@ -173,45 +168,36 @@ momentEstim.baseGmm.twoStep.formula <- function(object, ...)
   n <- nrow(x)
   q <- dat$ny*dat$nh
   df <- q-k*dat$ny
-    
+  w <- diag(q)
+
   if (q == k2 | P$wmatrix == "ident")
     {
-    w <- diag(q)
-    res <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, P$g)
+    res <- .tetlin(dat, w, P$gradv, P$g)
     z = list(coefficients = res$par, objective = res$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
     }
   else
     {
     if (P$vcov == "iid")
     	{
-      res2 <- .tetlin(x, diag(q), dat$ny, dat$nh, dat$k, P$gradv, P$g, type="2sls")
+      res2 <- .tetlin(dat, w, P$gradv, P$g, type="2sls")
+      initTheta <- NULL
       }
     if (P$vcov == "HAC")
       {
-      w=diag(q)
-      res1 <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, P$g)
-      if(P$centeredVcov) 
-       	 gmat <- lm(g(res1$par, x)~1)
-      else
-        {
-        gmat <- g(res1$par, x)
-        class(gmat) <- "gmmFct"
-        }
-      w <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, 
-		ar.method = P$ar.method, approx = P$approx, tol = P$tol, sandwich = FALSE)
-	 res2 <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+      res1 <- .tetlin(dat, w, P$gradv, P$g, type="2sls")
+      initTheta <- res1$par
+      gmat <- g(res1$par, dat)
+      w <- .myKernHAC(gmat, P)
+      res2 <- .tetlin(dat, w, P$gradv, g)
       }
-    
-    z = list(coefficients = res2$par, objective = res2$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients = res2$par, objective = res2$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df, initTheta = initTheta)	
     }
-  z$gt <- g(z$coefficients, x) 
+  z$gt <- g(z$coefficients, dat) 
   b <- z$coefficients
-  y <- as.matrix(model.response(dat$mf, "numeric"))
-  ny <- dat$ny
+  y <- as.matrix(dat$x[,1:dat$ny])
   b <- t(matrix(b, nrow = dat$ny))
-  x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+  x <- as.matrix(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
   yhat <- x %*% b
-  z$dat <- dat 
   z$fitted.values <- yhat	
   z$residuals <- y - yhat	
   z$terms <- dat$mt
@@ -221,23 +207,18 @@ momentEstim.baseGmm.twoStep.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  
-  namex <- colnames(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
-  nameh <- colnames(dat$x[,(dat$ny+dat$k+1):(dat$ny+dat$k+dat$nh)])
+  z$G <- P$gradv(dat) 
+  z$WSpec <- P$WSpec
+  z$w0 <- w
+
+  names(z$coefficients) <- P$namesCoef
+  colnames(z$gt) <- P$namesgt
  
-  if (dat$ny > 1)
-    {
-    namey <- colnames(dat$x[,1:dat$ny])
-    names(z$coefficients) <- paste(rep(namey, dat$k), "_", rep(namex, rep(dat$ny, dat$k)), sep = "")
-    colnames(z$gt) <- paste(rep(namey, dat$nh), "_", rep(nameh, rep(dat$ny, dat$nh)), sep = "")
-    }
- 
-  if (dat$ny == 1)
-    {
-    names(z$coefficients) <- namex
-    colnames(z$gt) <- nameh
-    }
+  if (P$vcov == "iid" & P$wmatrix != "ident")
+	z$fsRes <- res2$fsRes
+
   class(z) <- paste(P$TypeGmm,".res",sep="")
+  z$specMod <- P$specMod
   return(z)	
   }
 
@@ -245,66 +226,55 @@ momentEstim.baseGmm.iterative.formula <- function(object, ...)
   {
   P <- object
   g <- P$g
-  if (is.null(P$data))
-    	dat <- getDat(P$gform, P$x)
-    else
-    	dat <- getDat(P$gform, P$x, P$data)
-  
+  dat <- P$x
   x <- dat$x
   k <- dat$k
   k2 <- k*dat$ny
   n <- nrow(x)
   q <- dat$ny*dat$nh
   df <- q-k*dat$ny
+  w <- diag(q)
   
   if (q == k2 | P$wmatrix == "ident")
     {
-    w <- diag(q)
-    res <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+    res <- .tetlin(dat, w, P$gradv, g)
     z = list(coefficients = res$par, objective = res$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
     }
   else
     {
-    w=diag(rep(1, q))
-    res <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+    res <- .tetlin(dat, w, P$gradv, g, type="2sls")
+    initTheta <- res$par
     ch <- 100000
     j <- 1
     while(ch > P$crit)
       {
       tet <- res$par
-      if (P$vcov == "iid")
-        w <- P$iid(tet, x, g, P$centeredVcov)
       if (P$vcov == "HAC")
 	{
-        if (P$centeredVcov)
-          gmat <- lm(g(tet, x)~1)
-        else
-          {
-          gmat <- g(tet, x)
-          class(gmat) <- "gmmFct"
-          }
-        w <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, ar.method = P$ar.method, 
-                 approx = P$approx, tol = P$tol, sandwich = FALSE)
+        gmat <- g(tet, dat)
+	if (!is.null(attr(w,"Spec")))
+		P$WSpec$sandwich$bw <- attr(w,"Spec")$bw
+	w <- .myKernHAC(gmat, P)
         }
-      res <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+      res <- .tetlin(dat, w, P$gradv, g)
       ch <- crossprod(abs(tet- res$par)/tet)^.5
       if (j>P$itermax)
         {
         cat("No convergence after ", P$itermax, " iterations")
         ch <- P$crit
         }
+	if(P$traceIter)
+		cat("Iter :",j,": value=",res$value,", Coef = ", res$par,"\n") 
         j <- j+1	
       }
-    z = list(coefficients = res$par, objective = res$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients = res$par, objective = res$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df, initTheta=initTheta)	
    }
-  z$gt <- g(z$coefficients, x) 
+  z$gt <- g(z$coefficients, dat) 
   b <- z$coefficients
-  y <- as.matrix(model.response(dat$mf, "numeric"))
-  ny <- dat$ny
+  y <- as.matrix(dat$x[,1:dat$ny])
   b <- t(matrix(b, nrow = dat$ny))
-  x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+  x <- as.matrix(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
   yhat <- x %*% b
-  z$dat <- dat 
   z$fitted.values <- yhat	
   z$residuals <- y - yhat	
   z$terms <- dat$mt
@@ -314,23 +284,15 @@ momentEstim.baseGmm.iterative.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  
-  namex <- colnames(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
-  nameh <- colnames(dat$x[,(dat$ny+dat$k+1):(dat$ny+dat$k+dat$nh)])
- 
-  if (dat$ny > 1)
-    {
-    namey <- colnames(dat$x[,1:dat$ny])
-    names(z$coefficients) <- paste(rep(namey, dat$k), "_", rep(namex, rep(dat$ny, dat$k)), sep = "")
-    colnames(z$gt) <- paste(rep(namey, dat$nh), "_", rep(nameh, rep(dat$ny, dat$nh)), sep = "")
-    }
- 
-  if (dat$ny == 1)
-    {
-    names(z$coefficients) <- namex
-    colnames(z$gt) <- nameh
-    }
+  z$G <- P$gradv(dat) 
+  z$WSpec <- P$WSpec
+  z$w0 <- w
+
+  names(z$coefficients) <- P$namesCoef
+  colnames(z$gt) <- P$namesgt
+
   class(z) <- paste(P$TypeGmm,".res",sep="")
+  z$specMod <- P$specMod
   return(z)	
   }
 
@@ -400,6 +362,7 @@ momentEstim.baseGmm.iterative <- function(object, ...)
     }	
   else
     {
+    initTheta = res$par
     ch <- 100000
     j <- 1
     while(ch > P$crit)
@@ -409,15 +372,10 @@ momentEstim.baseGmm.iterative <- function(object, ...)
         w <- P$iid(tet, P$x, P$g, P$centeredVcov)
       if (P$vcov == "HAC")
 	{
-        if (P$centeredVcov)
-          gmat <- lm(P$g(tet, P$x)~1)
-        else
-          {
-          gmat <- P$g(tet, P$x)
-          class(gmat) <- "gmmFct"
-          }
-        w <- kernHAC(gmat, kernel = P$kernel, bw = P$bw, prewhite = P$prewhite, ar.method = P$ar.method, 
-                 approx = P$approx, tol = P$tol, sandwich = FALSE)
+	gmat <- P$g(tet, P$x)
+	if (!is.null(attr(w,"Spec")))
+		P$WSpec$sandwich$bw <- attr(w,"Spec")$bw
+	w <- .myKernHAC(gmat, P)
         }
 
       if (P$optfct == "optim")
@@ -457,15 +415,17 @@ momentEstim.baseGmm.iterative <- function(object, ...)
         res$par <- res$minimum
         res$value <- res$objective
         }	
-        ch <- crossprod(abs(tet-res$par)/tet)^.5	
+        ch <- crossprod(tet-res$par)^.5/(1+crossprod(tet)^.5)
         if (j>P$itermax)
           {
           cat("No convergence after ", P$itermax, " iterations")
           ch <- P$crit
           }
+	if(P$traceIter)
+		cat("Iter :",j,": value=",res$value,", Coef = ", res$par,"\n") 
         j <- j+1	
       }
-    z = list(coefficients = res$par, objective = res$value,k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients = res$par, objective = res$value,k=k, k2=k2, n=n, q=q, df=df, initTheta=initTheta)	
     if (P$optfct == "optim")
 	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
     else if(P$optfct == "nlminb")
@@ -473,71 +433,91 @@ momentEstim.baseGmm.iterative <- function(object, ...)
 
     }
 
-  if(is.null(names(P$t0)))
-    names(z$coefficients) <- paste("Theta[" ,1:k, "]", sep = "")
-  else
-    names(z$coefficients) <- names(P$t0)
+  
+ if (length(as.list(args(P$gradv))) == 3)
+	    z$G <- P$gradv(z$coefficients, P$x)
+ else
+	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
-  z$x <- P$x
+  z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
- 
+  z$WSpec <- P$WSpec
+  z$w0 <- w
+
+  names(z$coefficients) <- P$namesCoef
+  if (is.null(colnames(z$gt)))
+	colnames(z$gt) <- paste("gt",1:ncol(z$gt),sep="")
+  z$specMod <- P$specMod
   class(z) <- paste(P$TypeGmm,".res",sep="")	
   return(z)
   }
 
 momentEstim.baseGmm.cue.formula <- function(object, ...)
   {
+
   P <- object
   g <- P$g
-  if (is.null(P$data))
-    	dat <- getDat(P$gform, P$x)
-    else
-    	dat <- getDat(P$gform, P$x, P$data)
   
+  dat <- P$x
   x <- dat$x
   k <- dat$k
   k2 <- k*dat$ny
   n <- nrow(x)
   q <- dat$ny*dat$nh
   df <- q-k*dat$ny
-  
+  w <- diag(q)
+  P$weightMessage <- "Weights for kernel estimate of the covariance are fixed and based on the first step estimate of Theta"	
+
   if (q == k2 | P$wmatrix == "ident")
     {
-    w <- diag(q)
-    res <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g)
+    res <- .tetlin(dat, w, P$gradv, g)
     z = list(coefficients = res$par, objective = res$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
+    P$weightMessage <- "No CUE needed because the model is just identified"
     }
   else
     {
     if (is.null(P$t0))
-      P$t0 <- .tetlin(x,diag(q), dat$ny, dat$nh, dat$k, P$gradv, g)$par
+	{
+	P$t0 <- .tetlin(dat, w, P$gradv, g, type="2sls")$par
+	initTheta <- P$t0
+	}
+    else
+	{
+	initTheta <- P$t0
+	}
+
+    gt0 <- g(P$t0,dat)
+    w <- .myKernHAC(gt0, P)
+    P$WSpec$sandwich$bw <- attr(w,"Spec")$bw
+
     if (P$optfct == "optim")
-      res2 <- optim(P$t0,.objCue, x = x, P = P, ...)
+      res2 <- optim(P$t0,.objCue, x = dat, P = P, ...)
     if (P$optfct == "nlminb")
       {
-      res2 <- nlminb(P$t0,.objCue, x = x, P = P, ...)
+      res2 <- nlminb(P$t0,.objCue, x = dat, P = P, ...)
       res2$value <- res2$objective
       }
     if (P$optfct == "optimize")
       {
-      res2 <- optimize(.objCue,P$t0, x = x, P = P, ...)
+      res2 <- optimize(.objCue,P$t0, x = dat, P = P, ...)
       res2$par <- res2$minimum
       res2$value <- res2$objective
       }
-    z = list(coefficients = res2$par, objective = res2$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
-    if (P$optfct != "optimize")
-	z$convergence = res2$convergence
+    z = list(coefficients = res2$par, objective = res2$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df, initTheta=initTheta)
+    if (P$optfct == "optim")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
+    else if(P$optfct == "nlminb")
+	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
     }
 
-  z$gt <- g(z$coefficients, x) 
+  z$gt <- g(z$coefficients, dat) 
   b <- z$coefficients
-  y <- as.matrix(model.response(dat$mf, "numeric"))
-  ny <- dat$ny
+  y <- as.matrix(dat$x[,1:dat$ny])
   b <- t(matrix(b, nrow = dat$ny))
-  x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+  x <- as.matrix(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
   yhat <- x %*% b
   z$dat <- dat 
   z$fitted.values <- yhat	
@@ -549,22 +529,14 @@ momentEstim.baseGmm.cue.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  
-  namex <- colnames(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
-  nameh <- colnames(dat$x[,(dat$ny+dat$k+1):(dat$ny+dat$k+dat$nh)])
- 
-  if (dat$ny > 1)
-    {
-    namey <- colnames(dat$x[,1:dat$ny])
-    names(z$coefficients) <- paste(rep(namey, dat$k), "_", rep(namex, rep(dat$ny, dat$k)), sep = "")
-    colnames(z$gt) <- paste(rep(namey, dat$nh), "_", rep(nameh, rep(dat$ny, dat$nh)), sep = "")
-    }
- 
-  if (dat$ny == 1)
-    {
-    names(z$coefficients) <- namex
-    colnames(z$gt) <- nameh
-    }
+  z$G <- P$gradv(dat) 
+  z$specMod <- P$specMod
+  z$cue <- list(weights=P$fixedKernW,message=P$weightMessage)
+  z$WSpec <- P$WSpec
+  z$w0 <- w
+  names(z$coefficients) <- P$namesCoef
+  colnames(z$gt) <- P$namesgt
+
   class(z) <- paste(P$TypeGmm,".res",sep="")
   return(z)	
   }
@@ -573,75 +545,43 @@ momentEstim.baseGmm.cue <- function(object, ...)
   {
   P <- object
   x <- P$x
+
+  res <- try(gmm(P$g,P$x,P$t0,wmatrix="ident",optfct=P$optfct, ...))
+  if(class(res)=="try-error")
+	stop("Cannot get a first step estimate to compute the weights for the Kernel estimate of the covariance matrix; try different starting values")
+
+  initTheta <- res$coef
+  n <- nrow(res$gt)
+  q <- ncol(res$gt)
+  w <- diag(q)
+
   if (P$optfct == "optimize")
-    {
-    n = nrow(P$g(P$t0[1], x))
-    q = ncol(P$g(P$t0[1], x))
     k = 1
-    }
   else
-    {
-    n = nrow(P$g(P$t0, x))
-    q = ncol(P$g(P$t0, x))
     k = length(P$t0)
-    }
+
   k2 <- k
   df <- q - k
-  w=diag(q)
-  if (P$optfct == "optim")
-   {
-   if (P$gradvf)
-      {
-      gradvOptim <- P$gradv
-      gr2 <- function(thet, x,  w, gf, INV)
-		{
-		gt <- gf(thet, x)
-		Gbar <- gradvOptim(thet, x) 
-		gbar <- as.vector(colMeans(gt))
-		if (INV)		
-		  	obj <- crossprod(Gbar, solve(w, gbar))
-		else
-			obj <- crossprod(Gbar,w)%*%gbar
-		return(obj*2)
-		}
-      argDots <- list(...)
-      allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
-      argDots$gr <- NULL
-      allArgOptim <- c(allArgOptim,argDots)
-      res <- do.call(optim,allArgOptim)
-      }
-    else
-      res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
-    }
-  if (P$optfct == "nlminb")
-    {
-    res <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
-    res$value <- res$objective
-    }
-  if (P$optfct == "optimize")
-    {
-    res <- optimize(.obj1, P$t0, x = P$x, w = w, gf = P$g, ...)
-    res$par <- res$minimum
-    res$value <- res$objective
-    }	
 
   if (q == k2 | P$wmatrix == "ident")
     {
-    z <- list(coefficients = res$par, objective = res$value, k=k, k2=k2, n=n, q=q, df=df)
-    if (P$optfct == "optim")
-	z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
-    else if(P$optfct == "nlminb")
-	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+    z <- list(coefficients = res$coef, objective = res$objective, algoInfo = res$algoInfo, k=k, k2=k2, n=n, q=q, df=df)
+    P$weightMessage <- "No CUE needed because the model if just identified or you set wmatrix=identity"
     }	
   else
     {
+    gt0 <- P$g(res$coef,x) #Should we compute the weigths with the initial value provided?
+    w <- .myKernHAC(gt0, P)
+    P$WSpec$sandwich$bw <- attr(w,"Spec")$bw
+    P$weightMessage <- "Weights for kernel estimate of the covariance are fixed and based on the first step estimate of Theta"
+
     if (P$optfct == "optim")
       {
-      res2 <- optim(res$par, .objCue, x = x, P = P, ...)
+      res2 <- optim(P$t0, .objCue, x = x, P = P, ...)
       }
     if (P$optfct == "nlminb")
       {
-      res2 <- nlminb(res$par, .objCue, x = x, P = P, ...)
+      res2 <- nlminb(P$t0, .objCue, x = x, P = P, ...)
       res2$value <- res2$objective
       }
     if (P$optfct == "optimize")
@@ -650,7 +590,7 @@ momentEstim.baseGmm.cue <- function(object, ...)
       res2$par <- res2$minimum
       res2$value <- res2$objective
       }
-    z = list(coefficients=res2$par,objective=res2$value, k=k, k2=k2, n=n, q=q, df=df)	
+    z = list(coefficients=res2$par,objective=res2$value, k=k, k2=k2, n=n, q=q, df=df, initTheta=initTheta)	
     if (P$optfct == "optim")
 	z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
     else if(P$optfct == "nlminb")
@@ -658,17 +598,23 @@ momentEstim.baseGmm.cue <- function(object, ...)
 
     }
 
-  if(is.null(names(P$t0)))
-    names(z$coefficients) <- paste("Theta[" ,1:k, "]", sep = "")
+  if (length(as.list(args(P$gradv))) == 3)
+	    z$G <- P$gradv(z$coefficients, P$x)
   else
-    names(z$coefficients) <- names(P$t0)
+	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
-  z$x <- P$x
+  z$dat <- P$x
   z$gradv <- P$gradv
   z$gt <- P$g(z$coefficients, P$x)
   z$iid <- P$iid
   z$g <- P$g
- 
+  z$cue <- list(weights=P$fixedKernW,message=P$weightMessage)
+  names(z$coefficients) <- P$namesCoef
+  if (is.null(colnames(z$gt)))
+	colnames(z$gt) <- paste("gt",1:ncol(z$gt),sep="")
+  z$WSpec <- P$WSpec
+
+  z$specMod <- P$specMod
   class(z) <- paste(P$TypeGmm, ".res", sep = "")	
   return(z)
   }
@@ -677,84 +623,76 @@ momentEstim.baseGel.modFormula <- function(object, ...)
   {
   P <- object
   g <- P$g
-  dat <- getDat(P$gform, P$x)
-  x <- dat$x
-  n <- nrow(x)
+  l0Env <- new.env()
+  assign("l0",rep(0,P$q),envir=l0Env)
 
+  n <- nrow(P$dat$x)
   if (!P$constraint)
     {
     if (P$optfct == "optim")
-      res <- optim(P$tet0, .thetf, P = P, ...)
+      res <- optim(P$tet0, .thetf, P = P, l0Env = l0Env, ...)
     if (P$optfct == "nlminb")
-      res <- nlminb(P$tet0, .thetf, P = P, ...)
+      res <- nlminb(P$tet0, .thetf, P = P, l0Env = l0Env, ...)
 	
     if (P$optfct == "optimize")
       { 
-      res <- optimize(.thetf, P$tet0, P = P, ...)
+      res <- optimize(.thetf, P$tet0, P = P, l0Env = l0Env, ...)
       res$par <- res$minimum
       res$convergence <- "There is no convergence code for optimize"
       }
     }
 
   if(P$constraint)
-    res <- constrOptim(P$tet0, .thetf, grad = NULL, P = P, ...)
+    res <- constrOptim(P$tet0, .thetf, grad = NULL, P = P, l0Env = l0Env, ...)
 
+  All <- .thetf(res$par, P, "all",l0Env = l0Env)
+  gt <- All$gt
+  rlamb <- All$lambda
 
-  if (P$optlam == "iter")
-    {
-    rlamb <- getLamb(P$g, res$par, x, type = P$typel, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, tol_obj = P$tol_obj, k = P$k1/P$k2)
-    z <- list(coefficients = res$par, lambda = rlamb$lam, conv_lambda = rlamb$conv_mes, conv_par = res$convergence)
-    z$foc_lambda <- rlamb$obj
-    }
+  z <- list(coefficients = res$par, lambda = rlamb$lambda, conv_lambda = rlamb$conv, conv_par = res$convergence, dat=P$dat)
+  rho1 <- .rho(gt, z$lambda, derive = 1, type = P$typel, k = P$k1/P$k2)
+  z$foc_lambda <- crossprod(colMeans(rho1*gt))
 
-  if (P$optlam == "numeric")
-    {
-    gt <- P$g(res$par, x)
-    rhofct <- function(lamb)
-      {
-      rhof <- -sum(rho(gt, lamb, type = P$typel, k = P$k1/P$k2)$rhomat)
-      return(rhof)
-      }
-    rlamb <- optim(rep(0, ncol(gt)), rhofct, control = list(maxit = 1000))
-    z <- list(coefficients = res$par, conv_par = res$convergence, lambda = rlamb$par)
-    z$conv_lambda = paste("Lambda by optim. Conv. code = ", rlamb$convergence, sep = "")
-    rho1 <- as.numeric(rho(gt, z$lambda, derive = 1, type = P$typel, k = P$k1/P$k2)$rhomat)
-    z$foc_lambda <- crossprod(colMeans(rho1*gt))
-    }
   z$type <- P$type
-  z$gt <- P$g(z$coefficients, x)
-  rhom <- rho(z$gt, z$lambda, type = P$typet, k = P$k1/P$k2)
-  z$pt <- -rho(z$gt, z$lambda, type = P$typet, derive = 1, k = P$k1/P$k2)$rhomat/n
-  z$conv_moment <- colSums(as.numeric(z$pt)*z$gt)
+  z$gt <- gt
+  rhom <- .rho(z$gt, z$lambda, type = P$typet, k = P$k1/P$k2)
+  z$pt <- -.rho(z$gt, z$lambda, type = P$typet, derive = 1, k = P$k1/P$k2)/n
+  # Making sure pt>0
+  if (P$type=="CUE")
+	{
+	eps <- -length(z$pt)*min(min(z$pt),0)
+	z$pt <- (z$pt+eps/length(z$pt))/(1+eps)
+	}
+  ###################
+
+  z$conv_moment <- colSums(z$pt*z$gt)
   z$conv_pt <- sum(as.numeric(z$pt))
-  z$objective <- sum(as.numeric(rhom$rhomat) - rho(1, 0, type = P$typet)$rhomat)/n
+  z$objective <- sum(rhom - .rho(1, 0, type = P$typet))/n
 
-  namex <- colnames(dat$x[, (dat$ny+1):(dat$ny+dat$k)])
-  nameh <- colnames(dat$x[, (dat$ny+dat$k+1):(dat$ny+dat$k+dat$nh)])
+  namex <- colnames(P$dat$x[, (P$dat$ny+1):(P$dat$ny+P$dat$k)])
+  nameh <- colnames(P$dat$x[, (P$dat$ny+P$dat$k+1):(P$dat$ny+P$dat$k+P$dat$nh)])
 
-  if (dat$ny > 1)
+
+  if (P$dat$ny > 1)
     {
-    namey <- colnames(dat$x[, 1:dat$ny])
-    names(z$coefficients) <- paste(rep(namey, dat$k), "_", rep(namex, rep(dat$ny, dat$k)), sep = "")
-    colnames(z$gt) <- paste(rep(namey, dat$nh), "_", rep(nameh, rep(dat$ny,dat$nh)), sep = "")
-    names(z$lambda) <- paste("Lam(",rep(namey,dat$nh), "_", rep(nameh, rep(dat$ny,dat$nh)), ")", sep = "")
+    namey <- colnames(P$dat$x[, 1:P$dat$ny])
+    names(z$coefficients) <- paste(rep(namey, P$dat$k), "_", rep(namex, rep(P$dat$ny, P$dat$k)), sep = "")
+    colnames(z$gt) <- paste(rep(namey, P$dat$nh), "_", rep(nameh, rep(P$dat$ny,P$dat$nh)), sep = "")
+    names(z$lambda) <- paste("Lam(",rep(namey,P$dat$nh), "_", rep(nameh, rep(P$dat$ny,P$dat$nh)), ")", sep = "")
     }
-  if (dat$ny == 1)
+  if (P$dat$ny == 1)
     {
     names(z$coefficients) <- namex
     colnames(z$gt) <- nameh
     names(z$lambda) <- nameh
     }
 
-  if (P$type == "EL")	
-    {
-    z$badrho <- rhom$ch
-    names(z$badrho) <- "Number_of_bad_rho"
-    }
+ if(P$gradvf)
+    G <- P$gradv(z$coefficients, P$dat)
+  else
+    G <- P$gradv(z$coefficients, P$dat, g = P$g, z$pt)
 
-  G <- P$gradv(z$coefficients, x)
-
-  khat <- crossprod(z$gt)/(n*P$k2)*P$bwVal
+  khat <- crossprod(c(z$pt)*z$gt,z$gt)/(P$k2)*P$bwVal
   G <- G/P$k1 
 
   kg <- solve(khat, G)
@@ -765,26 +703,25 @@ momentEstim.baseGel.modFormula <- function(object, ...)
   z$weights <- P$w
   z$bwVal <- P$bwVal
   names(z$bwVal) <- "Bandwidth"
-
   dimnames(z$vcov_par) <- list(names(z$coefficients), names(z$coefficients))
   dimnames(z$vcov_lambda) <- list(names(z$lambda), names(z$lambda))
   b <- z$coefficients
-  y <- as.matrix(model.response(dat$mf, "numeric"))
-  ny <- dat$ny
+  y <- as.matrix(model.response(P$dat$mf, "numeric"))
+  ny <- P$dat$ny
   b <- t(matrix(b, nrow = ny))
-  x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+  x <- as.matrix(model.matrix(P$dat$mt, P$dat$mf, NULL))
   yhat <- x%*%b
   z$fitted.values <- yhat	
   z$residuals <- y - yhat	
-  z$terms <- dat$mt
-  if(P$model) z$model <- dat$mf
+  z$terms <- P$dat$mt
+  if(P$model) z$model <- P$dat$mf
   if(P$X) z$x <- x
   if(P$Y) z$y <- y
   z$call <- P$call
   z$k1 <- P$k1
   z$k2 <- P$k2
   z$khat <- khat
-
+  z$CGEL <- P$CGEL
   class(z) <- paste(P$TypeGel, ".res", sep = "")
   return(z)
   }
@@ -794,66 +731,56 @@ momentEstim.baseGel.mod <- function(object, ...)
   P <- object
   x <- P$x
   n <- ifelse(is.null(dim(x)),length(x),nrow(x))
+  l0Env <- new.env()
+  assign("l0",rep(0,P$q),envir=l0Env)
   if (!P$constraint)
     {
     if (P$optfct == "optim")
-      res <- optim(P$tet0, .thetf, P = P, ...)
+      res <- optim(P$tet0, .thetf, P = P, l0Env = l0Env, ...)
     if (P$optfct == "nlminb")
-      res <- nlminb(P$tet0, .thetf, P = P, ...)
+      res <- nlminb(P$tet0, .thetf, P = P, l0Env = l0Env, ...)
 	
     if (P$optfct == "optimize")
       { 
-      res <- optimize(.thetf, P$tet0, P = P, ...)
+      res <- optimize(.thetf, P$tet0, P = P, l0Env = l0Env, ...)
       res$par <- res$minimum
       res$convergence <- "There is no convergence code for optimize"
       }
     }
 
   if(P$constraint)
-    res <- constrOptim(P$tet0, .thetf, grad = NULL, P = P, ...)
+    res <- constrOptim(P$tet0, .thetf, grad = NULL, P = P,l0Env = l0Env, ...)
 
+  All <- .thetf(res$par, P, "all",l0Env = l0Env)
+  gt <- All$gt
+  rlamb <- All$lambda
 
-  if (P$optlam == "iter")
-    {
-    rlamb <- getLamb(P$g, res$par, x, type = P$typel, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, tol_obj = P$tol_obj, k = P$k1/P$k2)
-    z <- list(coefficients = res$par, lambda = rlamb$lam, conv_lambda = rlamb$conv_mes, conv_par = res$convergence)
-    z$foc_lambda <- rlamb$obj
-    }
+  z <- list(coefficients = res$par, lambda = rlamb$lambda, conv_lambda = rlamb$conv, conv_par = res$convergence, dat=P$dat)
+  rho1 <- .rho(gt, z$lambda, derive = 1, type = P$typel, k = P$k1/P$k2)
+  z$foc_lambda <- crossprod(colMeans(rho1*gt))
 
-  if (P$optlam == "numeric")
-    {
-    gt <- P$g(res$par, x)
-    rhofct <- function(lamb)
-      {
-      rhof <- -sum(rho(gt, lamb, type = P$typel, k = P$k1/P$k2)$rhomat)
-      return(rhof)
-      }
-    rlamb <- optim(rep(0, ncol(gt)), rhofct, control = list(maxit = 1000))
-    z <- list(coefficients = res$par, conv_par = res$convergence, lambda = rlamb$par)
-    z$conv_lambda = paste("Lambda by optim. Conv. code = ", rlamb$convergence, sep = "")
-    rho1 <- as.numeric(rho(gt, z$lambda, derive = 1, type = P$typel, k = P$k1/P$k2)$rhomat)
-    z$foc_lambda <- crossprod(colMeans(rho1*gt))
-    }
   z$type <- P$type
-  z$gt <- P$g(z$coefficients, x)
-  rhom <- rho(z$gt, z$lambda, type = P$typet, k = P$k1/P$k2)
-  z$pt <- -rho(z$gt, z$lambda, type = P$typet, derive = 1, k = P$k1/P$k2)$rhomat/n
+  z$gt <- gt
+  rhom <- .rho(z$gt, z$lambda, type = P$typet, k = P$k1/P$k2)
+  z$pt <- -.rho(z$gt, z$lambda, type = P$typet, derive = 1, k = P$k1/P$k2)/n
+
+# making sure pt>0
+  if (P$type=="CUE")
+	{
+	eps <- -length(z$pt)*min(min(z$pt),0)
+	z$pt <- (z$pt+eps/length(pt))/(1+eps)
+	}
+##################
   z$conv_moment <- colSums(as.numeric(z$pt)*z$gt)
   z$conv_pt <- sum(as.numeric(z$pt))
-  z$objective <- sum(as.numeric(rhom$rhomat) - rho(1, 0, type = P$typet, k = P$k1/P$k2)$rhomat)/n
-
-  if (P$type == "EL")	 
-    {
-    z$badrho <- rhom$ch
-    names(z$badrho) <- "Number_of_bad_rho"
-    }
-
+  z$objective <- sum(as.numeric(rhom) - .rho(1, 0, type = P$typet, k = P$k1/P$k2))/n
   if(P$gradvf)
     G <- P$gradv(z$coefficients, x)
   else
-    G <- P$gradv(z$coefficients, x, g = P$g)
+    G <- P$gradv(z$coefficients, x, g = P$g, z$pt)
+
   
-  khat <- crossprod(z$gt)/(n*P$k2)*P$bwVal
+  khat <- crossprod(c(z$pt)*z$gt, z$gt)/(P$k2)*P$bwVal
   G <- G/P$k1 
 
   kg <- solve(khat, G)
@@ -879,20 +806,20 @@ momentEstim.baseGel.mod <- function(object, ...)
   z$k1 <- P$k1
   z$k2 <- P$k2
   z$khat <- khat
+  z$CGEL <- P$CGEL
 
   class(z) <- paste(P$TypeGel, ".res", sep = "")
   return(z)
   }
 
+
+
 momentEstim.fixedW.formula <- function(object, ...)
   {
   P <- object
   g <- P$g
-  if (is.null(P$data))
-    	dat <- getDat(P$gform, P$x)
-    else
-    	dat <- getDat(P$gform, P$x, P$data)
 
+  dat <- P$x
   x <- dat$x
   k <- dat$k
   k2 <- k*dat$ny
@@ -911,15 +838,14 @@ momentEstim.fixedW.formula <- function(object, ...)
       warning("The matrix of weights is not strictly positive definite")
     }
   
-  res2 <- .tetlin(x, w, dat$ny, dat$nh, dat$k, P$gradv, g, inv=FALSE)
+  res2 <- .tetlin(dat, w, P$gradv, g, inv=FALSE)
   z = list(coefficients = res2$par, objective = res2$value, dat=dat, k=k, k2=k2, n=n, q=q, df=df)	
 
-  z$gt <- g(z$coefficients, x) 
+  z$gt <- g(z$coefficients, dat) 
   b <- z$coefficients
-  y <- as.matrix(model.response(dat$mf, "numeric"))
-  ny <- dat$ny
+  y <- as.matrix(dat$x[,1:dat$ny])
   b <- t(matrix(b, nrow = dat$ny))
-  x <- as.matrix(model.matrix(dat$mt, dat$mf, NULL))
+  x <- as.matrix(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
   yhat <- x %*% b
   z$dat <- dat 
   z$fitted.values <- yhat	
@@ -931,22 +857,13 @@ momentEstim.fixedW.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  
-  namex <- colnames(dat$x[,(dat$ny+1):(dat$ny+dat$k)])
-  nameh <- colnames(dat$x[,(dat$ny+dat$k+1):(dat$ny+dat$k+dat$nh)])
- 
-  if (dat$ny > 1)
-    {
-    namey <- colnames(dat$x[,1:dat$ny])
-    names(z$coefficients) <- paste(rep(namey, dat$k), "_", rep(namex, rep(dat$ny, dat$k)), sep = "")
-    colnames(z$gt) <- paste(rep(namey, dat$nh), "_", rep(nameh, rep(dat$ny, dat$nh)), sep = "")
-    }
- 
-  if (dat$ny == 1)
-    {
-    names(z$coefficients) <- namex
-    colnames(z$gt) <- nameh
-    }
+  z$G <- P$gradv(dat) 
+  z$WSpec <- P$WSpec
+
+  names(z$coefficients) <- P$namesCoef
+  colnames(z$gt) <- P$namesgt
+
+  z$specMod <- P$specMod
   class(z) <- paste(P$TypeGmm,".res",sep="")
   return(z)	
   }
@@ -1024,18 +941,22 @@ momentEstim.fixedW <- function(object, ...)
   else if(P$optfct == "nlminb")
      z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
 
-
-  if(is.null(names(P$t0)))
-    names(z$coefficients) <- paste("Theta[" ,1:k, "]", sep = "")
+  if (length(as.list(args(P$gradv))) == 3)
+	    z$G <- P$gradv(z$coefficients, P$x)
   else
-    names(z$coefficients) <- names(P$t0)
+	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
-  z$x <- P$x
+  z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
- 
+  z$WSpec <- P$WSpec
+
+  names(z$coefficients) <- P$namesCoef
+  if (is.null(colnames(z$gt)))
+	colnames(z$gt) <- paste("gt",1:ncol(z$gt),sep="") 
+  z$specMod <- P$specMod
   class(z) <- paste(P$TypeGmm,".res",sep="")	
   return(z)
   }

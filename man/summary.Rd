@@ -1,8 +1,10 @@
 \name{summary}
 \alias{summary.gmm}
 \alias{summary.gel}
+\alias{summary.tsls}
 \alias{print.summary.gmm}
 \alias{print.summary.gel}
+\alias{print.summary.tsls}
 \title{Method for object of class gmm or gel}
 \description{
 It presents the results from the \code{gmm} or \code{gel} estimation in the same fashion as \code{summary} does for the \code{lm} class objects for example. It also compute the tests for overidentifying restrictions.
@@ -10,8 +12,10 @@ It presents the results from the \code{gmm} or \code{gel} estimation in the same
 \usage{
 \method{summary}{gmm}(object, ...)
 \method{summary}{gel}(object, ...)
+\method{summary}{tsls}(object, ...)
 \method{print}{summary.gmm}(x, digits = 5, ...)
 \method{print}{summary.gel}(x, digits = 5, ...)
+\method{print}{summary.tsls}(x, digits = 5, ...)
 }
 \arguments{
  \item{object}{An object of class \code{gmm} or \code{gel} returned by the function \code{\link{gmm}} or \code{\link{gel}}}
@@ -55,7 +59,7 @@ Higher Order Properties of GMM and Generalized Empirical Likelihood Estimators.
 \examples{
 
 # GMM #
-
+set.seed(444)
 n = 500
 phi<-c(.2,.7)
 thet <- 0
@@ -64,10 +68,13 @@ x <- matrix(arima.sim(n = n, list(order = c(2,0,1), ar = phi, ma = thet, sd = sd
 y <- x[7:n]
 ym1 <- x[6:(n-1)]
 ym2 <- x[5:(n-2)]
+ym3 <- x[4:(n-3)]
+ym4 <- x[3:(n-4)]
+ym5 <- x[2:(n-5)]
+ym6 <- x[1:(n-6)]
 
-H <- cbind(x[4:(n-3)], x[3:(n-4)], x[2:(n-5)], x[1:(n-6)])
 g <- y ~ ym1 + ym2
-x <- H
+x <- ~ym3+ym4+ym5+ym6
 
 res <- gmm(g, x)
 
@@ -75,8 +82,14 @@ summary(res)
 
 # GEL #
 
-t0 <- c(0,.5,.5)
+t0 <- res$coef
 res <- gel(g, x, t0)
+summary(res)
+
+
+# tsls #
+
+res <- tsls(y ~ ym1 + ym2,~ym3+ym4+ym5+ym6)
 summary(res)
 
 }

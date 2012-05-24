@@ -30,21 +30,21 @@ charStable <- function(theta, tau, pm = 0)
 			{
 			if(g == 0)
 				{
-				the_car <- exp(complex(ima = d*tau)) 
+				the_car <- exp(complex(imaginary = d*tau)) 
 				}
 			else
 				{
 				re_p <- -g * abs(tau)
 				im_p <- d * tau
 				im_p[tau!=0] <- im_p[tau != 0] + re_p[tau != 0]*2/pi*b*sign(tau[tau != 0])*log(g*abs(tau[tau != 0]))
-				the_car <- exp(complex(re = re_p, ima = im_p))
+				the_car <- exp(complex(real = re_p, imaginary = im_p))
 				}
 			}
 		else
 			{
 			if(g == 0)
 				{
-				the_car <- exp(complex(ima = d*tau)) 
+				the_car <- exp(complex(imaginary = d*tau)) 
 				}
 			else
 				{
@@ -52,7 +52,7 @@ charStable <- function(theta, tau, pm = 0)
 				re_p <- -g^a*abs(tau)^a
 				im_p <- d*tau*1i
 				im_p[tau != 0] <- im_p[tau != 0] + re_p*( b*phi*sign(tau[tau != 0])*(abs(g*tau[tau != 0])^(1-a) - 1) )
-				the_car <- exp(complex(re = re_p, ima = im_p))
+				the_car <- exp(complex(real = re_p, imaginary = im_p))
 				}
 			}
 		}
@@ -64,14 +64,14 @@ charStable <- function(theta, tau, pm = 0)
 			re_p <- -g*abs(tau)
 			im_p <- d*tau
 			im_p[tau!=0] <- im_p[tau != 0]+re_p*(b*2/pi*sign(tau[tau != 0])*log(abs(tau[tau!=0])))			
-			the_car <- exp(complex(re = re_p, ima = im_p))
+			the_car <- exp(complex(real = re_p, imaginary = im_p))
 			}
 		else
 			{
 			phi <- tan(pi*a/2)
 			re_p <- -g^a*abs(tau)^a
 			im_p <- re_p*(-phi*b*sign(tau)) + d*tau
-			the_car <- exp(complex(re = re_p, ima = im_p))
+			the_car <- exp(complex(real = re_p, imaginary = im_p))
 			}
 		}
 	return(the_car)

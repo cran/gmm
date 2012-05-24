@@ -27,16 +27,66 @@ summary.gmm <- function(object, ...)
         c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 	ans$stest <- specTest(z)
         ans$algoInfo <- z$algoInfo
+	if(z$met=="cue")
+		ans$cue <- object$cue
+	if (!is.null(object$initTheta))
+		{
+		ans$initTheta <- object$initTheta
+		names(ans$initTheta) <- names(z$coefficients)
+		}
+        ans$specMod <- object$specMod
+	ans$bw <- attr(object$w0,"Spec")$bw
+	ans$weights <- attr(object$w0,"Spec")$weights
 	class(ans) <- "summary.gmm"
 	ans
 	}
 
+summary.tsls <- function(object, ...)
+	{
+	ans <- summary.gmm(object)
+	k <- object$dat$k
+	fstat <- vector()
+	fstat[1] <- object$fsRes[[1]]$fstatistic[1]
+	df1 <- object$fsRes[[1]]$fstatistic[2]
+	df2 <- object$fsRes[[1]]$fstatistic[3]
+	for (i in 2:k)	
+		fstat[i] <- object$fsRes[[i]]$fstatistic[1]
+	pvfstat <- 1-pf(fstat,df1, df2)
+	names(fstat) <- colnames(object$dat$x)[(object$dat$ny+1):(object$dat$ny+k)]
+	ans$fstatistic <- list(fstat = fstat, pvfstat = pvfstat, df1 = df1, df2 = df2)
+        ans$specMod <- object$specMod
+	class(ans) <- "summary.tsls"
+	return(ans)
+	}
+
+print.summary.tsls <- function(x, digits = 5, ...)
+	{
+	print.summary.gmm(x,digits)
+	cat("\n First stage F-statistics: \n")
+	if(names(x$fstatistic$fstat)[1]=="(Intercept)")
+		start=2
+	else
+		start=1
+	for (i in start:length(x$fstatistic$fstat))
+		cat(names(x$fstatistic$fstat)[i], 
+		": F(",x$fstatistic$df1,", ",x$fstatistic$df2,") = ",x$fstatistic$fstat[i], 
+		" (P-Vavue = ",x$fstatistic$pvfstat[i],")\n")
+	
+	}
 print.summary.gmm <- function(x, digits = 5, ...)
 	{
 	cat("\nCall:\n")
 	cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
-	cat("\nMethod: ", x$met,"\n\n")
-	cat("Kernel: ", x$kernel,"\n\n")
+	cat("\nMethod: ", x$met,"\n")
+	if (x$met=="cue")
+		cat("         (",x$cue$message,")\n\n")
+	else
+		cat("\n")
+	cat("Kernel: ", x$kernel)
+	if (!is.null(x$bw))
+		cat("(with bw = ", round(x$bw,5),")\n\n")
+	else
+		cat("\n\n")	
 	cat("Coefficients:\n")
 	print.default(format(x$coefficients, digits=digits),
                       print.gap = 2, quote = FALSE)
@@ -45,6 +95,13 @@ print.summary.gmm <- function(x, digits = 5, ...)
 	print.default(format(x$stest$test, digits=digits),
                       print.gap = 2, quote = FALSE)
 	cat("\n")
+	if(!is.null(x$initTheta))
+		{
+		cat("Initial values of the coefficients\n")
+		print(x$initTheta)
+		cat("\n")
+		}
+        cat(x$specMod)
 	if(!is.null(x$algoInfo))
 		{	
 		cat("#############\n")
@@ -109,6 +166,7 @@ print.gmm <- function(x, digits=5, ...)
 	cat("\n")
 	if(!is.null(x$algoInfo$convergence))
 		cat("Convergence code = ", x$algoInfo$convergence,"\n")
+	cat(x$specMod)
 	invisible(x)
 	}
 
@@ -120,7 +178,7 @@ estfun.gmmFct <- function(x, y = NULL, theta = NULL, ...)
 	{
 	if (is(x, "function"))
 		{
-		gmat <- x(y, theta)
+		gmat <- x(theta, y)
 		return(gmat)
 		}
 	else
