@@ -762,7 +762,7 @@ momentEstim.baseGel.mod <- function(object, ...)
   z$type <- P$type
   z$gt <- gt
   rhom <- .rho(z$gt, z$lambda, type = P$typet, k = P$k1/P$k2)
-  z$pt <- -.rho(z$gt, z$lambda, type = P$typet, derive = 1, k = P$k1/P$k2)/n
+  z$pt <- -.rho(z$gt, z$lambda, type = P$typel, derive = 1, k = P$k1/P$k2)/n
 
 # making sure pt>0
   if (P$type=="CUE")

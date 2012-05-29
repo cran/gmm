@@ -99,6 +99,8 @@ getLamb <- function(gt, l0, type = c('EL', 'ET', 'CUE', "ETEL"), tol_lam = 1e-7,
 
 	if (method == "iter")
 		{
+		if (type == "ETEL")
+			type = "ET"
 		for (i in 1:maxiterlam)
 			{
 			r1 <- .rho(gt,l0,derive=1,type=type,k=k)
@@ -240,7 +242,7 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
 	}
 
 
-  .thetf <- function(tet, P, output=c("obj","all"), l0Env)
+.thetf <- function(tet, P, output=c("obj","all"), l0Env)
     {
     output <- match.arg(output)
     gt <- P$g(tet, P$dat)
@@ -257,7 +259,7 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
 			tol_obj = P$tol_obj, k = P$k1/P$k2, control = P$Lambdacontrol, method = "optim")
 	    }
 	    else
-		    lamb <- getLamb(gt, l0, type = P$type, tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, 
+		    lamb <- getLamb(gt, l0, type = P$type,	 tol_lam = P$tol_lam, maxiterlam = P$maxiterlam, 
 			tol_obj = P$tol_obj, k = P$k1/P$k2, control = P$Lambdacontrol, method = P$optlam)
 	}
     else
