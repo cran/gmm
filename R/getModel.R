@@ -240,7 +240,7 @@ getModel.baseGel <- function(object, ...)
     P$typel <- P$type
     P$typet <- P$type
     }
-  if(P$optfct == "optim")
+  if(P$optfct == "optim" | P$optfct == "nlminb")
     P$k <- length(P$tet0)
   else
     P$k <- 1
@@ -312,6 +312,9 @@ getModel.baseGel <- function(object, ...)
     }
   if (P$smooth)
     {
+    if (is.function(object$gradv))
+	warning("Since you provided gradv, smooth does not apply to it. Do not provide it if you want it to be based on the smoothed g()",
+		call. = FALSE)		
     if(P$kernel == "Truncated")
         {
         P$wkernel <- "Bartlett"
@@ -336,7 +339,7 @@ getModel.baseGel <- function(object, ...)
 	    P$bwVal <- P$bw
 
     P$w <- smoothG(gt, bw = P$bwVal)$kern_weights
-    attr(P$dat,"smooth") <- list(bw=P$bwVal, w=P$w, g = P$g1)
+    attr(P$dat,"smooth") <- list(bw=P$bwVal, w=P$w, g = P$g1,kernel=P$kernel)
 
     P$g <- function(thet, x)
       {

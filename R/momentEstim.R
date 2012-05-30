@@ -729,7 +729,7 @@ momentEstim.baseGel.modFormula <- function(object, ...)
 momentEstim.baseGel.mod <- function(object, ...)
   {
   P <- object
-  x <- P$x
+  x <- P$dat
   n <- ifelse(is.null(dim(x)),length(x),nrow(x))
   l0Env <- new.env()
   assign("l0",rep(0,P$q),envir=l0Env)
@@ -774,12 +774,12 @@ momentEstim.baseGel.mod <- function(object, ...)
   z$conv_moment <- colSums(as.numeric(z$pt)*z$gt)
   z$conv_pt <- sum(as.numeric(z$pt))
   z$objective <- sum(as.numeric(rhom) - .rho(1, 0, type = P$typet, k = P$k1/P$k2))/n
+
   if(P$gradvf)
     G <- P$gradv(z$coefficients, x)
   else
     G <- P$gradv(z$coefficients, x, g = P$g, z$pt)
-
-  
+ 
   khat <- crossprod(c(z$pt)*z$gt, z$gt)/(P$k2)*P$bwVal
   G <- G/P$k1 
 

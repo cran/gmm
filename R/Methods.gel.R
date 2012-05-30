@@ -61,9 +61,16 @@ vcov.gel <- function(object, lambda = FALSE, ...)
 print.gel <- function(x, digits = 5, ...)
 	{
 	if (is.null(x$CGEL))
-		cat("Type de GEL: ", x$type, "\n\n")
+		cat("Type de GEL: ", x$type, "\n")
 	else
-		cat("CGEL of type: ", x$type, " (alpha = ", x$CGEL, ")\n\n")
+		cat("CGEL of type: ", x$type, " (alpha = ", x$CGEL, ")\n")
+	if (!is.null(attr(x$dat,"smooth")))
+		{
+		cat("Kernel: ", attr(x$dat,"smooth")$kernel," (bw=",
+		attr(x$dat,"smooth")$bw,")\n\n")
+		}
+	else
+		cat("\n")
 
 	cat("Coefficients:\n")
 	print.default(format(coef(x), digits = digits),
@@ -83,10 +90,17 @@ print.summary.gel <- function(x, digits = 5, ...)
 	cat("\nCall:\n")
 	cat(paste(deparse(x$call), sep = "\n", collapse = "\n"), "\n\n", sep = "")
 	if (is.null(x$CGEL))
-		cat("Type de GEL: ", x$type, "\n\n")
+		cat("Type of GEL: ", x$type, "\n")
 	else
-		cat("CGEL of type: ", x$type, " (alpha = ", x$CGEL, ")\n\n")
-	cat("Kernel: ", x$kernel, "\n\n")
+		cat("CGEL of type: ", x$type, " (alpha = ", x$CGEL, ")\n")
+
+	if (!is.null(x$smooth))
+		{
+		cat("Kernel: ", x$smooth$kernel," (bw=", x$smooth$bw,")\n\n")
+		}
+	else
+		cat("\n")
+
 	cat("Coefficients:\n")
 	print.default(format(x$coefficients, digits = digits),
                       print.gap = 2, quote = FALSE)
@@ -141,6 +155,8 @@ summary.gel <- function(object, ...)
 	ans$conv_moment <- cbind(z$conv_moment)
 	ans$conv_lambda <- z$conv_lambda
 	ans$CGEL <- z$CGEL
+	if (!is.null(attr(object$dat,"smooth")))
+		ans$smooth <- attr(object$dat,"smooth")
 	names(ans$conv_pt) <- "Sum_of_pt"
 	dimnames(ans$conv_moment) <- list(names(z$gt), "Sample_moment_with_pt")
 	class(ans) <- "summary.gel"

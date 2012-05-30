@@ -1,3 +1,8 @@
+Changes in version 1.4-2
+
+o Bugs fixed when running gel() with smooth=T and g() begina nonlinear function
+o Now, print.gel() and print.summary.gel() repports the bandwidth when smooth=T
+
 Changes in version 1.4-0
 
 o The method for GMM-CUE has been modified. Before, the weights for the kernel estimation of the weighting matrix
