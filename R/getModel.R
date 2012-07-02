@@ -67,7 +67,7 @@ getModel.constGmm <- function(object, ...)
 	      k <- ncol(x)
 	      ny <- 1
 	      dat$x <- cbind(y,x,dat$x[, dat$ny+dat$k+(1:nh)])
-	      dgb <- -(t(x[,(ny+k+1):(ny+k+nh)]) %*% x[,(ny+1):(ny+k)]) %x% diag(rep(1,ny))/nrow(x)
+	      dgb <- -(t(dat$x[,(ny+k+1):(ny+k+nh)]) %*% dat$x[,(ny+1):(ny+k)]) %x% diag(rep(1,ny))/nrow(x)
 	      return(dgb)
 	      }
 	attr(obj$x,"eqConst") <- list(unConstg = obj$g2, unConstgradv = obj$gradv2, eqConst = object$eqConst, 
@@ -100,6 +100,8 @@ getModel.constGmm <- function(object, ...)
 			attr(dat,"eqConst")$unConstgradv(tet2, dat)[,-resTet[,1]]
 		}
 	}
+  
+  obj$eqConst <- object$eqConst
   obj$namesCoef <- obj$namesCoef[-object$eqConst[,1]]
   obj$type <- paste(obj$type,"(with equality constraints)",sep=" ")	
   mess <- paste(rownames(object$eqConst), " = " , object$eqConst[,2], "\n",collapse="")

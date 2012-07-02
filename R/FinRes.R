@@ -24,6 +24,39 @@ FinRes.baseGmm.res <- function(z, object, ...)
   x <- z$dat
   n <- ifelse(is.null(nrow(z$gt)),length(z$gt),nrow(z$gt))
 
+  if (!is.null(attr(x,"eqConst")) & P$allArg$eqConstFullVcov)
+	{
+	eqConst <- attr(x,"eqConst")$eqConst
+	coef <- rep(0,length(eqConst[,1])+length(z$coefficients))
+	ncoef <- rep("",length(eqConst[,1])+length(z$coefficients))
+	coef[-eqConst[,1]] <- z$coefficients
+	ncoef[-eqConst[,1]] <- names(z$coefficients)
+	coef[eqConst[,1]] <- eqConst[,2]
+	ncoef[eqConst[,1]] <- rownames(eqConst)
+	names(coef) <- ncoef
+	z$coefficients <- coef
+	if (!is.null(z$initTheta))
+		{
+		initTheta <- rep(0,length(z$coefficients))
+		initTheta[eqConst[,1]] <- eqConst[,2]
+		initTheta[-eqConst[,1]] <- z$initTheta
+		z$initTheta <- initTheta
+		}
+	z$df <- z$df+nrow(eqConst)
+	z$k <- z$k2+nrow(eqConst)
+	z$k2 <- z$k+nrow(eqConst)
+	z$gradv <- attr(x,"eqConst")$unConstgradv
+	z$g <- attr(x,"eqConst")$unConstg 
+	z$specMod <- paste(z$specMod, "** Note: Covariance matrix computed for all coefficients based on restricted values **\n\n")
+	}  
+	
+  if (length(as.list(args(z$gradv))) == 2)
+        z$G <- z$gradv(x)
+  else if (length(as.list(args(z$gradv))) == 3)
+	z$G <- z$gradv(z$coefficients, x)
+  else
+        z$G <- z$gradv(z$coefficients, x, g = z$g)
+
   G <- z$G
   iid <- z$iid 	
 

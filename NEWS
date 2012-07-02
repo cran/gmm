@@ -1,3 +1,10 @@
+Changes in version 1.4-3
+
+o Added the option "constrOptim" to optfct for nonlinear models
+o Added the option "eqConstFullVcov" to gmm() to allow the computation the covariance matrix of all coefficients including 
+  the constrained ones (see ?gmm for details and examples).
+o Removed the dependency on fBasics and replaced it with stabledist
+
 Changes in version 1.4-2
 
 o Bugs fixed when running gel() with smooth=T and g() begina nonlinear function

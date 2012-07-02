@@ -9,13 +9,11 @@
  Function to estimate a vector of parameters based on moment conditions using the GMM method of Hansen(82). 
 }
 \usage{
-gmm(g, x, t0 = NULL, gradv = NULL, type = c("twoStep","cue","iterative"), 
-wmatrix = c("optimal","ident"), vcov = c("HAC","iid","TrueFixed"), 
-kernel = c("Quadratic Spectral","Truncated", "Bartlett", 
-"Parzen", "Tukey-Hanning"), crit = 10e-7, bw = bwAndrews, 
-prewhite = FALSE, ar.method = "ols", approx = "AR(1)", tol = 1e-7, 
-itermax = 100, optfct = c("optim","optimize","nlminb"), model=TRUE, X=FALSE, Y=FALSE, 
-TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, ...)
+gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid","TrueFixed"),
+kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews,
+prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
+model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
+eqConstFullVcov = FALSE, ...)
 gmmWithConst(obj, which, value)
 }
 \arguments{
@@ -49,7 +47,7 @@ gmmWithConst(obj, which, value)
 
 \item{itermax}{The maximum number of iterations for the iterative GMM. It is unlikely that the algorithm does not converge but we keep it as a safety.}
 
-\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, boundaries for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, boundaries for the coefficients can be set by the options \code{upper=} and \code{lower=}. The \code{\link{constrOptim}} is only available for nonlinear models for now. The standard errors may have to be corrected if the estimtes reach the boundary set by ui and ci.}
 
 \item{model, X, Y}{logical.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
 
@@ -68,6 +66,8 @@ gmmWithConst(obj, which, value)
 \item{which, value}{The equality constraint is of the form which=value. "which" can be a vector of type characters with the names of the coefficients being constrained, or a vector of type numeric with the position of the coefficient in the whole vector.}
 
 \item{obj}{Object of class "gmm"}
+
+\item{eqConstFullVcov}{If FALSE, the constrained coefficients are assumed to be fixed and only the covariance of the unconstrained coefficients is computed. If TRUE, the covariance matrix of the full set of coefficients is computed.}
 
 \item{...}{More options to give to \code{\link{optim}}.}
 }
@@ -277,14 +277,14 @@ res4
 # Brent should be used
 
 # without named vector
-gmm(g, x, c(4, 0), grad = Dg, eqCons=1)
+gmm(g, x, c(4, 0), grad = Dg, eqConst=1)
 # with named vector
-gmm(g, x, c(mu=4, sig=2), grad = Dg, eqCons="sig")
+gmm(g, x, c(mu=4, sig=2), grad = Dg, eqConst="sig")
 
 ## End(Not run)
 
-gmm(g, x, c(4, 0), grad = Dg, eqCons=1,method="Brent",lower=0,upper=6)
-gmm(g, x, c(mu=4, sig=2), grad = Dg, eqCons="sig",method="Brent",lower=0,upper=6)
+gmm(g, x, c(4, 0), grad = Dg, eqConst=1,method="Brent",lower=0,upper=6)
+gmm(g, x, c(mu=4, sig=2), grad = Dg, eqConst="sig",method="Brent",lower=0,upper=6)
 
 # Example with formula
 # first coef = 0 and second coef = 1
@@ -298,6 +298,15 @@ res2
 
 res3 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3, t0=c(0,1,.5,.5), type="cue", eqConst = c(1,2))
 res3
+
+### Examples with equality constraints, where the constrained coefficients is used to compute the covariance matrix.
+### Useful when some coefficients have been estimated before, they are just identified in GMM and don't need to be re-estimated
+### To use with caution because the covariance won't be valid if the coefficients do not solve the GMM FOC.
+######################################
+
+res4 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3, t0=c(0,1,.5,.5), eqConst = c(1,2), eqConstFullVcov=TRUE)
+summary(res4)
+
 
 ### Examples with equality constraint using gmmWithConst
 ###########################################################

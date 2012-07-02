@@ -1,6 +1,6 @@
 Package: gmm
-Version: 1.4-2
-Date: 2012-05-30
+Version: 1.4-3
+Date: 2012-07-02
 Title: Generalized Method of Moments and Generalized Empirical
         Likelihood
 Author: Pierre Chausse <pchausse@uwaterloo.ca>
@@ -13,11 +13,12 @@ Description: It is a complete suite to estimate models based on moment
         (GEL) family of estimators, as presented by Smith(1997),
         Kitamura(1997), Newey-Smith(2004) and Anatolyev(2005).
 Depends: R (>= 2.10.0), sandwich
-Suggests: mvtnorm, car, fBasics, MASS, timeDate, timeSeries
+Suggests: mvtnorm, car, stabledist, MASS, timeDate, timeSeries
 Imports: stats
 License: GPL (>= 2)
 Repository: CRAN
 Repository/R-Forge/Project: gmm
-Repository/R-Forge/Revision: 59
-Packaged: 2012-05-30 22:15:57 UTC; rforge
-Date/Publication: 2012-06-19 17:00:08
+Repository/R-Forge/Revision: 61
+Repository/R-Forge/DateTimeStamp: 2012-09-22 14:48:45
+Date/Publication: 2012-09-23 13:39:06
+Packaged: 2012-09-22 18:20:12 UTC; rforge

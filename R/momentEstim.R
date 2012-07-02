@@ -55,10 +55,24 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
       allArgOptim <- list(par = P$t0, fn = .obj1, gr = gr2, x = P$x, w = w, gf = P$g, INV = TRUE)
       allArgOptim <- c(allArgOptim,argDots)
       res <- do.call(optim,allArgOptim)
-      }
-    else
+      } else {
       res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
+	}
     }
+  if (P$optfct == "constrOptim")
+	{
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .obj1, grad = NULL, ui = ui, ci = ci, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- c(allArgOptim,argDots)
+	res <- do.call(constrOptim,allArgOptim)
+	}
+
   if (P$optfct == "nlminb")
     {
     res <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -114,7 +128,19 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
       else
         res2 <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
       }
-
+  if (P$optfct == "constrOptim")
+	{
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .obj1, grad = NULL, ui = ui, ci = ci, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- c(allArgOptim,argDots)
+	res2 <- do.call(constrOptim,allArgOptim)
+	}
     if (P$optfct == "nlminb")
       {
       res2 <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -134,11 +160,6 @@ momentEstim.baseGmm.twoStep <- function(object, ...)
     else if(P$optfct == "nlminb")
 	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
     }
-
- if (length(as.list(args(P$gradv))) == 3)
-	    z$G <- P$gradv(z$coefficients, P$x)
- else
-	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
   z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)
@@ -207,7 +228,6 @@ momentEstim.baseGmm.twoStep.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  z$G <- P$gradv(dat) 
   z$WSpec <- P$WSpec
   z$w0 <- w
 
@@ -284,7 +304,6 @@ momentEstim.baseGmm.iterative.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  z$G <- P$gradv(dat) 
   z$WSpec <- P$WSpec
   z$w0 <- w
 
@@ -339,7 +358,20 @@ momentEstim.baseGmm.iterative <- function(object, ...)
     else
       res <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
     }
-    
+ if (P$optfct == "constrOptim")
+    {
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .obj1, grad = NULL, ui = ui, ci = ci, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- c(allArgOptim,argDots)
+	res <- do.call(constrOptim,allArgOptim)
+    }
+ 
   if (P$optfct == "nlminb")
     {
     res <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -403,7 +435,19 @@ momentEstim.baseGmm.iterative <- function(object, ...)
         else
           res <- optim(tet, .obj1, x = P$x, w = w, gf = P$g, ...)
         }
-
+      if (P$optfct == "constrOptim")
+        {
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = tet, f = .obj1, grad = NULL, ui = ui, ci = ci, x = P$x, w = w, gf = P$g, INV = TRUE)
+        allArgOptim <- c(allArgOptim,argDots)
+	res <- do.call(constrOptim,allArgOptim)
+        }
       if (P$optfct == "nlminb")
         {
         res <- nlminb(tet, .obj1, x = P$x, w = w, gf = P$g, ...)
@@ -432,12 +476,6 @@ momentEstim.baseGmm.iterative <- function(object, ...)
 	z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
 
     }
-
-  
- if (length(as.list(args(P$gradv))) == 3)
-	    z$G <- P$gradv(z$coefficients, P$x)
- else
-	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
   z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)
@@ -495,6 +533,19 @@ momentEstim.baseGmm.cue.formula <- function(object, ...)
 
     if (P$optfct == "optim")
       res2 <- optim(P$t0,.objCue, x = dat, P = P, ...)
+    if (P$optfct == "constrOptim")
+      {
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .objCue, grad = NULL, ui = ui, ci = ci, x = dat, P = P)
+        allArgOptim <- c(allArgOptim,argDots)
+	res <- do.call(constrOptim,allArgOptim)
+      }
     if (P$optfct == "nlminb")
       {
       res2 <- nlminb(P$t0,.objCue, x = dat, P = P, ...)
@@ -529,7 +580,6 @@ momentEstim.baseGmm.cue.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  z$G <- P$gradv(dat) 
   z$specMod <- P$specMod
   z$cue <- list(weights=P$fixedKernW,message=P$weightMessage)
   z$WSpec <- P$WSpec
@@ -579,6 +629,19 @@ momentEstim.baseGmm.cue <- function(object, ...)
       {
       res2 <- optim(P$t0, .objCue, x = x, P = P, ...)
       }
+   if (P$optfct == "constrOptim")
+      {
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .objCue, grad = NULL, ui = ui, ci = ci, x = x, P = P)
+        allArgOptim <- c(allArgOptim,argDots)
+	res2 <- do.call(constrOptim,allArgOptim)
+      }
     if (P$optfct == "nlminb")
       {
       res2 <- nlminb(P$t0, .objCue, x = x, P = P, ...)
@@ -597,11 +660,6 @@ momentEstim.baseGmm.cue <- function(object, ...)
 	z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
 
     }
-
-  if (length(as.list(args(P$gradv))) == 3)
-	    z$G <- P$gradv(z$coefficients, P$x)
-  else
-	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
   z$dat <- P$x
   z$gradv <- P$gradv
@@ -857,7 +915,6 @@ momentEstim.fixedW.formula <- function(object, ...)
   z$gradv <- P$gradv
   z$iid <- P$iid
   z$g <- P$g
-  z$G <- P$gradv(dat) 
   z$WSpec <- P$WSpec
 
   names(z$coefficients) <- P$namesCoef
@@ -940,11 +997,6 @@ momentEstim.fixedW <- function(object, ...)
      z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
   else if(P$optfct == "nlminb")
      z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)
-
-  if (length(as.list(args(P$gradv))) == 3)
-	    z$G <- P$gradv(z$coefficients, P$x)
-  else
-	    z$G <- P$gradv(z$coefficients, P$x, g = P$g)
 
   z$dat <- P$x
   z$gt <- P$g(z$coefficients, P$x)

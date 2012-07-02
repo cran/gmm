@@ -13,8 +13,9 @@
 
 gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid","TrueFixed"), 
 	      kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
-	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb"),
-	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, ...)
+	      prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
+	      model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
+	      eqConstFullVcov = FALSE, ...)
 {
 
 type <- match.arg(type)
@@ -35,8 +36,9 @@ if(missing(data))
 	data<-NULL
 all_args<-list(data = data, g = g, x = x, t0 = t0, gradv = gradv, type = type, wmatrix = wmatrix, vcov = vcov, kernel = kernel,
                    crit = crit, bw = bw, prewhite = prewhite, ar.method = ar.method, approx = approx, 
-                   weightsMatrix = weightsMatrix, centeredVcov = centeredVcov,
-                   tol = tol, itermax = itermax, optfct = optfct, model = model, X = X, Y = Y, call = match.call(), traceIter = traceIter, eqConst = eqConst)
+                   weightsMatrix = weightsMatrix, centeredVcov = centeredVcov, tol = tol, itermax = itermax, 
+		   optfct = optfct, model = model, X = X, Y = Y, call = match.call(), traceIter = traceIter, 
+		   eqConst = eqConst, eqConstFullVcov = eqConstFullVcov)
 class(all_args)<-TypeGmm
 Model_info<-getModel(all_args, ...)
 z <- momentEstim(Model_info, ...)
