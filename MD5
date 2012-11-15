@@ -1,7 +1,7 @@
-592c5ca6b6e910a23d9d7570e1c2b64b *DESCRIPTION
+459b8fd32f33478bed92fac4bb773843 *DESCRIPTION
 f567cd74edea100fef982659ea6ea56c *NAMESPACE
-5a9b028ad86f50052694c7855ada268f *NEWS
-16c8e25825c5ecccb4dc1676522ec4a2 *R/FinRes.R
+700c0bc63fa96620d38b70ab0f9d9e2a *NEWS
+88ea575728fc0e8ce4c7522fc6f60c10 *R/FinRes.R
 47db3d39dd6dcc8bdf2d96b867b2556f *R/Methods.gel.R
 01aa8aa7155e1b76b9450143ff228501 *R/Methods.gmm.R
 f7fec7a4d5ec4e545ec61b3f3675e7d1 *R/PlotMethods.R
@@ -10,12 +10,12 @@ f7fec7a4d5ec4e545ec61b3f3675e7d1 *R/PlotMethods.R
 02b0e2fb672ca2f85e59978056f91beb *R/getModel.R
 8273888b43365bc142fff34f33f2f7aa *R/gmm.R
 a3fef0294bd392e5c58fdb4b12cd048d *R/gmmTests.R
-a8ee9549acda6e31abc06b00b0e732aa *R/momentEstim.R
+fc113978bfeb2e7a1c4f190c3d80ae23 *R/momentEstim.R
 ca6480d69c447b5275e884b7771c376c *R/specTest.R
 d01888b9a5f72d995bfed87ede69194c *data/Finance.rda
 6e22f15917d58c21acbf4551737659cb *inst/CITATION
 c316d483df8629262f3535565e296314 *inst/doc/empir.bib
-d2a8da7544a36a953328283398830485 *inst/doc/gmm_with_R.pdf
+6dc08f27606877965c4b63ac66e5e494 *inst/doc/gmm_with_R.pdf
 db6fde83117d33e0c9f68018650c8917 *inst/doc/gmm_with_R.rnw
 8ba54446fcc2acce19de5fef252e3734 *licence
 5e37a93a689634ee38cd7fdd177c2827 *man/FinRes.Rd

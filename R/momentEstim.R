@@ -193,8 +193,8 @@ momentEstim.baseGmm.twoStep.formula <- function(object, ...)
 
   if (q == k2 | P$wmatrix == "ident")
     {
-    res <- .tetlin(dat, w, P$gradv, P$g)
-    z = list(coefficients = res$par, objective = res$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
+    res2 <- .tetlin(dat, w, P$gradv, P$g)
+    z = list(coefficients = res2$par, objective = res2$value, dat = dat, k = k, k2 = k2, n = n, q = q, df = df)
     }
   else
     {

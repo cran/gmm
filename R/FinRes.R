@@ -98,7 +98,10 @@ FinRes.baseGmm.res <- function(z, object, ...)
      else
 	w <- P$weightsMatrix
 
-     T1 <- try(solve(t(G)%*%w%*%G,t(G)%*%w), silent = TRUE)
+     if (dim(G)[1] == dim(G)[2])	
+	T1 <- try(solve(G), silent=TRUE)
+     else
+	T1 <- try(solve(t(G)%*%w%*%G,t(G)%*%w), silent = TRUE)
      if(class(T1) == "try-error")
            {
            z$vcov <- matrix(Inf,length(z$coef),length(z$coef))

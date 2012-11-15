@@ -1,3 +1,7 @@
+Changes in version 1.4-4
+
+o Fixed an instability problem when the model is just identified and wmatrix is set to "ident"
+
 Changes in version 1.4-3
 
 o Added the option "constrOptim" to optfct for nonlinear models
