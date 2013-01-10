@@ -888,9 +888,9 @@ momentEstim.fixedW.formula <- function(object, ...)
   if(!all(dim(w) == c(q,q)))
     stop("The matrix of weights must be qxq")
   eigenW <- svd(w)$d
-  if(!is.real(eigenW))
+  if(!is.double(eigenW))
     warning("The matrix of weights is not strictly positive definite")
-  if(is.real(eigenW))
+  if(is.double(eigenW))
     {
     if(any(eigenW<=0))
       warning("The matrix of weights is not strictly positive definite")
@@ -947,9 +947,9 @@ momentEstim.fixedW <- function(object, ...)
   if(!all(dim(w) == c(q,q)))
     stop("The matrix of weights must be qxq")
   eigenW <- svd(w)$d
-  if(!is.real(eigenW))
+  if(!is.double(eigenW))
     warning("The matrix of weights is not strictly positive definite")
-  if(is.real(eigenW))
+  if(is.double(eigenW))
     {
     if(any(eigenW<=0))
       warning("The matrix of weights is not strictly positive definite")

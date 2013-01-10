@@ -1,3 +1,7 @@
+Changes in version 1.4-5
+
+o Replaced the deprecated function real(), is.real() and as.real() by double()
+
 Changes in version 1.4-4
 
 o Fixed an instability problem when the model is just identified and wmatrix is set to "ident"

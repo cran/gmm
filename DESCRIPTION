@@ -1,6 +1,6 @@
 Package: gmm
-Version: 1.4-4
-Date: 2012-11-15
+Version: 1.4-5
+Date: 2013-01-10
 Title: Generalized Method of Moments and Generalized Empirical
         Likelihood
 Author: Pierre Chausse <pchausse@uwaterloo.ca>
@@ -18,7 +18,7 @@ Imports: stats
 License: GPL (>= 2)
 Repository: CRAN
 Repository/R-Forge/Project: gmm
-Repository/R-Forge/Revision: 67
-Repository/R-Forge/DateTimeStamp: 2012-11-15 19:37:44
-Date/Publication: 2012-11-22 19:00:05
-Packaged: 2012-11-15 23:17:12 UTC; rforge
+Repository/R-Forge/Revision: 68
+Repository/R-Forge/DateTimeStamp: 2013-01-10 17:57:19
+Date/Publication: 2013-01-11 16:13:45
+Packaged: 2013-01-10 19:15:50 UTC; rforge
