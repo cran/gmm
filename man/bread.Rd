@@ -1,6 +1,7 @@
 \name{bread}
 \alias{bread.gmm}
 \alias{bread.gel}
+\alias{bread.tsls}
 \title{Bread for sandwiches}
 \description{
 Computes the bread of the sandwich covariance matrix
@@ -8,6 +9,7 @@ Computes the bread of the sandwich covariance matrix
 \usage{
 \method{bread}{gmm}(x, ...)
 \method{bread}{gel}(x, ...)
+\method{bread}{tsls}(x, ...)
 }
 \arguments{
 \item{x}{A fitted model of class \code{gmm} or \code{gel}.}
@@ -50,7 +52,8 @@ g <- function(tet, x)
         }
 Dg <- function(tet, x)
         {
-        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],-6*tet[1]*tet[2]), nrow=3,ncol=2)
+        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],
+				-6*tet[1]*tet[2]), nrow=3,ncol=2)
         return(jacobian)
         }
 

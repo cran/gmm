@@ -1,3 +1,13 @@
+Changes in version 1.5-0
+
+o Thanks to Eric Zivot. Many improvements are based on his testings of the package.
+o Fixed many bugs for the case in which vcov is set to iid 
+o Added options to tsls(). There are options for different sandwich matrix when summary is called
+
+Changes in version 1.4-6
+
+o Added the possibility of providing data.frame() with formula to gel()
+
 Changes in version 1.4-5
 
 o Replaced the deprecated function real(), is.real() and as.real() by double()

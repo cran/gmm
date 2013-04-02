@@ -124,15 +124,7 @@ getModel.baseGmm <- function(object, ...)
     
     if(is.null(object$weightsMatrix))
       {
-      if (object$vcov == "iid" & object$wmatrix != "ident" & object$type != "cue")
-      	{
-          clname <- "baseGmm.twoStep.formula"
-          object$type <- "Linear model with iid errors: Regular IV or 2SLS"
-        }
-      else
-	{
-         clname <- paste(class(object), ".", object$type, ".formula", sep = "")
-        }
+      clname <- paste(class(object), ".", object$type, ".formula", sep = "")
       }
     else
       {
@@ -250,7 +242,12 @@ getModel.baseGel <- function(object, ...)
   if (is(P$g, "formula"))
     {
     clname <- paste(class(P), ".modFormula", sep = "")
-    dat <- getDat(P$g, P$x)
+    if (is.null(P$data))
+    	dat <- getDat(P$g, P$x)
+    else
+    	dat <- getDat(P$g, P$x, P$data)
+    if (P$k != dat$k)
+	stop("The length of tet0 does not match the number of regressors")
 
     g <- function(tet, dat)
       {

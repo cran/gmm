@@ -52,6 +52,8 @@ tsls <- function(g,x,data)
 if(class(g) != "formula")
 	stop("2SLS is for linear models expressed as formula only")
 ans <- gmm(g,x,data=data,vcov="iid")
+ans$met <- "Two Stage Least Squares"
+ans$call <- match.call()
 class(ans) <- c("tsls","gmm")
 return(ans)
 }
@@ -216,17 +218,17 @@ getDat <- function (formula, h, data)
 	     }
 	else
 		par <- solve(crossprod(hm,xm),crossprod(hm,ym))  	}
-	}
   gb <- matrix(colSums(g(par, dat))/n, ncol = 1)
   if(inv)
 	  value <- crossprod(gb, solve(w, gb)) 
   else
 	  value <- crossprod(gb, w%*%gb) 
-
+	}
   res <- list(par = par, value = value)
   if (!is.null(type))
      {    
      if (type == "2sls")
+     res$firstStageReg <- restsls	
      res$fsRes <- summary(restsls)
      }
   return(res)

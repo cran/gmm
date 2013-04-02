@@ -216,7 +216,7 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
                 kernel = c("Truncated", "Bartlett"), bw = bwAndrews, approx = c("AR(1)", 
     		"ARMA(1,1)"), prewhite = 1, ar.method = "ols", tol_weights = 1e-7, tol_lam = 1e-9, tol_obj = 1e-9, 
 		tol_mom = 1e-9, maxiterlam = 100, constraint = FALSE, optfct = c("optim", "optimize", "nlminb"), 
-                optlam = c("nlminb", "optim", "iter"), Lambdacontrol = list(), model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", alpha = NULL, ...)
+                optlam = c("nlminb", "optim", "iter"), data, Lambdacontrol = list(), model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", alpha = NULL, ...)
 	{
 
 	type <- match.arg(type)
@@ -225,13 +225,14 @@ gel <- function(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL", "ET", "
 	weights <- weightsAndrews
 	approx <- match.arg(approx)
 	kernel <- match.arg(kernel)
-
+	if(missing(data))
+		data<-NULL
 	all_args <- list(g = g, x = x, tet0 = tet0, gradv = gradv, smooth = smooth, type = type,
                 kernel = kernel, bw = bw, approx = approx, prewhite = prewhite, ar.method = ar.method, 
 		tol_weights = tol_weights, tol_lam = tol_lam, tol_obj = tol_obj, tol_mom = tol_mom, 
 		maxiterlam = maxiterlam, constraint = constraint, optfct = optfct, weights = weights,
                 optlam = optlam, model = model, X = X, Y = Y, TypeGel = TypeGel, call = match.call(), 
-		Lambdacontrol = Lambdacontrol, alpha = alpha)
+		Lambdacontrol = Lambdacontrol, alpha = alpha, data = data)
 
 	class(all_args)<-TypeGel
 	Model_info<-getModel(all_args)

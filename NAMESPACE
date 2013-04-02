@@ -8,7 +8,8 @@ export(gmm,summary.gmm,smoothG,getDat,summary.gel,getLamb,gel, estfun.gmmFct, es
 	specTest.gmm, specTest.gel, print.specTest, momentEstim.baseGmm.twoStep, momentEstim.baseGmm.twoStep.formula,
         momentEstim.baseGmm.iterative.formula, momentEstim.baseGmm.iterative, momentEstim.baseGmm.cue.formula, 
 	momentEstim.baseGmm.cue, getModel.baseGmm, getModel.baseGel, getModel.constGmm, FinRes.baseGmm.res, momentEstim.baseGel.mod, 
-	momentEstim.baseGel.modFormula,tsls,summary.tsls, print.summary.tsls, KTest, print.gmmTests, gmmWithConst)
+	momentEstim.baseGel.modFormula,tsls,summary.tsls, print.summary.tsls, KTest, print.gmmTests, gmmWithConst, estfun.tsls, 
+	model.matrix.tsls,vcov.tsls, bread.tsls)
  
 S3method(summary, gmm)
 S3method(summary, tsls)
@@ -17,6 +18,7 @@ S3method(print, gmm)
 S3method(print, summary.gmm)
 S3method(coef, gmm)
 S3method(vcov, gmm)
+S3method(vcov, tsls)
 S3method(confint, gmm)
 S3method(fitted, gmm)
 S3method(residuals, gmm)
@@ -50,9 +52,12 @@ S3method(momentEstim, baseGel.mod)
 S3method(momentEstim, baseGel.modFormula)
 S3method(estfun, gmmFct)
 S3method(estfun, gmm)
+S3method(estfun, tsls)
+S3method(model.matrix, tsls)
 S3method(estfun, gel)
 S3method(bread, gmm)
 S3method(bread, gel)
+S3method(bread, tsls)
 
 
 

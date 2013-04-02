@@ -1,6 +1,7 @@
 \name{vcov}
 \alias{vcov.gmm}
 \alias{vcov.gel}
+\alias{vcov.tsls}
 \title{Variance-covariance matrix of GMM or GEL}
 \description{
  It extracts the matrix of variances and covariances from \code{gmm} or \code{gel} objects.
@@ -8,11 +9,19 @@
 \usage{
 \method{vcov}{gmm}(object, ...)
 \method{vcov}{gel}(object, lambda = FALSE, ...)
+\method{vcov}{tsls}(object, type=c("Classical","HC0","HC1","HAC"), hacProp = list(), ...)
 }
 \arguments{
  \item{object}{An object of class \code{gmm} or \code{gmm} returned by the function \code{\link{gmm}} or \code{\link{gel}}}
 \item{lambda}{If set to TRUE, the covariance matrix of the Lagrange multipliers is produced.}
+\item{type}{Type of covariance matrix for the meat}
+\item{hacProp}{A list of arguments to pass to \code{\link{kernHAC}}}
 \item{...}{Other arguments when \code{vcov} is applied to another class object}
+}
+
+\details{
+For tsls(), if vcov is set to a different value thand "Classical", a sandwich covariance matrix is computed.
+
 }
 
 \value{

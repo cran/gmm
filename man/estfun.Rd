@@ -2,6 +2,8 @@
 \alias{estfun.gmmFct}
 \alias{estfun.gmm}
 \alias{estfun.gel}
+\alias{estfun.tsls}
+\alias{model.matrix.tsls}
 \title{Extracts the empirical moment function}
 \description{
 It extracts the matrix of empirical moments so that it can be used by the \code{\link{kernHAC}} function. 
@@ -10,9 +12,12 @@ It extracts the matrix of empirical moments so that it can be used by the \code{
 \method{estfun}{gmmFct}(x, y = NULL, theta = NULL, ...)
 \method{estfun}{gmm}(x, ...)
 \method{estfun}{gel}(x, ...)
+\method{estfun}{tsls}(x, ...)
+\method{model.matrix}{tsls}(object, ...)
 }
 \arguments{
-\item{x}{A function of the form \eqn{g(\theta,y)} or a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,y_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n} or an object of class \code{gmm}. See \code{\link{gmm}} for more details.}
+\item{x}{A function of the form \eqn{g(\theta,y)} or a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,y_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n} or an object of class \code{gmm}. See \code{\link{gmm}} for more details. For \code{\link{tsls}}, it is an object of class \code{tsls}.}
+\item{object}{An object of class \code{tsls}.}
 \item{y}{The matrix or vector of data from which the function \eqn{g(\theta,y)} is computed if \code{g} is a function.}
 \item{theta}{Vector of parameters if \code{g} is a function.}
 \item{...}{Other arguments when \code{estfun} is applied to another class object}
@@ -24,6 +29,8 @@ For \code{estfun.gmmFct}, it returns a \eqn{n \times q} matrix with typical elem
 For \code{estfun.gmm}, it returns the matrix of first order conditions of \eqn{\min_\theta \bar{g}'W\bar{g}/2}, which is a \eqn{n \times k} matrix with the \eqn{t^{th}} row being \eqn{g(\theta, y_t)W G}, where \eqn{G} is \eqn{d\bar{g}/d\theta}. It allows to compute the sandwich covariance matrix using \code{\link{kernHAC}} or \code{\link{vcovHAC}} when \eqn{W} is not the optimal matrix.
 
 The method if not yet available for \code{gel} objects.
+
+For tsls, model.matrix and estfun are used by \code{vcov()} to compute different covariance matrices using the \code{\link{sandwich}} package. See \code{\link{vcov.tsls}}. \code{model.matrix} returns the fitted values frin the first stage regression and \code{esfun} the residuals.
 }
 
 \value{

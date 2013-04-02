@@ -9,11 +9,14 @@
  Function to estimate a vector of parameters based on moment conditions using the GMM method of Hansen(82). 
 }
 \usage{
-gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wmatrix = c("optimal","ident"),  vcov=c("HAC","iid","TrueFixed"),
-kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews,
-prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
-model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
-eqConstFullVcov = FALSE, ...)
+gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), 
+    wmatrix = c("optimal","ident"), vcov=c("HAC","iid","TrueFixed"), 
+    kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),
+    crit=10e-7,bw = bwAndrews, prewhite = FALSE, ar.method = "ols", approx="AR(1)",
+    tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
+    model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, 
+    weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
+    eqConstFullVcov = FALSE, ...)
 gmmWithConst(obj, which, value)
 }
 \arguments{
@@ -237,7 +240,8 @@ g <- function(tet, x)
 # Implementing the jacobian
 Dg <- function(tet, x)
         {
-        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],-6*tet[1]*tet[2]), nrow=3,ncol=2)
+        jacobian <- matrix(c( 1, 2*(-tet[1]+mean(x)), -3*tet[1]^2-3*tet[2]^2,0, 2*tet[2],
+			   -6*tet[1]*tet[2]), nrow=3,ncol=2)
         return(jacobian)
         }
 # Now we want to estimate the two parameters using the GMM.
@@ -299,12 +303,16 @@ res2
 res3 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3, t0=c(0,1,.5,.5), type="cue", eqConst = c(1,2))
 res3
 
-### Examples with equality constraints, where the constrained coefficients is used to compute the covariance matrix.
-### Useful when some coefficients have been estimated before, they are just identified in GMM and don't need to be re-estimated
-### To use with caution because the covariance won't be valid if the coefficients do not solve the GMM FOC.
+### Examples with equality constraints, where the constrained coefficients is used to compute
+### the covariance matrix.
+### Useful when some coefficients have been estimated before, they are just identified in GMM 
+### and don't need to be re-estimated.
+### To use with caution because the covariance won't be valid if the coefficients do not solve
+### the GMM FOC.
 ######################################
 
-res4 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3, t0=c(0,1,.5,.5), eqConst = c(1,2), eqConstFullVcov=TRUE)
+res4 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3, t0=c(0,1,.5,.5), eqConst = c(1,2), 
+  	    eqConstFullVcov=TRUE)
 summary(res4)
 
 
