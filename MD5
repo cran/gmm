@@ -1,6 +1,6 @@
-79c0745fcb81ee2db17574cc8ae9b319 *DESCRIPTION
+f0c026f6d3cc29a8b5ba11d75df79907 *DESCRIPTION
 bc0014880dde250f0ef962acba7ccbd9 *NAMESPACE
-ce808d539c95697b440ccb9fc6122199 *NEWS
+25005c03845f69b69949573bd60d3ab8 *NEWS
 88ea575728fc0e8ce4c7522fc6f60c10 *R/FinRes.R
 47db3d39dd6dcc8bdf2d96b867b2556f *R/Methods.gel.R
 756291cf23a109a6f5cb9ba7d83ab961 *R/Methods.gmm.R
@@ -10,13 +10,13 @@ b88106e6bce961ea553fca78e470112c *R/gel.R
 a0e77a394dd4d24c077d9d3e2261081b *R/getModel.R
 ee822e534f621955145e6bea3bbb68ec *R/gmm.R
 a3fef0294bd392e5c58fdb4b12cd048d *R/gmmTests.R
-1e0fb930f73c8d0c67a7668b8653491a *R/momentEstim.R
+1a160830770efc238031562ad72bb5de *R/momentEstim.R
 ca6480d69c447b5275e884b7771c376c *R/specTest.R
 bb61941d5678558e1ce690cfe20f851a *build/vignette.rds
 d01888b9a5f72d995bfed87ede69194c *data/Finance.rda
 6e22f15917d58c21acbf4551737659cb *inst/CITATION
 b63e47610a9a1227f24ad2dd210f6d44 *inst/doc/gmm_with_R.R
-822659915f142a4e6d2ee3a82e0ddef7 *inst/doc/gmm_with_R.pdf
+db8ee6035faaff4a0673709d3e1a6272 *inst/doc/gmm_with_R.pdf
 13ca406933c1c194b4fbeabec3e9be89 *inst/doc/gmm_with_R.rnw
 5e37a93a689634ee38cd7fdd177c2827 *man/FinRes.Rd
 24b37e384d9400713138b4df8ce05777 *man/Finance.Rd

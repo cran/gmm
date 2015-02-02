@@ -1,5 +1,5 @@
 Package: gmm
-Version: 1.5-1
+Version: 1.5-2
 Date: 2015-02-02
 Title: Generalized Method of Moments and Generalized Empirical
         Likelihood
@@ -18,8 +18,8 @@ Imports: stats
 License: GPL (>= 2)
 Repository: CRAN
 Repository/R-Forge/Project: gmm
-Repository/R-Forge/Revision: 76
-Repository/R-Forge/DateTimeStamp: 2015-02-06 22:50:15
-Date/Publication: 2015-02-09 16:46:31
-Packaged: 2015-02-06 23:10:36 UTC; rforge
+Repository/R-Forge/Revision: 77
+Repository/R-Forge/DateTimeStamp: 2015-02-13 20:51:24
+Date/Publication: 2015-03-17 22:42:51
+Packaged: 2015-02-13 21:05:43 UTC; rforge
 NeedsCompilation: no

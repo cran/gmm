@@ -1,3 +1,7 @@
+Changes in version 1.5-2
+
+o Added constrOptim to nonlinear gmm() with fixed W
+
 Changes in version 1.5-1
 
 o Added importFrom element

@@ -992,6 +992,20 @@ momentEstim.fixedW <- function(object, ...)
       res2 <- optim(P$t0, .obj1, x = P$x, w = w, gf = P$g, INV = FALSE,  ...)
     }
 
+  if (P$optfct == "constrOptim")
+	{
+	if (!any(c("ui","ci") %in% names(list(...))))
+		stop("You must specify ui and ci when optfct is set to constrOptim")
+	argDots <- list(...)
+	ui <- argDots$ui
+	ci <- argDots$ci
+	argDots$ui <- NULL
+	argDots$ci <- NULL
+      	allArgOptim <- list(theta = P$t0, f = .obj1, grad = NULL, ui = ui, ci = ci, x = P$x, w = w, gf = P$g, INV = FALSE)
+        allArgOptim <- c(allArgOptim,argDots)
+	res2 <- do.call(constrOptim,allArgOptim)
+	}
+  
   if (P$optfct == "nlminb")
     {
     res2 <- nlminb(P$t0, .obj1, x = P$x, w = w, gf = P$g, INV = FALSE, ...)
