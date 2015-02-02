@@ -318,6 +318,10 @@ summary(res3)
 For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
 <<>>=
 library(car)
+# the following line is to go around a bug with car version 2.0.24
+# It is fixed in version 2.0.25 but not on CRAN yet
+# It does not affect the result of the test
+res3$df.residual=1500-4
 linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
 @
 It is clearly rejected. The result is even stronger if the whole sample is used. 

@@ -1,3 +1,9 @@
+Changes in version 1.5-1
+
+o Added importFrom element
+o Added element df.residual to gmm objects to allow F-type linearHypothesis 
+o Removed the unnecessary ls estimations in the first stage 2SLS
+
 Changes in version 1.5-0
 
 o Thanks to Eric Zivot. Many improvements are based on his testings of the package.

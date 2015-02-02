@@ -78,7 +78,7 @@ getModel.constGmm <- function(object, ...)
 	obj$x$k <- obj$x$k-nrow(object$eqConst)
 	if (obj$x$k<=0)
 		stop("Nothing to estimate")
-	} else {
+        } else {
 	attr(obj$x,"eqConst") <- list(unConstg = obj$g, unConstgradv = obj$gradv, eqConst = object$eqConst)   	   	
 	obj$g <- function(tet, dat)
 		{
@@ -106,8 +106,7 @@ getModel.constGmm <- function(object, ...)
   obj$type <- paste(obj$type,"(with equality constraints)",sep=" ")	
   mess <- paste(rownames(object$eqConst), " = " , object$eqConst[,2], "\n",collapse="")
   mess <- paste("#### Equality constraints ####\n",mess,"##############################\n\n",sep="")
-  obj$specMod <- mess  
-                                      
+  obj$specMod <- mess                                   
   return(obj)
   }
 

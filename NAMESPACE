@@ -1,5 +1,5 @@
 import(stats)
-importFrom(sandwich, estfun, bread)
+importFrom(sandwich, estfun, bread, kernHAC, weightsAndrews, vcovHAC, bwAndrews, meatHC)
 
 
 export(gmm,summary.gmm,smoothG,getDat,summary.gel,getLamb,gel, estfun.gmmFct, estfun.gmm, estfun.gel, bread.gel, bread.gmm, 

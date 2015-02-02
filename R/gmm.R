@@ -165,18 +165,35 @@ getDat <- function (formula, h, data)
   ym <- as.matrix(x[,1:ny])
   xm <- as.matrix(x[,(ny+1):(ny+k)])
   hm <- as.matrix(x[,(ny+k+1):(ny+k+nh)])
+  includeExo <- which(colnames(xm)%in%colnames(hm))
   if (!is.null(type))
-  	{
+  	{            
   	if(type=="2sls")
-	  	{
-		restsls <- lm(xm~hm-1)
-  		fsls <- restsls$fitted
-  	     	par <- lm(ym~fsls-1)$coef
+	  	{                   
+                if (length(includeExo) > 0)
+                    {                        
+                    endo <- xm[, -includeExo, drop = FALSE]
+                    endoName <- colnames(endo)
+                    if (ncol(endo) != 0)
+                        {
+                            restsls <- lm(endo~hm-1)
+                            fsls <- xm
+                            fsls[, -includeExo] <- restsls$fitted
+                        } else {
+                            fsls <- xm
+                            restsls <- NULL
+                        }
+                } else {
+                    restsls <- lm(xm~hm-1)
+                    fsls <- restsls$fitted
+                    endoName <- colnames(xm)
+                }                
+  	     	par <- lm.fit(as.matrix(fsls), ym)$coefficients
 		if (ny == 1)
-		{
+		{                                    
   	     	e2sls <- ym-xm%*%par
- 	     	v2sls <- lm(e2sls~hm-1)$fitted
-  	     	value <- sum(v2sls^2)/sum(e2sls^2)
+ 	     	v2sls <- lm.fit(as.matrix(hm), e2sls)$fitted
+  	     	value <- sum(v2sls^2)/sum(e2sls^2)                
   	     }
   	     else
   	     {
@@ -189,7 +206,7 @@ getDat <- function (formula, h, data)
 	  	}
   	}
   else
-  	{
+  	{            
   if (ny>1)
   	{
      if (inv) 
@@ -228,8 +245,12 @@ getDat <- function (formula, h, data)
   if (!is.null(type))
      {    
      if (type == "2sls")
-     res$firstStageReg <- restsls	
-     res$fsRes <- summary(restsls)
+     res$firstStageReg <- restsls
+     if (!is.null(restsls))
+         {
+             res$fsRes <- summary(restsls)
+             attr(res$fsRes, "Endo") <- endoName
+         }
      }
   return(res)
   }

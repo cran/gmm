@@ -55,13 +55,29 @@ summary.tsls <- function(object, vcov = NULL, ...)
 	if (!is.null(object$fsRes))
 		{
 		fstat <- vector()
-		fstat[1] <- object$fsRes[[1]]$fstatistic[1]
-		df1 <- object$fsRes[[1]]$fstatistic[2]
-		df2 <- object$fsRes[[1]]$fstatistic[3]
-		for (i in 2:k)	
-			fstat[i] <- object$fsRes[[i]]$fstatistic[1]
+                fsRes <- object$fsRes
+                if (class(fsRes) == "listof")
+                    {
+                    nendo <- length(fsRes)
+                } else {
+                    nendo <- 1
+                }
+                if (nendo == 1)
+                    { 
+                    fstat[1] <- fsRes$fstatistic[1]
+                    df1 <- fsRes$fstatistic[2]
+                    df2 <- fsRes$fstatistic[3]
+                } else {
+                    fstat[1] <- fsRes[[1]]$fstatistic[1]
+                    df1 <- fsRes[[1]]$fstatistic[2]
+                    df2 <- fsRes[[1]]$fstatistic[3]
+                }
+                if (nendo > 1){
+                    for (i in 2:nendo)	
+			fstat[i] <- fsRes[[i]]$fstatistic[1]
+                }
 		pvfstat <- 1-pf(fstat,df1, df2)
-		names(fstat) <- colnames(object$dat$x)[(object$dat$ny+1):(object$dat$ny+k)]
+		names(fstat) <- attr(fsRes,"Endo")
 		ans$fstatistic <- list(fstat = fstat, pvfstat = pvfstat, df1 = df1, df2 = df2)
 		}
         ans$specMod <- object$specMod
