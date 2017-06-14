@@ -307,21 +307,19 @@ The null hypothesis that the moment conditions are satisfied is rejected. For no
 res2 <- gmm(g2,x2,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
 summary(res2)
 @
+Although the above modification solved the convergence problem, there is another issue that we need to address. The first step estimate used to compute the weighting matrix is almost identical to the starting values. There is therefore a convergence problem in the first step. In fact, choosing the initial $\alpha$ to be on the boundary was not a wise choice. Also, it seems that an initial value of $\beta$ equals to zero makes the objective function harder to minimize. Having a gobal minimum for the first step estimate is important if we care about efficiency. A wrong estimate will cause the weighting matrix not being a consistent estimate of the optimal matrix. The information about convergence is included in the argument 'initialAlgoInfo' of the gmm object.
+
 We conclude this example by estimating the parameters for a vector of stock returns from the data set \code{Finance} that comes with the \pkg{gmm} package.
 <<>>=
 data(Finance)
 x3 <- Finance[1:1500,"WMK"]
-t0<-c(alpha = 2, beta = 0, gamma = sd(x3)/sqrt(2),delta = 0)
+t0<-c(alpha = 1.8, beta = 0.1, gamma = sd(x3)/sqrt(2),delta = 0)
 res3 <- gmm(g2,x3,t0,optfct="nlminb")
 summary(res3)
 @
-For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,~\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
+For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
 <<>>=
 library(car)
-# the following line is to go around a bug with car version 2.0.24
-# It is fixed in version 2.0.25 but not on CRAN yet
-# It does not affect the result of the test
-res3$df.residual=1500-4
 linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
 @
 It is clearly rejected. The result is even stronger if the whole sample is used. 
@@ -348,6 +346,7 @@ where $(\epsilon_i,u_i) \sim ~iidN(0,\Sigma)$ with
 Any function of $x_i$ can be used as an instrument because it is orthogonal to $\epsilon_i$ and correlated with $W_i$. There is therefore an infinite number of possible instruments. For this example, $(x_i,x_i^2,x_i^3)$ will be the selected instruments and the sample size is set to $n=400$:
 <<>>=
 library(mvtnorm)
+set.seed(112233)
 sig <- matrix(c(1,.5,.5,1),2,2)
 n <- 400
 e <- rmvnorm(n,sigma=sig)
@@ -569,11 +568,11 @@ coef(res_rf)
 
 The \pkg{gmm} package is not directly built to easily deal with panel data. However, it is flexible enough to make it possible in most cases. To see that, let us consider the following model (see \cite{wooldridge02} for more details):
 \[
-y_{it} = x_{it} \beta + a_i + \epsilon_{it}~~\mbox{for}~~ i=1,...,N~~\mbox{and}~~t=1,...,T,
+y_{it} = x_{it} \beta + a_i + \epsilon_{it}\mbox{  for  } i=1,...,N\mbox{  and  }t=1,...,T,
 \]
 where $x_{it}$ is $1\times k$, $\beta$ is $k\times 1$, $\epsilon_{it}$ is an error term and  $a_i$ is an unobserved component which is specific to individual $i$. If $a_i$ is correlated with $x_{it}$, it can be removed by subtracting the average of the equation over time, which gives:
 \[
-(y_{it}-\bar{y}_i) = (x_{it}-\bar{x}_i) \beta + (\epsilon_{it}-\bar{\epsilon}_i)~~\mbox{for}~~ i=1,...,N~~\mbox{and}~~t=1,...,T,
+(y_{it}-\bar{y}_i) = (x_{it}-\bar{x}_i) \beta + (\epsilon_{it}-\bar{\epsilon}_i) \mbox{  for  } i=1,...,N\mbox{ and } t=1,...,T,
 \]
 which can be estimated by \code{gmm}. For example, if there are 3 individuals the following corresponds to the GMM fixed effects estimation:
 <<eval=false>>=

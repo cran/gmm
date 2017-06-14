@@ -2,6 +2,7 @@
 
 \alias{gmm}
 \alias{gmmWithConst}
+\alias{evalGmm}
 	
 \title{Generalized method of moment estimation}
 
@@ -10,13 +11,18 @@
 }
 \usage{
 gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), 
-    wmatrix = c("optimal","ident"), vcov=c("HAC","iid","TrueFixed"), 
+    wmatrix = c("optimal","ident"), vcov=c("HAC","MDS","iid","TrueFixed"), 
     kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),
-    crit=10e-7,bw = bwAndrews, prewhite = FALSE, ar.method = "ols", approx="AR(1)",
+    crit=10e-7,bw = bwAndrews, prewhite = 1, ar.method = "ols", approx="AR(1)",
     tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
     model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, 
     weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
     eqConstFullVcov = FALSE, ...)
+evalGmm(g, x, t0, tetw=NULL, gradv=NULL, wmatrix = c("optimal","ident"),
+    vcov=c("HAC","iid","TrueFixed"), kernel=c("Quadratic Spectral","Truncated", 
+    "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews,
+    prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7,
+    model=TRUE, X=FALSE, Y=FALSE,  centeredVcov = TRUE, weightsMatrix = NULL, data)
 gmmWithConst(obj, which, value)
 }
 \arguments{
@@ -24,7 +30,12 @@ gmmWithConst(obj, which, value)
 
 \item{x}{The matrix or vector of data from which the function \eqn{g(\theta,x)} is computed. If "g" is a formula, it is an \eqn{n \times Nh} matrix of instruments or a formula (see details below).}
 
-\item{t0}{A \eqn{k \times 1} vector of starting values. It is required only when "g" is a function because only then a numerical algorithm is used to minimize the objective function. If the dimension of \eqn{\theta} is one, see the argument "optfct".}
+\item{t0}{A \eqn{k \times 1} vector of starting values. It is required
+  only when "g" is a function because only then a numerical algorithm is
+  used to minimize the objective function. If the dimension of
+  \eqn{\theta} is one, see the argument "optfct".}
+
+\item{tetw}{A \eqn{k \times 1} vector to compute the weighting matrix.}
 
 \item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradient is used to compute the asymptotic covariance matrix of \eqn{\hat{\theta}} and to obtain the analytical gradient of the objective function if the method is set to "CG" or "BFGS" in \code{\link{optim}} and if "type" is not set to "cue". If "g" is a formula, the gradiant is not required (see the details below).}
 
@@ -38,7 +49,12 @@ gmmWithConst(obj, which, value)
 
 \item{crit}{The stopping rule for the iterative GMM. It can be reduce to increase the precision.}
 
-\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest}} of Newey-West(1994).}
+\item{bw}{The method to compute the bandwidth parameter in the HAC
+  weighting matrix. The default is \code{link{bwAndrews}} (as proposed in Andrews
+  (1991)), which minimizes the MSE of the weighting matrix. Alternatives
+  are \code{link{bwWilhelm}} (as proposed in Wilhelm
+  (2015)), which minimizes the mean-square error (MSE) of the resulting
+  GMM estimator, and \code{link{bwNeweyWest}} (as proposed in Newey-West(1994)).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
@@ -106,7 +122,11 @@ The Jacobian of these two conditions is (it should be an array but I can't make 
 \deqn{ -2\mu+2x ~~~~~ 2\sigma }
 \deqn{-3\mu^{2}-3\sigma^{2} ~~~~ -6\mu\sigma}
 
-\code{gmmWithConst()} re-estimates an unrestricted model by adding an equality constraint. 
+\code{gmmWithConst()} re-estimates an unrestricted model by adding an
+equality constraint.
+\code{evalGmm()} creates an object of class '"gmm"' for a given
+parameter vector. If no vector "tetw" is provided and the weighting
+matrix needs to be computed, "t0" is used.,  
 }
 
 \value{
@@ -168,7 +188,7 @@ The object of class "gmm" is a list containing at least:
   1029-1054,
 
   Hansen, L.P. and Heaton, J. and Yaron, A.(1996),
-  Finit-Sample Properties of Some Alternative GMM Estimators.
+  Finite-Sample Properties of Some Alternative GMM Estimators.
   \emph{Journal of Business and Economic Statistics}, \bold{14}
   262-280.
 }
@@ -208,8 +228,8 @@ summary(res_black)$coefficients
 ## APT test with Fama-French factors and GMM
 
 f1 <- zm
-f2 <- Finance[1:300, "hml"] - rf
-f3 <- Finance[1:300, "smb"] - rf
+f2 <- Finance[1:300, "hml"] 
+f3 <- Finance[1:300, "smb"] 
 h <- cbind(f1, f2, f3)
 res2 <- gmm(z ~ f1 + f2 + f3, x = h)
 coef(res2)
@@ -281,9 +301,10 @@ res4
 # Brent should be used
 
 # without named vector
-gmm(g, x, c(4, 0), grad = Dg, eqConst=1)
+# Method Brent is used because the problem is now one-dimensional
+gmm(g, x, c(4, 0), grad = Dg, eqConst=1, method="Brent", lower=-10,upper=10)
 # with named vector
-gmm(g, x, c(mu=4, sig=2), grad = Dg, eqConst="sig")
+gmm(g, x, c(mu=4, sig=2), grad = Dg, eqConst="sig", method="Brent", lower=-10,upper=10)
 
 ## End(Not run)
 
@@ -323,6 +344,12 @@ res2 <- gmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3)
 gmmWithConst(res2,c("f2","f3"),c(.5,.5))
 gmmWithConst(res2,c(2,3),c(.5,.5))
 
+## Creating an object without estimation for a fixed parameter vector
+###################################################################
+
+res2_2 <- evalGmm(z ~ f1 + f2 + f3, ~ f1 + f2 + f3,
+                  t0=res2$coefficients, tetw=res2$coefficients)
+summary(res2_2)
 
 }
 

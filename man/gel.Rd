@@ -1,6 +1,7 @@
 \name{gel}
 
 \alias{gel}
+\alias{evalGel}
 
 \title{Generalized Empirical Likelihood estimation}
 
@@ -8,18 +9,32 @@
 Function to estimate a vector of parameters based on moment conditions using the GEL method as presented by Newey-Smith(2004) and Anatolyev(2005).
 }
 \usage{
-gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"), 
+gel(g, x, tet0 = NULL, gradv = NULL, smooth = FALSE,
+    type = c("EL","ET","CUE","ETEL","HD","ETHD"), 
     kernel = c("Truncated", "Bartlett"), bw = bwAndrews, 
     approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1, ar.method = "ols", 
     tol_weights = 1e-7, tol_lam = 1e-9, tol_obj = 1e-9, tol_mom = 1e-9, 
     maxiterlam = 100, constraint = FALSE, optfct = c("optim", "optimize", 
-    "nlminb"), optlam = c("nlminb", "optim", "iter"), data, Lambdacontrol = list(),
-     model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", alpha = NULL, ...)
+    "nlminb"), optlam = c("nlminb", "optim", "iter", "Wu"), data,
+    Lambdacontrol = list(), model = TRUE, X = FALSE, Y = FALSE,
+    TypeGel = "baseGel", alpha = NULL, eqConst = NULL,
+    eqConstFullVcov = FALSE, ...)
+evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
+        type = c("EL", "ET", "CUE", "ETEL", "HD", "ETHD"),
+        kernel = c("Truncated", "Bartlett"), bw = bwAndrews,
+        approx = c("AR(1)", "ARMA(1,1)"), prewhite = 1,
+        ar.method = "ols", tol_weights = 1e-7, tol_lam = 1e-9, tol_obj = 1e-9, 
+        tol_mom = 1e-9, maxiterlam = 100, optlam = c("nlminb", "optim",
+        "iter", "Wu"), data, Lambdacontrol = list(), model = TRUE, X = FALSE,
+        Y = FALSE, alpha = NULL, ...)
 }
 \arguments{
 \item{g}{A function of the form \eqn{g(\theta,x)} and which returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,x_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. This matrix is then used to build the q sample moment conditions. It can also be a formula if the model is linear (see details below).  }
 
-\item{tet0}{A \eqn{k \times 1} vector of starting values. If the dimension of \eqn{\theta} is one, see the argument "optfct".}
+\item{tet0}{A \eqn{k \times 1} vector of starting values. If the
+  dimension of \eqn{\theta} is one, see the argument "optfct". In the
+  linear case, if tet0=NULL, the 2-step gmm estimator is used as starting
+  value. However, it has to be provided when eqConst is not NULL}
 
 \item{x}{The matrix or vector of data from which the function \eqn{g(\theta,x)} is computed. If "g" is a formula, it is an \eqn{n \times Nh} matrix of instruments (see details below).}
 
@@ -27,7 +42,11 @@ gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"),
 
 \item{smooth}{If set to TRUE, the moment function is smoothed as proposed by Kitamura(1997)}
 
-\item{type}{"EL" for empirical likelihood, "ET" for exponential tilting, "CUE" for continuous updated estimator and "ETEL" for exponentially tilted empirical likelihood of Schennach(2007).}
+\item{type}{"EL" for empirical likelihood, "ET" for exponential tilting,
+  "CUE" for continuous updated estimator, "ETEL" for exponentially
+  tilted empirical likelihood of Schennach(2007), "HD" for Hellinger
+  Distance of Kitamura-Otsu-Evdokimov (2013), and "ETHD" for the
+  exponentially tilted Hellinger distance of Antoine-Dovonon (2015).}
 
 \item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
 
@@ -53,7 +72,8 @@ gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"),
 
 \item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
 
-\item{optlam}{The default is "iter" which solves for \eqn{\lambda} using the Newton iterative method \code{\link{getLamb}}. If set to "numeric", the algorithm \code{\link{optim}} is used to compute \eqn{\lambda} instead.}
+\item{optlam}{Algorithm used to solve for the lagrange multiplier in
+  \code{\link{getLamb}}. The algorithm Wu is only for \code{type="EL"}. }
 
 \item{data}{A data.frame or a matrix with column names (Optional). }
 
@@ -64,6 +84,10 @@ gel(g, x, tet0, gradv = NULL, smooth = FALSE, type = c("EL","ET","CUE","ETEL"),
 \item{TypeGel}{The name of the class object created by the method \code{getModel}. It allows developers to extand the package and create other GEL methods.}
 
 \item{alpha}{Regularization coefficient for discrete CGEL estimation (experimental). By setting alpha to any value, the model is estimated by CGEL of type specified    by the option \code{type}. See Chausse (2011)}
+
+\item{eqConst}{Either a named vector (if "g" is a function), a simple vector for the nonlinear case indicating which of the \eqn{\theta_0} is restricted, or a qx2 vector defining equality constraints of the form \eqn{\theta_i=c_i}. See \code{\link{gmm}} for an example.}
+
+\item{eqConstFullVcov}{If FALSE, the constrained coefficients are assumed to be fixed and only the covariance of the unconstrained coefficients is computed. If TRUE, the covariance matrix of the full set of coefficients is computed.}
 
 \item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
 
@@ -80,8 +104,15 @@ where \eqn{r} is a truncated parameter that depends on the bandwidth and \eqn{k(
 
 The method solves 
 \eqn{\hat{\theta} = \arg\min \left[\arg\max_\lambda \frac{1}{n}\sum_{t=1}^n \rho(<g(\theta,x_t),\lambda>) - \rho(0) \right]}
- }
 
+\code{\link{evalGel}} generates the object of class "gel" for a fixed vector of
+parameters. There is no estimation for \eqn{\theta}, but the optimal
+vector of Lagrange multipliers \eqn{\lambda} is computed. The objective
+function is then the profiled likelihood for a given \eqn{\theta}. It
+can be used to construct a confidence interval by inverting  the
+likelihood ratio test. 
+}
+ 
 \value{
 'gel' returns an object of 'class' '"gel"' 
 
@@ -123,7 +154,6 @@ The object of class "gel" is a list containing at least the following:
 
 }
 
-
 \references{
 Anatolyev, S. (2005), GMM, GEL, Serial Correlation, and Asymptotic Bias. \emph{Econometrica}, \bold{73}, 983-1002.
 
@@ -132,6 +162,10 @@ Andrews DWK (1991), Heteroskedasticity and Autocorrelation Consistent Covariance
 
 Kitamura, Yuichi (1997), Empirical Likelihood Methods With Weakly Dependent Processes.
 \emph{The Annals of Statistics}, \bold{25}, 2084-2102.
+
+Kitamura, Y. and Otsu, T. and Evdokimov, K. (2013), Robustness,
+Infinitesimal Neighborhoods and Moment Restrictions.
+\emph{Econometrica}, \bold{81}, 1185-1201.
 
 Newey, W.K. and Smith, R.J. (2004), Higher Order Properties of GMM and 
 Generalized Empirical Likelihood Estimators. \emph{Econometrica}, \bold{72}, 219-255.
@@ -147,6 +181,10 @@ Matrix Estimation. \emph{Review of Economic Studies}, \bold{61}, 631-653.
 
 Schennach, Susanne, M. (2007), Point Estimation with Exponentially Tilted Empirical Likelihood.
 \emph{Econometrica}, \bold{35}, 634-672.
+
+Wu, C. (2005), Algorithms and R codes for the pseudo empirical
+likelihood method in survey sampling.
+\emph{Survey Methodology}, \bold{31}(2), page 239.
 
 Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
 \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
@@ -203,6 +241,10 @@ x <- H
 
 res <- gel(g, x, c(0, .3, .6))
 summary(res)
+
+# Using evalGel to create the object without estimation
+
+res <- evalGel(g, x, res$coefficients)
 
 }
 

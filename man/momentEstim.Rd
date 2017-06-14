@@ -1,12 +1,16 @@
 \name{momentEstim}
 \alias{momentEstim.baseGmm.twoStep}
 \alias{momentEstim.baseGmm.twoStep.formula}
+\alias{momentEstim.sysGmm.twoStep.formula}
+\alias{momentEstim.tsls.twoStep.formula}
 \alias{momentEstim.baseGmm.iterative.formula}
 \alias{momentEstim.baseGmm.iterative}
 \alias{momentEstim.baseGmm.cue.formula}
 \alias{momentEstim.baseGmm.cue}
+\alias{momentEstim.baseGmm.eval}
 \alias{momentEstim.baseGel.mod}
 \alias{momentEstim.baseGel.modFormula}
+\alias{momentEstim.baseGel.eval}
 \title{Method for estimating models based on moment conditions}
 \description{
 It estimates a model which is caracterized by the method \code{getModel} (see details). 
@@ -14,10 +18,16 @@ It estimates a model which is caracterized by the method \code{getModel} (see de
 \usage{
 \method{momentEstim}{baseGmm.twoStep}(object, ...)
 \method{momentEstim}{baseGmm.twoStep.formula}(object, ...)
+\method{momentEstim}{sysGmm.twoStep.formula}(object, ...)
+\method{momentEstim}{tsls.twoStep.formula}(object, ...)
 \method{momentEstim}{baseGmm.iterative.formula}(object, ...)
 \method{momentEstim}{baseGmm.iterative}(object, ...)
 \method{momentEstim}{baseGmm.cue.formula}(object, ...)
 \method{momentEstim}{baseGmm.cue}(object, ...)
+\method{momentEstim}{baseGmm.eval}(object, ...)
+\method{momentEstim}{baseGel.mod}(object, ...)
+\method{momentEstim}{baseGel.modFormula}(object, ...)
+\method{momentEstim}{baseGel.eval}(object, ...)
 }
 \arguments{
 \item{object}{An object created by the method \code{getModel}}

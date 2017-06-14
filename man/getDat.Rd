@@ -5,14 +5,21 @@
 It extract the data from a formula y~z with instrument h and put everything in a matrix. It helps redefine the function \eqn{g(\theta,x)} that is required by \code{\link{gmm}} and \code{\link{gel}}.
 }
 \usage{
-getDat(formula, h, data) 
+getDat(formula, h, data, error=TRUE) 
 }
 \arguments{
 \item{formula}{A formula that defines the linear model to be estimated (see details).}
 \item{h}{A \eqn{n\times nh} matrix of intruments(see details).}
 \item{data}{A data.frame or a matrix with colnames (Optionnal).}
+\item{error}{If FALSE, the data is generated without giving any error message}
 }
-\details{The model to be estimated is based on the moment conditions \eqn{<h,(y-z\theta)>=0}. It adds a column of ones to z and h by default. They are removed if -1 is added to the formula}
+\details{The model to be estimated is based on the moment conditions
+  \eqn{<h,(y-z\theta)>=0}. It adds a column of ones to z and h by
+  default. They are removed if -1 is added to the formula.
+  The error argument has been added for \code{\link{sysGmm}} with common
+  coefficients because the check is only valid for
+  equation by equation identification. 
+}
 \value{
 x: A \eqn{n \times l} matrix, where \eqn{l = ncol(y)+ncol(z)+ncol(h)+2} if "intercept" is TRUE and \eqn{ncol(y)+ncol(z)+xcol(h)} if "intercept" is FALSE. 
 

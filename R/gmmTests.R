@@ -28,10 +28,7 @@
 	dg <- function(obj)
 		{
 		dat <- obj$dat
-		if (!is.null(attr(dat,"eqConst")))
-			x <- attr(dat,"eqConst")$Xunc
-		else
-			x <- dat$x[,(dat$ny+1):(dat$ny+dat$k)]
+                x <- dat$x[,(dat$ny+1):(dat$ny+dat$k)]
 		k <- ncol(x)
 		h <- dat$x[,(dat$ny+dat$k+1):ncol(dat$x)]
 		qt <- array(dim=c(dim(obj$gt),k))
@@ -39,21 +36,17 @@
 			qt[,,i] <- -x[,i]*h
 		qt}
 
-	if (attr(obj$dat,"ModelType") == "nonlinear")
+ 	if (attr(obj$dat,"ModelType") == "nonlinear")
 		{
 		Myenv <- new.env()
 		assign("obj", obj, envir=Myenv)
 		assign("theta", theta0, envir=Myenv)
-		gFunct <- if (!is.null(attr(obj$dat,"eqConst")))
-				attr(obj$dat,"eqConst")$unConstg
-			  else
-				obj$g
+		gFunct <- obj$g
 		assign("g",gFunct,envir=Myenv)
 		res <- numericDeriv(quote(g(theta,obj$dat)),"theta",Myenv)
 		qT <- attr(res,"gradient")
 		} else {
-		qT <- dg(obj)}
-
+                    qT <- dg(obj)}
 	qTmat <- apply(qT,3,colSums)
 	qT <- matrix(qT,nrow=dim(qT)[1])
 	gt <- obj$g(theta0,obj$dat)
@@ -69,12 +62,12 @@
 		All <- All[,-w]
 	if (dim(All)[2] >= dim(All)[1])
 		stop("Too many moment conditions. Cannot estimate V")
-	if (obj$WSpec$vcov == "iid") 
+	if (attr(obj$dat, "weight")$vcov == "iid") 
 		{
 		V <- crossprod(All)/nrow(All) 
 	} else {
 		class(All) <- "gmmFct"
-		argSand <- obj$WSpec$sandwich
+		argSand <- attr(obj$dat, "weight")$WSpec$sandwich
 		argSand$x <- All
 		argSand$sandwich <- FALSE
 		V <- do.call(kernHAC,argSand)
@@ -101,17 +94,13 @@ KTest <- function(obj, theta0=NULL, alphaK = 0.04, alphaJ = 0.01)
 		theta0[resTet[,1]] <- resTet[,2]
 		theta0[-resTet[,1]] <- tet
 		testName <- paste(rownames(resTet), " = ", resTet[,2], collapse="\n")
-		if (is.list(obj$dat))		
-			{
-			x <- model.matrix(obj$dat$mt,obj$dat$mf)
-			y <- model.response(obj$dat$mf)
-			obj$dat$x <- cbind(y,x,obj$dat$x[,(obj$dat$ny+obj$dat$k+1):ncol(obj$dat$x)])
-			obj$dat$k <- ncol(x)
-			} else {
-			obj$g <- attr(obj$dat,"eqConst")$unConstg
+             	if (attr(obj$dat,"ModelType") == "linear")
+                    {
+                        obj$dat$k <- length(theta0)
 			}	
 		dfK <- nrow(resTet)
 		which <- resTet[,1]
+                attr(obj$dat, "eqConst") <- NULL
 	} else {
 		if (is.null(theta0))
 			stop("You must either estimate a restricted model first or set theta0 under H0")		

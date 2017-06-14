@@ -26,6 +26,7 @@ specTest.gmm <- function(x, ...)
 	ans
 	}
 
+
 print.specTest <- function(x, digits=5, ...)
 	{
 	cat("\n","## ",x$ntest," ##","\n\n")
@@ -41,12 +42,16 @@ specTest.gel <- function(x, ...)
 	khat <- x$khat
 	gbar <- colMeans(x$gt)
 	LR_test <- 2*x$objective*n*x$k2/(x$bwVal*x$k1^2)
+        if (x$type == "ETHD")
+            LR_test <- LR_test*2
 	LM_test <- n*crossprod(x$lambda, crossprod(khat, x$lambda))/(x$bwVal^2)
 	J_test <- n*crossprod(gbar, solve(khat, gbar))/(x$k1^2)
 	test <- c(LR_test, LM_test, J_test)
-	df <- (ncol(x$gt) - length(x$coef))
+	df <- x$df
 	ntest <- noquote(paste("Over-identifying restrictions tests: degrees of freedom is ", df, sep = ""))
 	vptest <- pchisq(test,df,lower.tail = FALSE)
+        if (df == 0)
+            vptest[] <- "###"
 	test <- cbind(test,vptest)
 	dimnames(test) <- list(c("LR test", "LM test", "J test"), c("statistics", "p-value"))	
 	ans <- list(test = test, ntest = ntest)

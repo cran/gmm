@@ -1,14 +1,23 @@
 \name{getModel}
 \alias{getModel.baseGmm}
+\alias{getModel.sysGmm}
 \alias{getModel.baseGel}
 \alias{getModel.constGmm}
+\alias{getModel.tsls}
+\alias{getModel.constGel}
+\alias{getModel.ateGel}
 \title{Method for setting the properties of a model}
 \description{
 It collects what is needed by the method \code{momentEstim} (see details). 
 }
 \usage{
 \method{getModel}{baseGmm}(object, ...)
+\method{getModel}{sysGmm}(object, ...)
 \method{getModel}{baseGel}(object, ...)
+\method{getModel}{constGel}(object, ...)
+\method{getModel}{constGel}(object, ...)
+\method{getModel}{tsls}(object, ...)
+\method{getModel}{ateGel}(object, ...)
 }
 \arguments{
 \item{object}{An object of class \code{baseGmm} }

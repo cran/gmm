@@ -1,5 +1,6 @@
 \name{print}
 \alias{print.gmm}
+\alias{print.sysGmm}
 \alias{print.gel}
 \title{Printing a gmm or gel object}
 \description{
@@ -8,6 +9,7 @@
 \usage{
 \method{print}{gmm}(x, digits = 5, ...)
 \method{print}{gel}(x, digits = 5, ...)
+\method{print}{sysGmm}(x, digits = 5, ...)
 }
 \arguments{
  \item{x}{An object of class \code{gmm} or \code{gel} returned by the function \code{\link{gmm}} or \code{\link{gel}}}
