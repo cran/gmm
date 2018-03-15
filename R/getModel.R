@@ -217,6 +217,7 @@ getModel.baseGmm <- function(object, ...)
                 attr(object$x, "k") <- object$x$k
                 attr(object$x, "q") <- object$x$ny*object$x$nh
                 attr(object$x, "n") <- NROW(object$x$x)
+                attr(object$x, "namesgt") <- object$namesgt
             } else {
                 attr(object$x,"ModelType") <- "nonlinear"
                 attr(object$x, "momentfct") <- object$g
@@ -261,6 +262,7 @@ getModel.baseGmm <- function(object, ...)
                                                         ar.method = object$ar.method,
                                                         approx = object$approx, tol = object$tol)
         attr(object$x, "weight")$vcov <- object$vcov
+        attr(object$x, "mustar") <- object$mustar
         object$g <- .momentFct
         class(object)  <- clname
         return(object)
@@ -436,6 +438,13 @@ getModel.ateGel <- function(object, ...)
         if(is(object$g, "formula"))
             {
                 dat <- getDat(object$g, object$x, data = object$data)
+                if (!is.null(object$w))
+                    if (is(object$w, "formula"))
+                        {
+                            dat$w <- model.matrix(object$w, object$data)[,-1,drop=FALSE]
+                        } else {
+                            stop("w must be a formula")
+                        }                
                 if (dat$ny>1 | dat$ny==0)
                     stop("You need one and only one dependent variable")
                 k <- dat$k
@@ -457,13 +466,19 @@ getModel.ateGel <- function(object, ...)
                     }
                 if (is.null(object$tet0))
                     {
-                        tet0 <- lm(dat$x[,1]~dat$x[,3:(k+1)])$coef
+                        if (is.null(dat$w))
+                            {
+                                tet0 <- lm(dat$x[,1]~dat$x[,3:(k+1)])$coef
+                            } else {
+                                tet0 <- lm(dat$x[,1]~dat$x[,3:(k+1)]+dat$w)$coef
+                            }
                         tet0 <- c(tet0, colMeans(dat$x[,3:(k+1),drop=FALSE]))
                         names(tet0) <- NULL
                         object$tet0 <- tet0
                     } else {
-                        if (length(object$tet0) != (2*k-1))
-                            stop("tet0 should have a length equal to 2x(number of treatments)+1")
+                        ntet0 <- 2*k-1 + ifelse(is.null(dat$w), 0, ncol(dat$w))
+                        if (length(object$tet0) != ntet0)
+                            stop("tet0 should have a length equal to 2x(number of treatments)+1+number of w's if any")
                     }
                 if (object$family != "linear")
                     {
@@ -481,14 +496,22 @@ getModel.ateGel <- function(object, ...)
                 q <- dat$nh + 2*k+1
                 if (object$momType != "bal" | !is.null(object$popMom))
                     q  <- q+dat$nh
+                if (!is.null(dat$w))
+                    {
+                        q <- q+ncol(dat$w)
+                        namew <- colnames(dat$w)
+                    } else {
+                        namew <- NULL
+                    }
                 object$gradv <- .DmomentFctATE
                 object$x <- dat
                 object$gradvf <- FALSE
                 object$gform<-object$g                
                 namex <- colnames(dat$x[,2:(k+1)])
                 nameh <- colnames(dat$x[,(k+2):ncol(dat$x), drop=FALSE])
-                namesCoef <- c(namex, paste("TreatProb", 1:(k-1), sep=""))
-                namesgt <- paste(rep(paste("Treat", 1:(k-1), sep=""), rep(dat$nh, k-1)), "_", rep(nameh, k-1), sep="")
+                namesCoef <- c(namex, namew, paste("TreatProb", 1:(k-1), sep=""))
+                namesgt <- paste(rep(paste("Treat", 1:(k-1), sep=""),
+                                     rep(dat$nh, k-1)), "_", rep(nameh, k-1), sep="")
                 object$namesgt <- c(namesCoef,namesgt)
                 if (object$momType != "bal" | !is.null(object$popMom))
                     object$namesgt <- c(object$namesgt, paste("bal_", nameh, sep=""))

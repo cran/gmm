@@ -1,6 +1,7 @@
 \name{ATEgel}
 
 \alias{ATEgel}
+\alias{checkConv}
 
 \title{ATE with Generalized Empirical Likelihood estimation}
 
@@ -9,7 +10,7 @@ Function to estimate the average treatment effect with the sample being
 balanced by GEL.
 }
 \usage{
-ATEgel(g, balm, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT"),
+ATEgel(g, balm, w=NULL, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT"),
                    popMom = NULL, family=c("linear","logit", "probit"),
                    type = c("EL", "ET", "CUE", "ETEL", "HD", "ETHD"),
                    tol_lam = 1e-9, tol_obj = 1e-9, tol_mom = 1e-9, maxiterlam = 100,
@@ -17,13 +18,17 @@ ATEgel(g, balm, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT")
                    optlam = c("nlminb", "optim", "iter", "Wu"), data=NULL,
                    Lambdacontrol = list(),
                    model = TRUE, X = FALSE, Y = FALSE, ...)
+checkConv(obj, tolConv=1e-4, verbose=TRUE)
 }
 \arguments{
 \item{g}{A formula as \code{y~z}, where code{y} is the response and
   \code{z} the treatment indicator. If there is more than one
   treatment, more indicators can be added or \code{z} can be set as a
   factor. It can also be of the form
-  \code{g(theta, y, z)} for non-linear models. It is however, not implemented yet.}
+  \code{g(theta, y, z)} for non-linear models. It is however, not
+  implemented yet.}
+
+\item{obj}{Object of class \code{"ategel"} produced y \code{ATEgel}}
 
 \item{balm}{A formula for the moments to be balanced between the treated
   and control groups (see details)}
@@ -33,6 +38,10 @@ ATEgel(g, balm, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT")
 
 \item{treat}{The treatment indicator when \code{g} is a function. Not
   implemented yet}
+
+\item{w}{A formula to add covariates to the main regression. When
+  \code{NULL}, the default value, the main regression only include
+  treatment indicators.}
 
 \item{tet0}{A \eqn{3 \times 1} vector of starting values. If not
   provided, they are obtained using an OLS regression}
@@ -75,6 +84,10 @@ ATEgel(g, balm, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT")
 \item{Lambdacontrol}{Controls for the optimization of the vector of Lagrange multipliers used by either \code{\link{optim}}, \code{\link{nlminb}} or \code{\link{constrOptim}}}
 
 \item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
+
+\item{verbose}{If TRUE, a summary of the convergence is printed}
+
+\item{tolConv}{The tolerance for comparing moments between groups}
 
 \item{...}{More options to give to \code{\link{optim}} or \code{\link{nlminb}}.}
 
@@ -132,9 +145,11 @@ nsw$re75 <- nsw$re75/1000
 res <- ATEgel(re78~treat, ~age+ed+black+hisp+married+nodeg+re75,
 data=nsw,type="ET")
 summary(res)
+chk <- checkConv(res)
 
 res2 <- ATEgel(re78~treat, ~age+ed+black+hisp+married+nodeg+re75,
 data=nsw,type="ET", momType="balSample")
 summary(res2)
+chk2 <- checkConv(res2)
 
 }

@@ -62,7 +62,13 @@ FinRes.baseGmm.res <- function(z, object, ...)
                         warning("The covariance matrix of the coefficients is singular")
                     }
             } else if ( (is.null(P$weightsMatrix)) & (P$wmatrix != "ident") ) {
-                z$vcov <- try(solve(crossprod(G, solve(v, G)))/n, silent = TRUE)
+                if (dim(G)[1] == dim(G)[2])
+                    {
+                        T1 <- try(solve(G), silent=TRUE)
+                        z$vcov <- try(T1%*%v%*%t(T1)/n, silent=TRUE)
+                    } else {                                                
+                        z$vcov <- try(solve(crossprod(G, solve(v, G)))/n, silent = TRUE)
+                    }
                 if(class(z$vcov) == "try-error")
                     {
                         z$vcov <- matrix(Inf,length(z$coef),length(z$coef))

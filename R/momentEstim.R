@@ -465,15 +465,20 @@ momentEstim.baseGmm.iterative <- function(object, ...)
             {
                 z <- list(coefficients = res$par, objective = res$value, k=k, k2=k2, n=n, q=q, df=df)
                 if (chkOptim)
-                    z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+                    z$algoInfo <- list(convergence = res$convergence, counts = res$counts,
+                                       message = res$message)
                 else if(P$optfct == "nlminb")
-                    z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+                    z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations,
+                                       message = res$message)
             } else {                
                 initTheta = res$par
+                z <- list()
                 if (chkOptim)
-                    z$initialAlgoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+                    z$initialAlgoInfo <- list(convergence = res$convergence, counts = res$counts,
+                                              message = res$message)
                 else if(P$optfct == "nlminb")
-                    z$initialAlgoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)                
+                    z$initialAlgoInfo <- list(convergence = res$convergence, counts = res$evaluations,
+                                              message = res$message)                
                 ch <- 100000
                 j <- 1
                 while(ch > P$crit)
@@ -507,11 +512,15 @@ momentEstim.baseGmm.iterative <- function(object, ...)
                             cat("Iter :",j,": value=",res$value,", Coef = ", res$par,"\n") 
                         j <- j+1	
                     }
-                z = list(coefficients = res$par, objective = res$value,k=k, k2=k2, n=n, q=q, df=df, initTheta=initTheta)	
+                z2 = list(coefficients = res$par, objective = res$value,k=k, k2=k2, n=n, q=q,
+                    df=df, initTheta=initTheta)
+                z <- c(z, z2)
                 if (chkOptim)
-                    z$algoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+                    z$algoInfo <- list(convergence = res$convergence, counts = res$counts,
+                                       message = res$message)
                 else if(P$optfct == "nlminb")
-                    z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+                    z$algoInfo <- list(convergence = res$convergence, counts = res$evaluations,
+                                       message = res$message)
                 
             }
         z$dat <- P$x
@@ -574,7 +583,7 @@ momentEstim.baseGmm.cue.formula <- function(object, ...)
                         argDots$ci <- NULL
                         allArgOptim <- list(theta = P$t0, f = .objCue, grad = NULL, ui = ui, ci = ci, x = dat, type = P$vcov)
                         allArgOptim <- c(allArgOptim,argDots)
-                        res <- do.call(constrOptim,allArgOptim)
+                        res2 <- do.call(constrOptim,allArgOptim)
                     }
                 if (P$optfct == "nlminb")
                     {
@@ -633,20 +642,25 @@ momentEstim.baseGmm.cue <- function(object, ...)
         if (q == k2 | P$wmatrix == "ident")
             {
                 w = .weightFct(NULL, x, "ident")
-                res <- gmm(P$g,P$x,P$t0,wmatrix="ident",optfct=P$optfct, ...)                
-                z <- list(coefficients = res$coef, objective = res$objective, algoInfo = res$algoInfo, k=k, k2=k2, n=n, q=q, df=df, initTheta=P$t0)
+                res <- gmm(P$allArg$g,P$allArg$x,P$t0,wmatrix="ident",optfct=P$optfct, ...)
+                z <- list(coefficients = res$coef, objective = res$objective,
+                          algoInfo = res$algoInfo, k=k, k2=k2, n=n, q=q, df=df,
+                          initTheta=P$t0)
                 P$weightMessage <- "No CUE needed because the model if just identified or you set wmatrix=identity"
             } else {
                 w <- .weightFct(P$t0, x, P$vcov)
                 initTheta <- P$t0
                 if (P$vcov == "HAC")
                     {
-                        res <- try(gmm(P$g,P$x,P$t0,wmatrix="ident",optfct=P$optfct, ...))
+                        res <- try(gmm(P$allArg$g,P$allArg$x,P$t0,wmatrix="ident",
+                                       optfct=P$optfct, ...))                      
                         if(class(res)=="try-error")
                             stop("Cannot get a first step estimate to compute the weights for the Kernel estimate of the covariance matrix; try different starting values")
                         w <- .weightFct(res$coefficients, x, P$vcov)
                         attr(x, "weight")$WSpec$sandwich$bw <- attr(w,"Spec")$bw
                         P$weightMessage <- "Weights for kernel estimate of the covariance are fixed and based on the first step estimate of Theta"
+                    } else {
+                        res <- list()
                     }
                 if (P$optfct == "optim")
                     {
@@ -676,20 +690,27 @@ momentEstim.baseGmm.cue <- function(object, ...)
                         res2$par <- res2$minimum
                         res2$value <- res2$objective
                     }
-                z = list(coefficients=res2$par,objective=res2$value, k=k, k2=k2, n=n, q=q, df=df, initTheta=initTheta)
+                z = list(coefficients=res2$par,objective=res2$value, k=k, k2=k2,
+                    n=n, q=q, df=df, initTheta=initTheta)
                 if (any(P$optfct == c("optim", "constrOptim")))
                     {
-                        z$algoInfo <- list(convergence = res2$convergence, counts = res2$counts, message = res2$message)
-                        z$InitialAlgoInfo <- list(convergence = res$convergence, counts = res$counts, message = res$message)
+                        z$algoInfo <- list(convergence = res2$convergence, counts =
+                                               res2$counts, message = res2$message)
+                        z$InitialAlgoInfo <- list(convergence = res$algoInfo$convergence,
+                                                  counts = res$algoInfo$counts,
+                                                  message = res$algoInfo$message)
                     } else if (P$optfct == "nlminb") {
-                        z$algoInfo <- list(convergence = res2$convergence, counts = res2$evaluations, message = res2$message)                        
-                        z$InitialAlgoInfo <- list(convergence = res$convergence, counts = res$evaluations, message = res$message)
+                        z$algoInfo <- list(convergence = res2$convergence, counts =
+                                               res2$evaluations, message = res2$message)
+                        z$InitialAlgoInfo <- list(convergence = res$algoInfo$convergence,
+                                                  counts = res$algoInfo$evaluations,
+                                                  message = res$algoInfo$message)
                     }
             }
-        z$dat <- P$x
+        z$dat <- x
         z$gradv <- P$gradv
-        z$gt <- P$g(z$coefficients, P$x)
-        z$w0 <- .weightFct(z$coefficients, P$x, P$vcov)        
+        z$gt <- P$g(z$coefficients, x)
+        z$w0 <- .weightFct(z$coefficients, x, P$vcov)        
         z$iid <- P$iid
         z$g <- P$g
         z$cue <- list(weights=P$fixedKernW,message=P$weightMessage)
@@ -748,8 +769,11 @@ momentEstim.baseGel.modFormula <- function(object, ...)
         z$typeDesc <- P$typeDesc
         z$specMod <- P$specMod
         z$df <- df
-
         names(z$coefficients) <- object$namesCoef
+        if (P$onlyCoefficients)
+            return(z[c("coefficients","lambda","conv_lambda","conv_par","objective")])
+
+        
         if (!is.null(object$namesgt))
             {
                 colnames(z$gt) <- object$namesgt
@@ -871,6 +895,9 @@ momentEstim.baseGel.mod <- function(object, ...)
                 attr(x,"eqConst") <- NULL
                 z$specMod <- paste(z$specMod, "** Note: Covariance matrix computed for all coefficients based on restricted values \n   Tests non-valid**\n\n")
             }
+        if (P$onlyCoefficients)
+            return(z[c("coefficients", "lambda", "conv_lambda", "conv_par", "objective")])
+        
         if(P$gradvf)
             G <- P$gradv(z$coefficients, x)
         else

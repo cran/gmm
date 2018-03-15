@@ -18,7 +18,7 @@ gel(g, x, tet0 = NULL, gradv = NULL, smooth = FALSE,
     "nlminb"), optlam = c("nlminb", "optim", "iter", "Wu"), data,
     Lambdacontrol = list(), model = TRUE, X = FALSE, Y = FALSE,
     TypeGel = "baseGel", alpha = NULL, eqConst = NULL,
-    eqConstFullVcov = FALSE, ...)
+    eqConstFullVcov = FALSE, onlyCoefficients=FALSE, ...)
 evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
         type = c("EL", "ET", "CUE", "ETEL", "HD", "ETHD"),
         kernel = c("Truncated", "Bartlett"), bw = bwAndrews,
@@ -88,6 +88,9 @@ evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
 \item{eqConst}{Either a named vector (if "g" is a function), a simple vector for the nonlinear case indicating which of the \eqn{\theta_0} is restricted, or a qx2 vector defining equality constraints of the form \eqn{\theta_i=c_i}. See \code{\link{gmm}} for an example.}
 
 \item{eqConstFullVcov}{If FALSE, the constrained coefficients are assumed to be fixed and only the covariance of the unconstrained coefficients is computed. If TRUE, the covariance matrix of the full set of coefficients is computed.}
+
+\item{onlyCoefficients}{If \code{TRUE}, only the vector of coefficients
+  and Lagrange multipliers are returned}
 
 \item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
 

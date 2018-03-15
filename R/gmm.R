@@ -15,7 +15,7 @@ gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wma
                 kernel=c("Quadratic Spectral","Truncated", "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
                 prewhite = 1, ar.method = "ols", approx="AR(1)",tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
                 model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
-                eqConstFullVcov = FALSE, ...)
+                eqConstFullVcov = FALSE, mustar = NULL, onlyCoefficients=FALSE, ...)
     {
         type <- match.arg(type)
         kernel <- match.arg(kernel)
@@ -37,11 +37,12 @@ gmm <- function(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"), wma
                        crit = crit, bw = bw, prewhite = prewhite, ar.method = ar.method, approx = approx, 
                        weightsMatrix = weightsMatrix, centeredVcov = centeredVcov, tol = tol, itermax = itermax, 
                        optfct = optfct, model = model, X = X, Y = Y, call = match.call(), traceIter = traceIter, 
-                       eqConst = eqConst, eqConstFullVcov = eqConstFullVcov)
+                       eqConst = eqConst, eqConstFullVcov = eqConstFullVcov, mustar = mustar)
         class(all_args)<-TypeGmm
         Model_info<-getModel(all_args, ...)
         z <- momentEstim(Model_info, ...)
-
+        if (onlyCoefficients)
+            return(z[c("coefficients","objective")])
         z <- FinRes(z, Model_info)
         z
     }
@@ -52,7 +53,7 @@ evalGmm <- function(g, x, t0, tetw=NULL, gradv=NULL, wmatrix = c("optimal","iden
                         "Tukey-Hanning"),crit=10e-7,bw = bwAndrews, 
                     prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7,
                     model=TRUE, X=FALSE, Y=FALSE,  centeredVcov = TRUE,
-                    weightsMatrix = NULL, data)
+                    weightsMatrix = NULL, data, mustar = NULL)
     {
         TypeGmm = "baseGmm"
         type <- "eval"    
@@ -74,7 +75,7 @@ evalGmm <- function(g, x, t0, tetw=NULL, gradv=NULL, wmatrix = c("optimal","iden
                        centeredVcov = centeredVcov, tol = tol, itermax = 100, 
                        model = model, X = X, Y = Y, call = match.call(),
                        traceIter = NULL, optfct="optim",
-                       eqConst = NULL, eqConstFullVcov = FALSE)
+                       eqConst = NULL, eqConstFullVcov = FALSE, mustar = mustar)
         class(all_args)<-TypeGmm
         Model_info<-getModel(all_args)
         class(Model_info) <- "baseGmm.eval"
@@ -123,7 +124,7 @@ tsls <- function(g,x,data)
                                   prewhite=AllArg$prewhite, tol=AllArg$tol)
 	w <- vcovHAC(x=gmat, order.by=AllArg$order.by, weights=weights,
                      prewhite=AllArg$prewhite, sandwich=FALSE,
-                     ar.method=AllArg$ar.method)
+                     ar.method=AllArg$ar.method, adjust=FALSE)
 	attr(w,"Spec") <- list(weights = weights, bw = AllArg$bw,
                                kernel = AllArg$kernel)
 	w
@@ -261,6 +262,7 @@ getDat <- function (formula, h, data, error=TRUE)
             }
         includeExo <- which(colnames(xm)%in%colnames(hm))
         inv <- attr(w, "inv")
+        mustar <- attr(dat, "mustar")
         if (!is.null(type))
             {            
                 if(type=="2sls")
@@ -295,9 +297,7 @@ getDat <- function (formula, h, data, error=TRUE)
                                 e2sls <- ym-xm%*%par
                                 v2sls <- lm.fit(as.matrix(hm), e2sls)$fitted
                                 value <- sum(v2sls^2)/sum(e2sls^2)                
-                            }
-                        else
-                            {
+                            } else {
                                 par <- c(t(par))	
                                 g2sls <- g(par, dat)
                                 w <- crossprod(g2sls)/n
@@ -305,44 +305,48 @@ getDat <- function (formula, h, data, error=TRUE)
                                 value <- crossprod(gb, solve(w, gb)) 
                             }
                     }
-            }
-        else
-            {            
+            } else {            
                 if (ny>1)
                     {
                         if (inv) 
                             {
                                 whx <- solve(w, (crossprod(hm, xm) %x% diag(ny)))
                                 wvecyh <- solve(w, matrix(crossprod(ym, hm), ncol = 1))	
-                            }
-                        else
-                            {
+                            } else {
                                 whx <- w%*% (crossprod(hm, xm) %x% diag(ny))
                                 wvecyh <- w%*%matrix(crossprod(ym, hm), ncol = 1)
                             }
                         dg <- gradv(NULL, dat)
                         xx <- crossprod(dg, whx)
                         par <- solve(xx, crossprod(dg, wvecyh))
-                    }
-                else
-                    {   
+                    } else {   
                         if (nh>k)
                             {
                                 if(inv)
                                     xzwz <- crossprod(xm,hm)%*%solve(w,t(hm))	
                                 else
                                     xzwz <- crossprod(xm,hm)%*%w%*%t(hm)
-                                par <- solve(xzwz%*%xm,xzwz%*%ym)	
+                                par <- solve(xzwz%*%xm,xzwz%*%ym)
+                            } else {
+                                par <- solve(crossprod(hm,xm),crossprod(hm,ym))
                             }
-                        else
-                            par <- solve(crossprod(hm,xm),crossprod(hm,ym))  	}
+                    }
                 gb <- matrix(colSums(g(par, dat))/n, ncol = 1)
                 if(inv)
                     value <- crossprod(gb, solve(w, gb)) 
                 else
                     value <- crossprod(gb, w%*%gb) 
-            }
+            }        
         res <- list(par = par, value = value)
+        if (!is.null(mustar))
+            {
+                if (!is.null(type))
+                    {
+                        w <- crossprod(hm)/NROW(hm)
+                        attr(w, "inv") <- TRUE
+                    }        
+                res <- .mustarLin(par, xm, hm, w, dat, mustar)
+            }
         if (!is.null(type))
             {    
                 if (type == "2sls")
@@ -355,6 +359,27 @@ getDat <- function (formula, h, data, error=TRUE)
                     }
             }
         return(res)
+    }
+
+.mustarLin <- function(par, xm, hm, w, dat, mustar)
+    {
+        if (ncol(xm) == ncol(hm))
+            {
+                par <- par-solve(crossprod(hm,xm),mustar)
+            } else {
+                hmxm <- crossprod(hm,xm)
+                if (attr(w, "inv"))
+                    T1 <- solve(w, hmxm)
+                else
+                    T1 <- w%*%hmxm
+                par <- par-solve(crossprod(hmxm, T1), crossprod(T1, mustar))
+            }
+        gb <- colSums(.momentFct(par, dat))/NROW(xm)
+        if(attr(w, "inv"))
+            value <- crossprod(gb, solve(w, gb)) 
+        else
+            value <- crossprod(gb, w%*%gb)
+        list(value=value, par=par)
     }
 
 .obj1 <- function(thet, x, w)
@@ -434,7 +459,14 @@ getDat <- function (formula, h, data, error=TRUE)
                 w <- attr(dat, "smooth")$w
                 gt <- smoothG(gt, bw = bw, weights = w)$smoothx
             }
-        return(as.matrix(gt))
+        gt <- as.matrix(gt)
+        if (!is.null(attr(dat, "mustar")))
+            {
+                if (length(attr(dat, "mustar")) != ncol(gt))
+                    stop("dim of mustar must match the number of moment conditions")
+                gt <- sweep(gt, 2, attr(dat, "mustar"), "-")
+            }
+        return(gt)
     }
 
 .DmomentFct <- function(tet, dat, pt=NULL)
@@ -482,6 +514,8 @@ getDat <- function (formula, h, data, error=TRUE)
                 attr(w, "inv") <- FALSE
             } else {
                 gt <- .momentFct(tet,dat)
+                if (!is.null(attr(dat, "namesgt")))
+                    colnames(gt) <- attr(dat, "namesgt")
                 if(attr(dat, "weight")$centeredVcov)
                     gt <- scale(gt, scale=FALSE)
                 n <- NROW(gt)

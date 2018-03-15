@@ -8,18 +8,25 @@ specTest.gmm <- function(x, ...)
 	if (x$infWmatrix == "ident")
 		{
 		gb <- colMeans(x$gt)
-		j <- crossprod(gb,solve(x$v,gb))*x$n
+		j <- try(crossprod(gb,solve(x$v,gb))*x$n, silent=TRUE)
 		}
 	else if ( (x$infVcov!="TrueFixed") & !is.null(x$weightsMatrix) )
 		{
 		gb <- colMeans(x$gt)
-		j <- crossprod(gb,solve(x$v,gb))*x$n
+		j <- try(crossprod(gb,solve(x$v,gb))*x$n, silent=TRUE)
 		}
 	else
 		j <- x$objective*x$n
-
+        if (any(class(j)=="try-error"))
+            {
+                j <- noquote(cbind("Failed", "Failed"))
+            } else {
+                j <- noquote(cbind(j, ifelse(x$df>0,pchisq(j,x$df,
+                                                           lower.tail = FALSE),
+                                             "*******")))
+            }
 	J_test <- noquote(paste("J-Test: degrees of freedom is ",x$df,sep=""))
-	j <- noquote(cbind(j, ifelse(x$df>0,pchisq(j,x$df, lower.tail = FALSE),"*******")))
+
 	dimnames(j) <- list("Test E(g)=0:  ", c("J-test", "P-value"))
 	ans<-list(ntest=J_test, test = j)
 	class(ans) <- "specTest"

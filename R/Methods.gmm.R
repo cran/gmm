@@ -110,9 +110,14 @@ print.summary.gmm <- function(x, digits = 5, ...)
 	cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
 	cat("\nMethod: ", x$met,"\n")
 	if (x$met=="cue")
-            cat("         (",x$cue$message,")\n\n")
-	else
-            cat("\n")
+            {
+                if (!is.null(x$cue$message))
+                    {
+                        cat("         (",x$cue$message,")\n\n")
+                    }
+            } else {
+                cat("\n")
+            }
 	if( !is.null(x$kernel))
             {
 		cat("Kernel: ", x$kernel)

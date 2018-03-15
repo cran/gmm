@@ -1,3 +1,14 @@
+Changes in version 1.6-2
+
+o Fixed a bug with iterative GMM from the previous version
+o Added the option onlyCoefficients=FALSE to gmm() and gel(). If set to TRUE, no covariance matrix is computed. Only the coefficients
+  objective and the lambdas (for gel only) are returned.
+o In previous versions, the HAC weighting matrix for linear models was computed without specifying that the first column of the
+  instrument matrix was a column of ones (with its name being "(Intercept)"). It makes a difference when computing the bandwidth with
+  bwNeweyWest. The new version, takes it into account. It is not possible to obtain the same sandwich covariance matrix with gmm and OLS.
+o In previous versions, the weighting matrix and, as a result, the standard errors were based on the small sample adjusted vcovHAC for weakly dependent
+  processes. The adjustment is not justified for GMM. The option adjust=FALSE is therefore added to vcovHAC in .myKernHAC()
+
 Changes in version 1.6-1
 
 o Added the function bwWilhelm() to compute the optimal bandwidth of Wilhelm(2015).

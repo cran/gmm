@@ -281,7 +281,7 @@ gel <- function(g, x, tet0 = NULL, gradv = NULL, smooth = FALSE,
                 optfct = c("optim", "optimize", "nlminb"), 
                 optlam = c("nlminb", "optim", "iter", "Wu"), data, Lambdacontrol = list(),
                 model = TRUE, X = FALSE, Y = FALSE, TypeGel = "baseGel", alpha = NULL,
-                eqConst = NULL, eqConstFullVcov = FALSE, ...)
+                eqConst = NULL, eqConstFullVcov = FALSE, onlyCoefficients=FALSE, ...)
     {
 	type <- match.arg(type)
 	optfct <- match.arg(optfct)
@@ -303,12 +303,12 @@ gel <- function(g, x, tet0 = NULL, gradv = NULL, smooth = FALSE,
                          optlam = optlam, model = model, X = X, Y = Y,
                          TypeGel = TypeGel, call = match.call(),
                          Lambdacontrol = Lambdacontrol, alpha = alpha, data = data,
-                         eqConst = eqConst, eqConstFullVcov = eqConstFullVcov)
+                         eqConst = eqConst, eqConstFullVcov = eqConstFullVcov, onlyCoefficients=onlyCoefficients)
 	class(all_args)<-TypeGel
 	Model_info<-getModel(all_args)
 	z <- momentEstim(Model_info, ...)
-        
-	class(z) <- "gel"
+        if (!onlyCoefficients)
+            class(z) <- "gel"
 	return(z)
 	}
 

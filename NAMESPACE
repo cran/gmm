@@ -16,7 +16,7 @@ export(gmm,summary.gmm,smoothG,getDat,summary.gel,getLamb,gel, estfun.gmmFct, es
        momentEstim.baseGel.eval, evalGel, confint.gmm, print.confint, sysGmm, getModel.sysGmm, momentEstim.sysGmm.twoStep.formula,
        momentEstim.tsls.twoStep.formula, getModel.tsls, summary.sysGmm, print.sysGmm, print.summary.sysGmm,
        sur, threeSLS, randEffect, five, bwWilhelm, getModel.ateGel, ATEgel,
-       summary.ategel, vcov.ategel, confint.ategel, marginal, marginal.ategel)
+       summary.ategel, vcov.ategel, confint.ategel, marginal, marginal.ategel,checkConv)
 
 S3method(marginal, ategel)
 S3method(summary, gmm)

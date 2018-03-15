@@ -17,12 +17,13 @@ gmm(g,x,t0=NULL,gradv=NULL, type=c("twoStep","cue","iterative"),
     tol = 1e-7, itermax=100,optfct=c("optim","optimize","nlminb", "constrOptim"),
     model=TRUE, X=FALSE, Y=FALSE, TypeGmm = "baseGmm", centeredVcov = TRUE, 
     weightsMatrix = NULL, traceIter = FALSE, data, eqConst = NULL, 
-    eqConstFullVcov = FALSE, ...)
+    eqConstFullVcov = FALSE, mustar = NULL, onlyCoefficients=FALSE, ...)
 evalGmm(g, x, t0, tetw=NULL, gradv=NULL, wmatrix = c("optimal","ident"),
     vcov=c("HAC","iid","TrueFixed"), kernel=c("Quadratic Spectral","Truncated", 
     "Bartlett", "Parzen", "Tukey-Hanning"),crit=10e-7,bw = bwAndrews,
     prewhite = FALSE, ar.method = "ols", approx="AR(1)",tol = 1e-7,
-    model=TRUE, X=FALSE, Y=FALSE,  centeredVcov = TRUE, weightsMatrix = NULL, data)
+    model=TRUE, X=FALSE, Y=FALSE,  centeredVcov = TRUE, weightsMatrix = NULL,
+    data, mustar = NULL)
 gmmWithConst(obj, which, value)
 }
 \arguments{
@@ -87,6 +88,17 @@ gmmWithConst(obj, which, value)
 \item{obj}{Object of class "gmm"}
 
 \item{eqConstFullVcov}{If FALSE, the constrained coefficients are assumed to be fixed and only the covariance of the unconstrained coefficients is computed. If TRUE, the covariance matrix of the full set of coefficients is computed.}
+
+\item{mustar}{If not null, it must be a vector with the number of
+  elements being equal to the number of moment conditions. In that case,
+  the vector is subtracted from the sample moment vector before
+  minimizing the objective function. It is useful to do a bootstrap
+  procedure.
+}
+
+\item{onlyCoefficients}{If set to \code{TRUE}, the function only returns
+  the coefficient estimates. It may be of interest when the standard
+  errors are not needed}
 
 \item{...}{More options to give to \code{\link{optim}}.}
 }
