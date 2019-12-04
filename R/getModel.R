@@ -62,7 +62,7 @@ getModel.sysGmm <- function(object, ...)
             typeDesc <- paste(typeDesc, " (Common Coefficients)")
         dat <- lapply(1:length(object$g), function(i) try(getDat(object$g[[i]], object$h[[i]], data = object$data,
                                                                  error=!object$commonCoef), silent=TRUE))
-        chk <- sapply(1:length(dat), function(i) class(dat[[i]]) == "try-error")
+        chk <- sapply(1:length(dat), function(i) any(class(dat[[i]]) == "try-error"))
         chk <- which(chk)
         mess <- vector()
         for (i in chk)

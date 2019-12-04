@@ -30,7 +30,7 @@ A data frame containing 9 variables.
 
 \source{
 "NSW Data Files" from Rajeev Dehejia's website. URL:
-\url{http://users.nber.org/~rdehejia/data/nswdata2.html}
+\url{http://users.nber.org/~rdehejia/data/.nswdata2.html}
 
 "National Supported Work Evaluation Study, 1975-1979: Public Use Files."
 from the Interuniversity Consortium for Political and Social

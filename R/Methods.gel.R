@@ -298,5 +298,32 @@ bread.gel <- function(x, ...)
   }
 
 
+getImpProb <- function(object, ...)
+    UseMethod("getImpProb")
+
+getImpProb.gel <- function(object, posProb=TRUE, normalize=TRUE,
+                           checkConv=FALSE, ...)
+    {
+        if (!normalize || (object$type == "CUE" && !posProb))
+            {
+                n <- NROW(object$gt)
+                pt <- -.rho(object$gt, object$lambda, type = object$type,
+                            derive = 1, k = object$k1/object$k2)/n
+                if (object$type == "CUE" && posProb)
+                    {
+                        eps <- -length(pt)*min(min(pt),0)
+                        pt <- (pt+eps/length(pt))/(1+eps)
+                    }
+                if (normalize)
+                    pt <- pt/sum(pt)
+            } else {
+                pt <- object$pt
+            }
+        if (checkConv)
+            attr(pt, "convergence") <- list(pt=sum(pt),
+                                            ptgt=colSums(pt*as.matrix(object$gt)))
+        pt
+    }
+
 
         

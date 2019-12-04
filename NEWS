@@ -8,6 +8,8 @@ o In previous versions, the HAC weighting matrix for linear models was computed 
   bwNeweyWest. The new version, takes it into account. It is not possible to obtain the same sandwich covariance matrix with gmm and OLS.
 o In previous versions, the weighting matrix and, as a result, the standard errors were based on the small sample adjusted vcovHAC for weakly dependent
   processes. The adjustment is not justified for GMM. The option adjust=FALSE is therefore added to vcovHAC in .myKernHAC()
+o Added a method getImpProb, which extract the implied probabilities. It allows  for negative probabilities as it often happens with CUE
+o lambda for CUE is solved analytically (it is minus the projection of gt on a vector of ones). The option RCue for optlam can be used to restrict the implied probabilities to be non-negative.
 
 Changes in version 1.6-1
 

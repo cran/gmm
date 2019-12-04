@@ -654,7 +654,7 @@ momentEstim.baseGmm.cue <- function(object, ...)
                     {
                         res <- try(gmm(P$allArg$g,P$allArg$x,P$t0,wmatrix="ident",
                                        optfct=P$optfct, ...))                      
-                        if(class(res)=="try-error")
+                        if(any(class(res)=="try-error"))
                             stop("Cannot get a first step estimate to compute the weights for the Kernel estimate of the covariance matrix; try different starting values")
                         w <- .weightFct(res$coefficients, x, P$vcov)
                         attr(x, "weight")$WSpec$sandwich$bw <- attr(w,"Spec")$bw
@@ -805,7 +805,7 @@ momentEstim.baseGel.modFormula <- function(object, ...)
             G <- P$gradv(z$coefficients, P$x, z$pt)
         allVcov <- try(.vcovGel(gt, G, P$k1, P$k2, P$bwVal, z$pt),
                        silent=TRUE)
-        if (class(allVcov) == "try-error")
+        if (any(class(allVcov) == "try-error"))
             {
                 z$vcov_par <- matrix(NA, length(z$coefficients), length(z$coefficients))
                 z$vcov_lambda <- matrix(NA, length(z$lambda), length(z$lambda))
@@ -905,7 +905,7 @@ momentEstim.baseGel.mod <- function(object, ...)
         z$G <- G
         allVcov <- try(.vcovGel(gt, G, P$k1, P$k2, P$bwVal, z$pt),
                          silent=TRUE)
-        if (class(allVcov) == "try-error")
+        if (any(class(allVcov) == "try-error"))
             {
                 z$vcov_par <- matrix(NA, length(z$coefficients), length(z$coefficients))
                 z$vcov_lambda <- matrix(NA, length(z$lambda), length(z$lambda))

@@ -2,13 +2,13 @@
 ### Encoding: UTF-8
 
 ###################################################
-### code chunk number 1: gmm_with_R.rnw:158-159
+### code chunk number 1: gmm_with_R.rnw:171-172
 ###################################################
 library(gmm)
 
 
 ###################################################
-### code chunk number 2: gmm_with_R.rnw:178-186
+### code chunk number 2: gmm_with_R.rnw:191-199
 ###################################################
 g1 <- function(tet,x)
         {
@@ -21,7 +21,7 @@ g1 <- function(tet,x)
 
 
 ###################################################
-### code chunk number 3: gmm_with_R.rnw:198-207
+### code chunk number 3: gmm_with_R.rnw:211-220
 ###################################################
 Dg <- function(tet,x)
         {
@@ -35,7 +35,7 @@ Dg <- function(tet,x)
 
 
 ###################################################
-### code chunk number 4: gmm_with_R.rnw:210-213
+### code chunk number 4: gmm_with_R.rnw:223-226
 ###################################################
 set.seed(123)
 n <- 200
@@ -43,25 +43,25 @@ x1 <- rnorm(n, mean = 4, sd = 2)
 
 
 ###################################################
-### code chunk number 5: gmm_with_R.rnw:216-217
+### code chunk number 5: gmm_with_R.rnw:229-230
 ###################################################
 print(res <- gmm(g1,x1,c(mu = 0, sig = 0), grad = Dg))
 
 
 ###################################################
-### code chunk number 6: gmm_with_R.rnw:220-221
+### code chunk number 6: gmm_with_R.rnw:233-234
 ###################################################
 summary(res)
 
 
 ###################################################
-### code chunk number 7: gmm_with_R.rnw:226-227
+### code chunk number 7: gmm_with_R.rnw:239-240
 ###################################################
 specTest(res)
 
 
 ###################################################
-### code chunk number 8: gmm_with_R.rnw:230-249
+### code chunk number 8: gmm_with_R.rnw:243-262
 ###################################################
 sim_ex <- function(n,iter)
     {
@@ -85,7 +85,7 @@ sim_ex <- function(n,iter)
 
 
 ###################################################
-### code chunk number 9: gmm_with_R.rnw:278-291
+### code chunk number 9: gmm_with_R.rnw:291-304
 ###################################################
 g2 <- function(theta,x)
 	{
@@ -103,7 +103,7 @@ g2 <- function(theta,x)
 
 
 ###################################################
-### code chunk number 10: gmm_with_R.rnw:294-299
+### code chunk number 10: gmm_with_R.rnw:307-312
 ###################################################
 library(stabledist)
 set.seed(345)
@@ -113,20 +113,20 @@ print(res <- gmm(g2,x2,t0))
 
 
 ###################################################
-### code chunk number 11: gmm_with_R.rnw:302-303
+### code chunk number 11: gmm_with_R.rnw:315-316
 ###################################################
 summary(res)
 
 
 ###################################################
-### code chunk number 12: gmm_with_R.rnw:306-308
+### code chunk number 12: gmm_with_R.rnw:319-321
 ###################################################
 res2 <- gmm(g2,x2,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
 summary(res2)
 
 
 ###################################################
-### code chunk number 13: gmm_with_R.rnw:313-318
+### code chunk number 13: gmm_with_R.rnw:326-331
 ###################################################
 data(Finance)
 x3 <- Finance[1:1500,"WMK"]
@@ -136,14 +136,14 @@ summary(res3)
 
 
 ###################################################
-### code chunk number 14: gmm_with_R.rnw:321-323
+### code chunk number 14: gmm_with_R.rnw:334-336
 ###################################################
 library(car)
 linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
 
 
 ###################################################
-### code chunk number 15: gmm_with_R.rnw:347-355
+### code chunk number 15: gmm_with_R.rnw:360-368
 ###################################################
 library(mvtnorm)
 set.seed(112233)
@@ -156,40 +156,40 @@ y <- 0.1*w + e[,2]
 
 
 ###################################################
-### code chunk number 16: gmm_with_R.rnw:358-360
+### code chunk number 16: gmm_with_R.rnw:371-373
 ###################################################
 h <- cbind(x4, x4^2, x4^3)
 g3 <- y~w
 
 
 ###################################################
-### code chunk number 17: gmm_with_R.rnw:379-380
+### code chunk number 17: gmm_with_R.rnw:392-393
 ###################################################
 summary(res <- gmm(g3,x=h))
 
 
 ###################################################
-### code chunk number 18: gmm_with_R.rnw:383-385
+### code chunk number 18: gmm_with_R.rnw:396-398
 ###################################################
 res2 <- gmm(g3,x=h,type='iterative',crit=1e-8,itermax=200)
 coef(res2)
 
 
 ###################################################
-### code chunk number 19: gmm_with_R.rnw:390-392
+### code chunk number 19: gmm_with_R.rnw:403-405
 ###################################################
 res3 <- gmm(g3,x=h,res2$coef,type='cue')
 coef(res3)
 
 
 ###################################################
-### code chunk number 20: gmm_with_R.rnw:395-396
+### code chunk number 20: gmm_with_R.rnw:408-409
 ###################################################
 confint(res3,level=.90)
 
 
 ###################################################
-### code chunk number 21: gmm_with_R.rnw:402-407
+### code chunk number 21: gmm_with_R.rnw:415-420
 ###################################################
 plot(w,y,main="LS vs GMM estimation")
 lines(w,fitted(res),col=2)
@@ -199,7 +199,7 @@ legend("topleft",c("Data","Fitted GMM","Fitted LS","True line"),pch=c(1,NA,NA,NA
 
 
 ###################################################
-### code chunk number 22: gmm_with_R.rnw:423-432
+### code chunk number 22: gmm_with_R.rnw:436-445
 ###################################################
 t <- 400
 set.seed(345)
@@ -213,7 +213,7 @@ summary(res)
 
 
 ###################################################
-### code chunk number 23: gmm_with_R.rnw:437-445
+### code chunk number 23: gmm_with_R.rnw:450-458
 ###################################################
 res2 <- gmm(g4,x=x5t[,4:7],kernel="Truncated")
 coef(res2)
@@ -226,7 +226,7 @@ coef(res5)
 
 
 ###################################################
-### code chunk number 24: gmm_with_R.rnw:448-452
+### code chunk number 24: gmm_with_R.rnw:461-465
 ###################################################
 diag(vcov(res2))^.5
 diag(vcov(res3))^.5
@@ -235,19 +235,19 @@ diag(vcov(res5))^.5
 
 
 ###################################################
-### code chunk number 25: gmm_with_R.rnw:460-461
+### code chunk number 25: gmm_with_R.rnw:473-474
 ###################################################
 plot(res,which=2)
 
 
 ###################################################
-### code chunk number 26: gmm_with_R.rnw:466-467
+### code chunk number 26: gmm_with_R.rnw:479-480
 ###################################################
 plot(res,which=3)
 
 
 ###################################################
-### code chunk number 27: gmm_with_R.rnw:479-490
+### code chunk number 27: gmm_with_R.rnw:492-503
 ###################################################
 data(Finance)
 r <- Finance[1:500,1:5]
@@ -263,21 +263,21 @@ linearHypothesis(res,R,c,test = "Chisq")
 
 
 ###################################################
-### code chunk number 28: gmm_with_R.rnw:493-495 (eval = FALSE)
+### code chunk number 28: gmm_with_R.rnw:506-508 (eval = FALSE)
 ###################################################
 ## test <- paste(names(coef(res)[1:5])," = 0",sep="")
 ## linearHypothesis(res,test)
 
 
 ###################################################
-### code chunk number 29: gmm_with_R.rnw:498-500
+### code chunk number 29: gmm_with_R.rnw:511-513
 ###################################################
 res2<-gmm(z~zm-1,cbind(1,zm))
 specTest(res2)
 
 
 ###################################################
-### code chunk number 30: gmm_with_R.rnw:511-517
+### code chunk number 30: gmm_with_R.rnw:524-530
 ###################################################
 g5 <- function(tet, x) {
      gmat <- (tet[1] + tet[2] * (1 + c(x[, 1]))) * (1 + x[, 2:6]) -  1
@@ -288,7 +288,7 @@ specTest(res_sdf)
 
 
 ###################################################
-### code chunk number 31: gmm_with_R.rnw:546-553
+### code chunk number 31: gmm_with_R.rnw:559-566
 ###################################################
 g6 <- function(theta, x) {
      t <- length(x)
@@ -300,7 +300,7 @@ g6 <- function(theta, x) {
 
 
 ###################################################
-### code chunk number 32: gmm_with_R.rnw:556-564
+### code chunk number 32: gmm_with_R.rnw:569-577
 ###################################################
 rf <- Finance[,"rf"]
 rf <- ((1 + rf/100)^(365) - 1) * 100
@@ -313,7 +313,7 @@ coef(res_rf)
 
 
 ###################################################
-### code chunk number 33: gmm_with_R.rnw:578-581 (eval = FALSE)
+### code chunk number 33: gmm_with_R.rnw:591-594 (eval = FALSE)
 ###################################################
 ## y <- rbind(y1-mean(y1),y2-mean(y2),y3-mean(y3))
 ## x <- rbind(x1-mean(x1),x2-mean(x2),x3-mean(x3))
@@ -321,7 +321,7 @@ coef(res_rf)
 
 
 ###################################################
-### code chunk number 34: gmm_with_R.rnw:588-591 (eval = FALSE)
+### code chunk number 34: gmm_with_R.rnw:601-604 (eval = FALSE)
 ###################################################
 ## y <- rbind(y1,y2,y3)
 ## x <- rbind(x1,x2,x3)
@@ -329,7 +329,7 @@ coef(res_rf)
 
 
 ###################################################
-### code chunk number 35: gmm_with_R.rnw:602-605 (eval = FALSE)
+### code chunk number 35: gmm_with_R.rnw:615-618 (eval = FALSE)
 ###################################################
 ## gt <- g(t0, x)
 ## V <- kernHAC(lm(gt~1),sandwich = FALSE)
@@ -337,26 +337,26 @@ coef(res_rf)
 
 
 ###################################################
-### code chunk number 36: gmm_with_R.rnw:620-622
+### code chunk number 36: gmm_with_R.rnw:633-635
 ###################################################
 print(res<-gmm(g4,x5t[,4:7],wmatrix="ident"))
 diag(vcovHAC(res))^.5
 
 
 ###################################################
-### code chunk number 37: gmm_with_R.rnw:625-626
+### code chunk number 37: gmm_with_R.rnw:638-639
 ###################################################
 diag(vcov(res))^.5
 
 
 ###################################################
-### code chunk number 38: gmm_with_R.rnw:629-630
+### code chunk number 38: gmm_with_R.rnw:642-643
 ###################################################
 print(res<-gmm(g4,x5t[,4:7], weightsMatrix = diag(5)))
 
 
 ###################################################
-### code chunk number 39: gmm_with_R.rnw:712-715
+### code chunk number 39: gmm_with_R.rnw:725-728
 ###################################################
 tet0 <- c(mu = mean(x1), sig = sd(x1))
 res_el <- gel(g1,x1,tet0)
@@ -364,28 +364,28 @@ summary(res_el)
 
 
 ###################################################
-### code chunk number 40: gmm_with_R.rnw:720-722
+### code chunk number 40: gmm_with_R.rnw:733-735
 ###################################################
 res_et <- gel(g1,x1,tet0,type="ET")
 coef(res_et)
 
 
 ###################################################
-### code chunk number 41: gmm_with_R.rnw:724-726
+### code chunk number 41: gmm_with_R.rnw:737-739
 ###################################################
 res_cue <- gel(g1,x1,tet0,type="CUE")
 coef(res_cue)
 
 
 ###################################################
-### code chunk number 42: gmm_with_R.rnw:729-731
+### code chunk number 42: gmm_with_R.rnw:742-744
 ###################################################
 res_etel <- gel(g1,x1,c(mu=1,sig=1),type="ETEL")
 coef(res_etel)
 
 
 ###################################################
-### code chunk number 43: gmm_with_R.rnw:756-759
+### code chunk number 43: gmm_with_R.rnw:769-772
 ###################################################
 tet0 <- gmm(g4,x=x5t[,4:7],wmatrix="ident")$coef
 res <- gel(g4,x=x5t[,4:7],tet0,smooth=TRUE,kernel="Truncated")
@@ -393,33 +393,33 @@ summary(res)
 
 
 ###################################################
-### code chunk number 44: gmm_with_R.rnw:762-763
+### code chunk number 44: gmm_with_R.rnw:775-776
 ###################################################
 specTest(res)
 
 
 ###################################################
-### code chunk number 45: gmm_with_R.rnw:767-768
+### code chunk number 45: gmm_with_R.rnw:780-781
 ###################################################
 plot(res,which=4)
 
 
 ###################################################
-### code chunk number 46: gmm_with_R.rnw:772-774 (eval = FALSE)
+### code chunk number 46: gmm_with_R.rnw:785-787 (eval = FALSE)
 ###################################################
 ## ui=cbind(0,-1,-1)
 ## ci <- -1
 
 
 ###################################################
-### code chunk number 47: gmm_with_R.rnw:777-779 (eval = FALSE)
+### code chunk number 47: gmm_with_R.rnw:790-792 (eval = FALSE)
 ###################################################
 ## res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",
 ## constraint=TRUE, ui=ui,ci=ci)
 
 
 ###################################################
-### code chunk number 48: gmm_with_R.rnw:784-787 (eval = FALSE)
+### code chunk number 48: gmm_with_R.rnw:797-800 (eval = FALSE)
 ###################################################
 ## res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim")
 ## res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim",

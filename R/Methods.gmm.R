@@ -55,7 +55,7 @@ summary.tsls <- function(object, vcov = NULL, ...)
             {
 		fstat <- vector()
                 fsRes <- object$fsRes
-                if (class(fsRes) == "listof")
+                if (class(fsRes)[1] == "listof")
                     {
                         nendo <- length(fsRes)
                     } else {
@@ -294,7 +294,7 @@ bread.gmm <- function(x, ...)
     {
         GWG <- crossprod(x$G, x$w %*% x$G)
         b <- try(solve(GWG), silent = TRUE)
-        if (class(b) == "try-error")
+        if (any(class(b) == "try-error"))
             stop("The bread matrix is singular")
         return(b)
     }

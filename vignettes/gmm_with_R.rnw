@@ -20,18 +20,31 @@
 \Plaintitle{Computing Generalized Method of Moments and Generalized Empirical Likelihood with R} 
 \Shorttitle{GMM and GEL with R} 
 
-\Abstract{This paper shows how to estimate models by the generalized method of moments and the generalized empirical likelihood using the \proglang{R} package \pkg{gmm}. A brief discussion is offered on the theoretical aspects of both methods and the functionality of the package is presented through several examples in economics and finance. It is a modified version of \cite{chausse10} published in the Journal of Statistical Software. It has been adapted to the version 1.4-0.  
-}
-\Keywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood, \proglang{R}}
-\Plainkeywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood, R}
+\Abstract{This paper shows how to estimate models by the generalized
+  method of moments and the generalized empirical likelihood using the
+  \proglang{R} package \pkg{gmm}. A brief discussion is offered on the
+  theoretical aspects of both methods and the functionality of the
+  package is presented through several examples in economics and
+  finance. It is a modified version of \cite{chausse10} published in
+  the Journal of Statistical Software. It has been adapted to the
+  version 1.4-0. \textbf{Notice that the maintenance of the package is
+    converging to zero. The new \pkg{gmm4} package, available on
+    RForge, will soon replace the \pkg{gmm} package.} }
+
+\Keywords{generalized empirical likelihood,
+  generalized method of moments, empirical likelihood, continuous
+  updated estimator, exponential tilting, exponentially tilted
+  empirical likelihood, \proglang{R}} \Plainkeywords{generalized
+  empirical likelihood, generalized method of moments, empirical
+  likelihood, continuous updated estimator, exponential tilting,
+  exponentially tilted empirical likelihood, R}
 
 \Address{
   Pierre Chaus\'e\\
   Department of Economics\\
   University of Waterloo\\
   Waterloo (Ontario), Canada\\
-  E-mail: \email{pierre.chausse@uqam.ca}\\
-  URL: \url{http://www.er.uqam.ca/nobel/k34115/}
+  E-mail: \email{pchausse@uwaterloo.ca}
 }
 \begin{document}
 
@@ -606,7 +619,7 @@ W <- solve(V)
 @
 where $t0$ is any consistent estimate. As long as the optimal matrix is used, the covariance matrix of the coefficients can be estimated as follows:
 \[
-(\hat{G}'\hat{V}\hat{G})^{-1}/n,
+(\hat{G}'W\hat{G})^{-1}/n \equiv (\hat{G}'\hat{V}^{-1}\hat{G})^{-1}/n,
 \]
 where $\hat{G}=d\bar{g}(\hat{\theta})/d\theta$ and $\hat{V}$ is obtained using \code{kernHAC()}. It is not a sandwich covariance matrix and is computed using the \code{vcov()} method included in \pkg{gmm}. However, if any other weighting matrix is used, say $W$, the estimated covariance matrix of the coefficients must then be estimated as follows: 
 \[

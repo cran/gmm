@@ -56,7 +56,7 @@ FinRes.baseGmm.res <- function(z, object, ...)
         if (P$vcov == "TrueFixed") 
             {
                 z$vcov=try(solve(crossprod(G, P$weightsMatrix) %*% G)/n, silent = TRUE)
-                if(class(z$vcov) == "try-error")
+                if(any(class(z$vcov) == "try-error"))
                     {
                         z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
                         warning("The covariance matrix of the coefficients is singular")
@@ -69,7 +69,7 @@ FinRes.baseGmm.res <- function(z, object, ...)
                     } else {                                                
                         z$vcov <- try(solve(crossprod(G, solve(v, G)))/n, silent = TRUE)
                     }
-                if(class(z$vcov) == "try-error")
+                if(any(class(z$vcov) == "try-error"))
                     {
                         z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
                         warning("The covariance matrix of the coefficients is singular")
@@ -84,7 +84,7 @@ FinRes.baseGmm.res <- function(z, object, ...)
                 } else {
                     T1 <- try(solve(t(G)%*%w%*%G,t(G)%*%w), silent = TRUE)
                 }
-                if(class(T1) == "try-error")
+                if(any(class(T1) == "try-error"))
                     {
                         z$vcov <- matrix(Inf,length(z$coef),length(z$coef))
                         warning("The covariance matrix of the coefficients is singular")
@@ -102,7 +102,7 @@ FinRes.baseGmm.res <- function(z, object, ...)
                         z$w <- diag(ncol(z$gt))
                     } else {
                         z$w <- try(solve(v), silent = TRUE)
-                        if(class(z$w) == "try-error")
+                        if(any(class(z$w) == "try-error"))
                             warning("The covariance matrix of the moment function is singular")
                     }
             } else {
@@ -135,14 +135,14 @@ FinRes.sysGmm.res <- function(z, object, ...)
         if (P$vcov == "TrueFixed") 
             {
                 z$vcov=try(solve(crossprod(G, P$weightsMatrix) %*% G)/n, silent = TRUE)
-                if(class(z$vcov) == "try-error")
+                if(any(class(z$vcov) == "try-error"))
                     {
                         z$vcov <- matrix(Inf,nk,nk)
                         warning("The covariance matrix of the coefficients is singular")
                     }
             } else if ( (is.null(P$weightsMatrix)) & (P$wmatrix != "ident") ) {
                 z$vcov <- try(solve(crossprod(G, solve(v, G)))/n, silent = TRUE)
-                if(class(z$vcov) == "try-error")
+                if(any(class(z$vcov) == "try-error"))
                     {
                         z$vcov <- matrix(Inf,nk,nk)
                         warning("The covariance matrix of the coefficients is singular")
@@ -157,7 +157,7 @@ FinRes.sysGmm.res <- function(z, object, ...)
                 } else {
                     T1 <- try(solve(t(G)%*%w%*%G,t(G)%*%w), silent = TRUE)
                 }
-                if(class(T1) == "try-error")
+                if(any(class(T1) == "try-error"))
                     {
                         z$vcov <- matrix(Inf, nk, nk)
                         warning("The covariance matrix of the coefficients is singular")
@@ -177,7 +177,7 @@ FinRes.sysGmm.res <- function(z, object, ...)
                         z$w <- .weightFct_Sys(z$coefficient, x, "ident")
                     } else {
                         z$w <- try(solve(v), silent = TRUE)
-                        if(class(z$w) == "try-error")
+                        if(any(class(z$w) == "try-error"))
                             warning("The covariance matrix of the moment function is singular")
                     }
             } else {

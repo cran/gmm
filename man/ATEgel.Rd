@@ -12,13 +12,13 @@ balanced by GEL.
 \usage{
 ATEgel(g, balm, w=NULL, y=NULL, treat=NULL, tet0=NULL,momType=c("bal","balSample","ATT"),
                    popMom = NULL, family=c("linear","logit", "probit"),
-                   type = c("EL", "ET", "CUE", "ETEL", "HD", "ETHD"),
+                   type = c("EL", "ET", "CUE", "ETEL", "HD", "ETHD", "RCUE"),
                    tol_lam = 1e-9, tol_obj = 1e-9, tol_mom = 1e-9, maxiterlam = 100,
                    optfct = c("optim", "nlminb"), 
                    optlam = c("nlminb", "optim", "iter", "Wu"), data=NULL,
                    Lambdacontrol = list(),
                    model = TRUE, X = FALSE, Y = FALSE, ...)
-checkConv(obj, tolConv=1e-4, verbose=TRUE)
+checkConv(obj, tolConv=1e-4, verbose=TRUE, ...)
 }
 \arguments{
 \item{g}{A formula as \code{y~z}, where code{y} is the response and
@@ -64,32 +64,51 @@ checkConv(obj, tolConv=1e-4, verbose=TRUE)
   "CUE" for continuous updated estimator, "ETEL" for exponentially
   tilted empirical likelihood of Schennach(2007), "HD" for Hellinger
   Distance of Kitamura-Otsu-Evdokimov (2013), and "ETHD" for the
-  exponentially tilted Hellinger distance of Antoine-Dovonon (2015).}
+  exponentially tilted Hellinger distance of Antoine-Dovonon
+  (2015). "RCUE" is a restricted version of "CUE" in which the
+  probabilities are bounded below by zero. In that case, an analytical
+  Kuhn-Tucker method is used to find the solution.}
 
-\item{tol_lam}{Tolerance for \eqn{\lambda} between two iterations. The algorithm stops when \eqn{\|\lambda_i -\lambda_{i-1}\|} reaches \code{tol_lamb} (see \code{\link{getLamb}}) }
+\item{tol_lam}{Tolerance for \eqn{\lambda} between two iterations. The
+  algorithm stops when \eqn{\|\lambda_i -\lambda_{i-1}\|} reaches
+  \code{tol_lamb} (see \code{\link{getLamb}}) }
 
-\item{maxiterlam}{The algorithm to compute \eqn{\lambda} stops if there is no convergence after "maxiterlam" iterations (see \code{\link{getLamb}}).}
+\item{maxiterlam}{The algorithm to compute \eqn{\lambda} stops if there
+  is no convergence after "maxiterlam" iterations (see
+  \code{\link{getLamb}}).}
 
-\item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{getLamb}}).}
+\item{tol_obj}{Tolerance for the gradiant of the objective function to
+  compute \eqn{\lambda} (see \code{\link{getLamb}}).}
 
 \item{optfct}{Algorithm used for the parameter estimates}
 
-\item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
+\item{tol_mom}{It is the tolerance for the moment condition
+  \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where
+  \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It
+  adds a penalty if the solution diverges from its goal.}
 
 \item{optlam}{Algorithm used to solve for the lagrange multiplier in
-  \code{\link{getLamb}}. The algorithm Wu is only for \code{type="EL"}. }
+  \code{\link{getLamb}}. The algorithm Wu is only for
+  \code{type="EL"}. The value of \code{optlam} is ignored for "CUE"
+  because in that case, the analytical solution exists.}
 
 \item{data}{A data.frame or a matrix with column names (Optional). }
 
-\item{Lambdacontrol}{Controls for the optimization of the vector of Lagrange multipliers used by either \code{\link{optim}}, \code{\link{nlminb}} or \code{\link{constrOptim}}}
+\item{Lambdacontrol}{Controls for the optimization of the vector of
+  Lagrange multipliers used by either \code{\link{optim}},
+  \code{\link{nlminb}} or \code{\link{constrOptim}}}
 
-\item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
+\item{model, X, Y}{logicals.  If \code{TRUE} the corresponding
+  components of the fit (the model frame, the model matrix, the response)
+  are returned if g is a formula.}
 
 \item{verbose}{If TRUE, a summary of the convergence is printed}
 
 \item{tolConv}{The tolerance for comparing moments between groups}
 
-\item{...}{More options to give to \code{\link{optim}} or \code{\link{nlminb}}.}
+\item{...}{More options to give to \code{\link{optim}} or
+  \code{\link{nlminb}}. In \code{checkConv}, they are options passed to
+  \code{\link{getImpProb}}.}
 
 }
 

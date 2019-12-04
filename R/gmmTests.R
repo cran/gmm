@@ -81,7 +81,7 @@
 
 KTest <- function(obj, theta0=NULL, alphaK = 0.04, alphaJ = 0.01)
 	{
-	if (class(obj) != "gmm")
+	if (class(obj)[1] != "gmm")
 		stop("KTest is only for gmm type objects")
 
 	if (!is.null(attr(obj$dat,"eqConst")))

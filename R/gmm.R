@@ -86,7 +86,7 @@ evalGmm <- function(g, x, t0, tetw=NULL, gradv=NULL, wmatrix = c("optimal","iden
 
 tsls <- function(g,x,data)
     {
-        if(class(g) != "formula")
+        if(class(g)[1] != "formula")
             stop("2SLS is for linear models expressed as formula only")
         ans <- gmm(g,x,data=data,vcov="iid", TypeGmm="tsls")
         ans$met <- "Two Stage Least Squares"
