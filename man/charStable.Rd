@@ -22,9 +22,9 @@ The function returns the vector \eqn{\Psi(\theta,\tau,pm)} defined as \eqn{E(e^{
 
 
 \references{
-Nolan J. P. (2009), Stable Disttributions.
-  \emph{Math/Stat Department, American University}.
-  URL \url{http://academic2.american.edu/~jpnolan/stable/stable.html}.
+Nolan J. P. (2020), Univariate Stable Distributions - Models for Heavy Tailed Data.
+  \emph{Springer Series in Operations Research and Financial Engineering}.
+  URL \url{https://edspace.american.edu/jpnolan/stable/}.
 }
 
 \examples{

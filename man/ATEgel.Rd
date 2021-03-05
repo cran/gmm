@@ -148,12 +148,10 @@ likelihood method in survey sampling.
 
 Chausse, P. (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
  \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
- URL \url{http://www.jstatsoft.org/v34/i11/}.
+ URL \url{https://www.jstatsoft.org/v34/i11/}.
 
-Chausse, P and Luta, G. (2017) Estimating the Average Treatment Effect
-in Quasi-Experimental Studies using the Generalized Empirical
-Likelihood, Work in progress. 
-
+Chausse, P. and Giurcanu, M. and Luta, G. (2021) Estimating the Average Causal Effect
+ using Generalized Empirical Likelihood Methods, Work in progress. 
 }
 
 \examples{

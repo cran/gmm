@@ -196,11 +196,11 @@ likelihood method in survey sampling.
 
 Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
 \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
-URL \url{http://www.jstatsoft.org/v16/i09/}.
+URL \url{https://www.jstatsoft.org/v16/i09/}.
 
 Chausse (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
  \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
- URL \url{http://www.jstatsoft.org/v34/i11/}.
+ URL \url{https://www.jstatsoft.org/v34/i11/}.
 
 Chausse (2011), Generalized Empirical likelihood for a continumm of moment conditions.
  \emph{Working Paper}, 

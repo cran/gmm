@@ -36,7 +36,7 @@ A data frame containing 24 time series. Dates are reported as rownames(). In the
 }
 }
 
-\source{Yahoo Finance and \url{http://mba.tuck.dartmouth.edu/pages/faculty/ken.french}}
+\source{Yahoo Finance and \url{https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/}}
 
 
 \keyword{datasets}

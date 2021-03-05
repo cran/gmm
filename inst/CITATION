@@ -8,12 +8,12 @@ citEntry(entry = "Article",
   volume       = "34",
   number       = "11",
   pages        = "1--35",
-  url          = "http://www.jstatsoft.org/v34/i11/",
+  url          = "https://www.jstatsoft.org/v34/i11/",
 
   textVersion  =
   paste("Pierre Chausse (2010).",
         "Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.",
         "Journal of Statistical Software, 34(11), 1-35.",
-        "URL http://www.jstatsoft.org/v34/i11/.")
+        "URL https://www.jstatsoft.org/v34/i11/.")
 )
 

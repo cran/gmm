@@ -1,62 +1,77 @@
-\documentclass[article, nojss]{jss}
+\documentclass[11pt,letterpaper]{article}
 
+\usepackage{amsthm}
+\usepackage[hmargin=2cm,vmargin=2.5cm]{geometry}
 \newtheorem{theorem}{Theorem}
 \newtheorem{col}{Corollary}
 \newtheorem{lem}{Lemma}
+\usepackage[utf8x]{inputenc}
 \newtheorem{ass}{Assumption}
-
-\usepackage[active]{srcltx}
 \usepackage{amsmath}
+\usepackage{verbatim}
+\usepackage[round]{natbib}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{ucs}
-\usepackage[utf8x]{inputenc}
-%% need no \usepackage{Sweave.sty}
-\SweaveOpts{keep.source=TRUE} 
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black
+}
+\bibliographystyle{plainnat}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\diag}{\mathrm{diag}}
+\newcommand{\Prob}{\mathrm{Pr}}
+\newcommand{\Var}{\mathrm{Var}}
+\let\proglang=\textsf
+\newcommand{\pkg}[1]{{\fontseries{m}\fontseries{b}\selectfont #1}}
+\newcommand{\Vect}{\mathrm{Vec}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\conP}{\overset{p}{\to}}
+\newcommand{\conD}{\overset{d}{\to}}
+\newcommand\Real{ \mathbb{R} }
+\newcommand\Complex{ \mathbb{C} }
+\newcommand\Natural{ \mathbb{N} }
+\newcommand\rv{{\cal R}}
+\newcommand\Q{\mathbb{Q}}
+\newcommand\PR{{\cal R}}
+\newcommand\T{{\cal T}}
+\newcommand\Hi{{\cal H}}
+\newcommand\La{{\cal L}}
+\newcommand\plim{plim}
+\renewcommand{\epsilon}{\varepsilon}
+
+
+\begin{document}
 
 \author{Pierre Chauss\'e}
 \title{Computing Generalized Method of Moments and Generalized Empirical Likelihood with \proglang{R}}
-\Plainauthor{Pierre Chauss\'e}
-\Plaintitle{Computing Generalized Method of Moments and Generalized Empirical Likelihood with R} 
-\Shorttitle{GMM and GEL with R} 
+\maketitle
 
-\Abstract{This paper shows how to estimate models by the generalized
+\abstract{This paper shows how to estimate models by the generalized
   method of moments and the generalized empirical likelihood using the
-  \proglang{R} package \pkg{gmm}. A brief discussion is offered on the
+  \proglang{R} package \textbf{gmm}. A brief discussion is offered on the
   theoretical aspects of both methods and the functionality of the
   package is presented through several examples in economics and
   finance. It is a modified version of \cite{chausse10} published in
   the Journal of Statistical Software. It has been adapted to the
   version 1.4-0. \textbf{Notice that the maintenance of the package is
-    converging to zero. The new \pkg{gmm4} package, available on
-    RForge, will soon replace the \pkg{gmm} package.} }
+    converging to zero. The new \pkg{momentfit} package, available on
+    CRAN, will soon replace the \pkg{gmm} package.}}
 
-\Keywords{generalized empirical likelihood,
-  generalized method of moments, empirical likelihood, continuous
-  updated estimator, exponential tilting, exponentially tilted
-  empirical likelihood, \proglang{R}} \Plainkeywords{generalized
-  empirical likelihood, generalized method of moments, empirical
-  likelihood, continuous updated estimator, exponential tilting,
-  exponentially tilted empirical likelihood, R}
-
-\Address{
-  Pierre Chaus\'e\\
-  Department of Economics\\
-  University of Waterloo\\
-  Waterloo (Ontario), Canada\\
-  E-mail: \email{pchausse@uwaterloo.ca}
-}
-\begin{document}
-
-\SweaveOpts{engine=R,eps=FALSE}
 %\VignetteIndexEntry{Computing Generalized Empirical Likelihood and Generalized Method of Moments with R}
 %\VignetteDepends{gmm,mvtnorm,stabledist, car, MASS, timeDate, timeSeries}
 %\VignetteKeywords{generalized empirical likelihood, generalized method of moments, empirical likelihood, continuous updated estimator, exponential tilting, exponentially tilted empirical likelihood}
 %\VignettePackage{gmm}
+%\VignetteEngine{knitr::knitr}
+<<echo=FALSE>>=
+library(knitr)
+opts_chunk$set(size='footnotesize', fig.height=5, out.width='70%')
+@ 
 
-\newcommand\R{ \mathbb{R} }
-\newcommand\C{ \mathbb{C} }
-\newcommand\rv{{\cal R}}
 
 \section{Introduction}
 
@@ -66,7 +81,7 @@ Although GMM has good potential theoretically, several applied studies have show
 
 Asymptotic properties of GMM and generalized empirical likelihood (GEL) are now well established in the econometric literature. \cite{newey-smith04} and \cite{anatolyev05} have compared their second order asymptotic properties. In particular, they show that the second order bias of the empirical likelihood (EL) estimator, which is a special case of GEL, is smaller than the bias of the estimators from the three GMM methods. Furthermore, as opposed to GMM, the bias does not increase with the number of moment conditions. Since the efficiency improves when the number of conditions goes up, this is a valuable property. However, these are only asymptotic results which do not necessarily hold in small sample as shown by \cite{guggenberger08}. In order to analyze small sample properties, we have to rely on Monte Carlo simulations. However, Monte Carlo studies on methods such as GMM or GEL depend on complicated algorithms which are often home made. Because of that, results from such studies are not easy to reproduce. The solution should be to use a common tool which can be tested and improved upon by the users. Because it is open source, \proglang{R} offers a perfect platform for such tool.
 
-The \pkg{gmm} package allows to estimate models using the three GMM methods, the empirical likelihood and the exponential tilting, which belong to the family of GEL methods, and the exponentially tilted empirical likelihood which was proposed by \cite{schennach07}, Also it offers several options to estimate the covariance matrix of the moment conditions. Users can also choose between \code{optim}, if no restrictions are required on the coefficients of the model to be estimated, and either \code{nlminb} or \code{constrOptim} for constrained optimizations. The results are presented in such a way that \proglang{R} users who are familiar with \code{lm} objects, find it natural. In fact, the same methods are available for \code{gmm} and \code{gel} objects produced by the estimation procedures.  
+The \pkg{gmm} package allows to estimate models using the three GMM methods, the empirical likelihood and the exponential tilting, which belong to the family of GEL methods, and the exponentially tilted empirical likelihood which was proposed by \cite{schennach07}, Also it offers several options to estimate the covariance matrix of the moment conditions. Users can also choose between \textit{optim}, if no restrictions are required on the coefficients of the model to be estimated, and either \textit{nlminb} or \textit{constrOptim} for constrained optimizations. The results are presented in such a way that \proglang{R} users who are familiar with \textit{lm} objects, find it natural. In fact, the same methods are available for \textit{gmm} and \textit{gel} objects produced by the estimation procedures.  
 
 The paper is organized as follows. Section 2 presents the theoretical aspects of the GMM method along with several examples in economics and finance. Through these examples, the functionality of the \pkg{gmm} packages is presented in details. Section 3 presents the GEL method with some of the examples used in section 2. Section 4 concludes and Section 5 gives the computational details of the package.
 
@@ -74,7 +89,7 @@ The paper is organized as follows. Section 2 presents the theoretical aspects of
 
 This section presents an overview of the GMM method. It is intended to help the users understand the options that the \pkg{gmm} package offers. For those who are not familiar with the method and require more details, see \cite{hansen82} and \cite{hansen-heaton-yaron96} for the method itself, \cite{newey-west94} and \cite{andrews91} for the choice of the covariance matrix or \cite{hamilton94}.
  
-We want to estimate a vector of parameters $\theta_0 \in \R^p$ from a model based on the following $q\times 1$ vector of unconditional moment conditions:
+We want to estimate a vector of parameters $\theta_0 \in \Real^p$ from a model based on the following $q\times 1$ vector of unconditional moment conditions:
 \begin{equation}\label{mcond}
 E[g(\theta_0,x_i)] = 0 ,
 \end{equation}
@@ -172,11 +187,11 @@ The \pkg{gmm} package can be loaded the usual way.
 library(gmm)
 @
 
-The main function is \code{gmm()} which creates an object of class \code{gmm}. Many options are available but in many cases they can be set to their default values. They are explained in details below through examples. The main arguments are \code{g} and \code{x}. For a linear model, \code{g} is a formula like \code{y~z1+z2} and \code{x} the matrix of instruments. In the nonlinear case, they are respectively the function $g(\theta,x_i)$ and its argument. The available methods are \code{coef}, \code{vcov}, \code{summary}, \code{residuals}, \code{fitted.values}, \code{plot}, \code{confint}. The model and data in a \code{data.frame} format can be extracted by the generic function \code{model.frame}. 
+The main function is \textit{gmm()} which creates an object of class \textit{gmm}. Many options are available but in many cases they can be set to their default values. They are explained in details below through examples. The main arguments are \textit{g} and \textit{x}. For a linear model, \textit{g} is a formula like \textit{y~z1+z2} and \textit{x} the matrix of instruments. In the nonlinear case, they are respectively the function $g(\theta,x_i)$ and its argument. The available methods are \textit{coef}, \textit{vcov}, \textit{summary}, \textit{residuals}, \textit{fitted.values}, \textit{plot}, \textit{confint}. The model and data in a \textit{data.frame} format can be extracted by the generic function \textit{model.frame}. 
 
 \subsection{Estimating the parameters of a normal distribution}
 
- This example\footnote{Thanks to Dieter Rozenich for his suggestion.}, is not something we want to do in practice, but its simplicity allows us to understand how to implement the \code{gmm()} procedure by providing the gradient of $g(\theta,x_i)$. It is also a good example of the weakness of GMM when the moment conditions are not sufficiently informative. In fact, the ML estimators of the mean and the variance of a normal distribution are more efficient because the likelihood carries more information than few moment conditions.  
+ This example\footnote{Thanks to Dieter Rozenich for his suggestion.}, is not something we want to do in practice, but its simplicity allows us to understand how to implement the \textit{gmm()} procedure by providing the gradient of $g(\theta,x_i)$. It is also a good example of the weakness of GMM when the moment conditions are not sufficiently informative. In fact, the ML estimators of the mean and the variance of a normal distribution are more efficient because the likelihood carries more information than few moment conditions.  
 
 For the two parameters of a normal distribution $(\mu,\sigma)$ we have the following vector of moment conditions:
 \[
@@ -225,17 +240,17 @@ set.seed(123)
 n <- 200
 x1 <- rnorm(n, mean = 4, sd = 2)
 @
-We then run \code{gmm} using the starting values $(\mu_0,\sigma^2_0)=(0,0)$
+We then run \textit{gmm} using the starting values $(\mu_0,\sigma^2_0)=(0,0)$
 <<>>=
 print(res <- gmm(g1,x1,c(mu = 0, sig = 0), grad = Dg))
 @
-The \code{summary} method prints more results from the estimation:
+The \textit{summary} method prints more results from the estimation:
 <<>>=
 summary(res)
 @
 The section "Initial values of the coefficients" shows the first step estimates used to either compute the weighting matrix in the 2-step GMM or the fixed bandwidth in CUE or iterative GMM.
 
-The J-test of over-identifying restrictions can also be extracted by using the method \code{specTest}:
+The J-test of over-identifying restrictions can also be extracted by using the method \textit{specTest}:
 <<>>=
 specTest(res)
 @
@@ -261,7 +276,7 @@ sim_ex <- function(n,iter)
     return(list(bias=bias,Variance=Var,MSE=MSE))
     }
 @
-The following results can be reproduced with $n=50$, $iter=2000$ and by setting \code{set.seed(345)}:
+The following results can be reproduced with $n=50$, $iter=2000$ and by setting \textit{set.seed(345)}:
 \begin{center}
 \begin{tabular}{|c|c|c|c||c|c|c|} \hline
 &\multicolumn{3}{c||}{$\mu$}&\multicolumn{3}{c}{$\sigma$} \\ \hline
@@ -273,21 +288,23 @@ ML& 0.0021  &0.0823  &  0.0822 & -0.0349 & 0.0411& 0.0423 \\ \hline
 
 \subsection{Estimating the parameters of a stable distribution}
 
-The previous example showed that ML should be used when the true distribution is known. However, when the density does not have a closed form expression, we have to consider other alternatives. \cite{garcia-renault-veredas06} propose to use indirect inference and perform a numerical study to compare it with several other methods. One of them is GMM for a continuum of moment conditions and was suggested by \cite{carrasco-florens02}. It uses the fact that the characteristic function $E(e^{ix_i\tau})$, where $i$ is the imaginary number and $\tau\in\R$, has a closed form expression (for more details on stable distribution, see \cite{nolan09}). The \pkg{gmm} package does not yet deal with continuum of moment conditions but we can choose a certain grid $\{\tau_1,..., \tau_q\}$ over a given interval and estimate the parameters using the following moment conditions:
+The previous example showed that ML should be used when the true distribution is known. However, when the density does not have a closed form expression, we have to consider other alternatives. \cite{garcia-renault-veredas06} propose to use indirect inference and perform a numerical study to compare it with several other methods. One of them is GMM for a continuum of moment conditions and was suggested by \cite{carrasco-florens02}. It uses the fact that the characteristic function $E(e^{ix_i\tau})$, where $i$ is the imaginary number and $\tau\in\Real$, has a closed form expression (for more details on stable distribution, see \cite{nolan09}). The \pkg{gmm} package does not yet deal with continuum of moment conditions but we can choose a certain grid $\{\tau_1,..., \tau_q\}$ over a given interval and estimate the parameters using the following moment conditions:
 \[
 E\left[e^{ix_i\tau_l}-\Psi(\theta;\tau_l) \right]=0~~\mbox{for}~~l=1,...,q~,
 \]
-where $\Psi(\theta;\tau_l)$ is the characteristic function. There is more than one way to define a stable distribution and it depends on the choice of parametrization. We will follow the notation of \cite{nolan09} and consider stable distributions $S(\alpha,\beta,\gamma,\delta;1)$, where $\alpha\in (0,2]$ is the characteristic exponent and $\beta\in[-1,1]$, $\gamma>0$ and $\delta\in\R$ are respectively the skewness, the scale and the location parameters. The last argument defines which parametrization we use. The \pkg{stabledist} package of \cite{stabledist} offers a function to generate random variables from stable distributions and uses the same notation. This parametrization implies that:
+where $\Psi(\theta;\tau_l)$ is the characteristic function. There is more than one way to define a stable distribution and it depends on the choice of parametrization. We will follow the notation of \cite{nolan09} and consider stable distributions $S(\alpha,\beta,\gamma,\delta;1)$, where $\alpha\in (0,2]$ is the characteristic exponent and $\beta\in[-1,1]$, $\gamma>0$ and $\delta\in\Real$ are respectively the skewness, the scale and the location parameters. The last argument defines which parametrization we use. The \pkg{stabledist} package of \cite{stabledist} offers a function to generate random variables from stable distributions and uses the same notation. This parametrization implies that:
 \[
 \Psi(\theta;\tau_l) = 
 \left\{
 \begin{array}{lcr}
-\exp{(-\gamma^\alpha|\tau_l|^\alpha[1-i\beta(\tan{\frac{\pi\alpha}{2}})(\text{sign}(\tau_l))] + i\delta \tau_l)} &\mbox{for}&\alpha\neq 1\\
-\exp{(-\gamma|\tau_l|[1+i\beta\frac{2}{\pi}(\text{sign}(\tau_l))\log{|\tau_l|}] + i\delta \tau_l)} &\mbox{for}&\alpha= 1\\
+\exp{(-\gamma^\alpha|\tau_l|^\alpha[1-i\beta(\tan{\frac{\pi\alpha}{2}})(\mathrm{sign}(\tau_l))]
+  + i\delta \tau_l)} &\mbox{for}&\alpha\neq
+1\\ \exp{(-\gamma|\tau_l|[1+i\beta\frac{2}{\pi}(\mathrm{sign}(\tau_l))\log{|\tau_l|}]
+  + i\delta \tau_l)} &\mbox{for}&\alpha= 1\\
 \end{array}
 \right. ,
 \]
-The function \code{charStable} included in the package computes the characteristic function and can be used to construct $g(\theta,x_i)$. To avoid dealing with complex numbers, it returns the imaginary and real parts in separate columns because both should have zero expectation. The function is:
+The function \textit{charStable} included in the package computes the characteristic function and can be used to construct $g(\theta,x_i)$. To avoid dealing with complex numbers, it returns the imaginary and real parts in separate columns because both should have zero expectation. The function is:
 <<>>=
 g2 <- function(theta,x)
 	{
@@ -303,7 +320,7 @@ g2 <- function(theta,x)
 	return(gt)
 	}
 @
-The parameters of a simulated random vector can be estimated as follows (by default, $\gamma$ and $\delta$ are set to $1$ and $0$ respectively in \code{rstable}). For the example, the starting values are the ones of a normal distribution with mean 0 and variance equals to \code{var(x)}:
+The parameters of a simulated random vector can be estimated as follows (by default, $\gamma$ and $\delta$ are set to $1$ and $0$ respectively in \textit{rstable}). For the example, the starting values are the ones of a normal distribution with mean 0 and variance equals to \textit{var(x)}:
 <<>>=
 library(stabledist)
 set.seed(345)
@@ -311,26 +328,26 @@ x2 <- rstable(500,1.5,.5,pm=1)
 t0 <- c(alpha = 2, beta = 0, gamma = sd(x2)/sqrt(2), delta = 0)
 print(res <- gmm(g2,x2,t0))
 @
-The result is not very close to the true parameters. But we can see why by looking at the J-test that is provided by the \code{summary} method:
+The result is not very close to the true parameters. But we can see why by looking at the J-test that is provided by the \textit{summary} method:
 <<>>=
 summary(res)
 @
-The null hypothesis that the moment conditions are satisfied is rejected. For nonlinear models, a significant J-test may indicate that we have not reached the global minimum. Furthermore, the standard deviation of the coefficient of $\delta$ indicates that the covariance matrix is nearly singular. Notice also that the convergence code is equal to 1, which indicates that the algorithm did not converge. We could try different starting values, increase the number of iterations in the control option of \code{optim} or use \code{nlminb} which allows to put restrictions on the parameter space. The former would work but the latter will allow us to see how to select another optimizer. The option \code{optfct} can be modified to use this algorithm instead of \code{optim}. In that case, we can specify the upper and lower bounds of $\theta$. 
+The null hypothesis that the moment conditions are satisfied is rejected. For nonlinear models, a significant J-test may indicate that we have not reached the global minimum. Furthermore, the standard deviation of the coefficient of $\delta$ indicates that the covariance matrix is nearly singular. Notice also that the convergence code is equal to 1, which indicates that the algorithm did not converge. We could try different starting values, increase the number of iterations in the control option of \textit{optim} or use \textit{nlminb} which allows to put restrictions on the parameter space. The former would work but the latter will allow us to see how to select another optimizer. The option \textit{optfct} can be modified to use this algorithm instead of \textit{optim}. In that case, we can specify the upper and lower bounds of $\theta$. 
 <<>>= 
 res2 <- gmm(g2,x2,t0,optfct="nlminb",lower=c(0,-1,0,-Inf),upper=c(2,1,Inf,Inf))
 summary(res2)
 @
 Although the above modification solved the convergence problem, there is another issue that we need to address. The first step estimate used to compute the weighting matrix is almost identical to the starting values. There is therefore a convergence problem in the first step. In fact, choosing the initial $\alpha$ to be on the boundary was not a wise choice. Also, it seems that an initial value of $\beta$ equals to zero makes the objective function harder to minimize. Having a gobal minimum for the first step estimate is important if we care about efficiency. A wrong estimate will cause the weighting matrix not being a consistent estimate of the optimal matrix. The information about convergence is included in the argument 'initialAlgoInfo' of the gmm object.
 
-We conclude this example by estimating the parameters for a vector of stock returns from the data set \code{Finance} that comes with the \pkg{gmm} package.
-<<>>=
+We conclude this example by estimating the parameters for a vector of stock returns from the data set \textit{Finance} that comes with the \pkg{gmm} package.
+<<warning=FALSE>>=
 data(Finance)
 x3 <- Finance[1:1500,"WMK"]
 t0<-c(alpha = 1.8, beta = 0.1, gamma = sd(x3)/sqrt(2),delta = 0)
 res3 <- gmm(g2,x3,t0,optfct="nlminb")
 summary(res3)
 @
-For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,\beta=0$ using \code{linearHypothesis} from the \pkg{car} package:
+For this sub-sample, the hypothesis that the return follows a stable distribution is  rejected. The normality assumption can be analyzed  by testing $H_0:\alpha=2,\beta=0$ using \textit{linearHypothesis} from the \pkg{car} package:
 <<>>=
 library(car)
 linearHypothesis(res3,cbind(diag(2),c(0,0),c(0,0)),c(2,0))
@@ -367,7 +384,7 @@ x4 <- rnorm(n)
 w <- exp(-x4^2) + e[,1]
 y <- 0.1*w + e[,2]
 @ 
-where \code{rmvnorm} is a multivariate normal distribution random generator which is included in the package \pkg{mvtnorm} (\cite{mvtnorm}). For a linear model, the $g$ argument is a formula that specifies the right- and left-hand sides as for \code{lm} and $x$ is the matrix of instruments:
+where \textit{rmvnorm} is a multivariate normal distribution random generator which is included in the package \pkg{mvtnorm} (\cite{mvtnorm}). For a linear model, the $g$ argument is a formula that specifies the right- and left-hand sides as for \textit{lm} and $x$ is the matrix of instruments:
 <<>>=
 h <- cbind(x4, x4^2, x4^3)
 g3 <- y~w
@@ -384,11 +401,11 @@ E\left(\begin{array}{c}
 \]
 In order the remove the intercept, -1 has to be added to the formula. In that case there is no column of ones added to the matrix of instruments. To keep the condition that the expected value of the error terms is zero, the column of ones needs to be included manually.   
 
-We know that the moment conditions of this example are iid. Therefore, we can add the option \code{vcov="iid"}. This option tells \code{gmm} to estimate  the covariance matrix of $\sqrt{n}\bar{g}(\theta^*)$ as follows:
+We know that the moment conditions of this example are iid. Therefore, we can add the option \textit{vcov="iid"}. This option tells \textit{gmm} to estimate  the covariance matrix of $\sqrt{n}\bar{g}(\theta^*)$ as follows:
 \[
 \hat{\Omega}(\theta^*) = \frac{1}{n}\sum_{i=1}^n g(\theta^*,x_i)g(\theta^*,x_i)'
 \]
-However, it is recommended not to set this option to ``iid" in practice with real data because one of the reasons we want to use GMM is to avoid such restrictions. Finally, it is not necessary to provide the gradient when the model is linear since it is already included in \code{gmm}. The first results are:
+However, it is recommended not to set this option to ``iid" in practice with real data because one of the reasons we want to use GMM is to avoid such restrictions. Finally, it is not necessary to provide the gradient when the model is linear since it is already included in \textit{gmm}. The first results are:
 <<>>=
 summary(res <- gmm(g3,x=h))
 @ 
@@ -397,32 +414,34 @@ By default, the 2SGMM is computed. Other methods can be chosen by modifying the 
 res2 <- gmm(g3,x=h,type='iterative',crit=1e-8,itermax=200)
 coef(res2)
 @
-The procedure iterates until the difference between the estimates of two successive iterations reaches a certain tolerance level, defined by the option \code{crit} (default is $10^{-7}$), or if the number of iterations reaches \code{itermax} (default is 100). In the latter case, a message is printed to indicate that the procedure did not converge.  
+The procedure iterates until the difference between the estimates of two successive iterations reaches a certain tolerance level, defined by the option \textit{crit} (default is $10^{-7}$), or if the number of iterations reaches \textit{itermax} (default is 100). In the latter case, a message is printed to indicate that the procedure did not converge.  
 
-The third method is CUE. As you can see, the estimates from ITGMM is used as starting values. However, the starting values are required only when \code{g} is a function. When \code{g} is a formula, the default starting values are the ones obtained by setting the matrix of weights equal to the identity matrix.  
+The third method is CUE. As you can see, the estimates from ITGMM is used as starting values. However, the starting values are required only when \textit{g} is a function. When \textit{g} is a formula, the default starting values are the ones obtained by setting the matrix of weights equal to the identity matrix.  
 <<>>=
 res3 <- gmm(g3,x=h,res2$coef,type='cue')
 coef(res3)
 @
-It is possible to produce confidence intervals by using the method \code{confint}:
+It is possible to produce confidence intervals by using the method \textit{confint}:
 <<>>=
 confint(res3,level=.90)
 @
-Whether \code{optim} or \code{nlminb} is used to compute the solution, it is possible to modify their default options by adding  \code{control=list()}. For example, you can keep track of the convergence with \code{control=list(trace=TRUE)} or increase the number of iterations with \code{control=list(maxit=1000)}. You can also choose the \code{BFGS} algorithm with \code{method="BFGS"} (see \code{help(optim)} for more details).  
+Whether \textit{optim} or \textit{nlminb} is used to compute the solution, it is possible to modify their default options by adding  \textit{control=list()}. For example, you can keep track of the convergence with \textit{control=list(trace=TRUE)} or increase the number of iterations with \textit{control=list(maxit=1000)}. You can also choose the \textit{BFGS} algorithm with \textit{method="BFGS"} (see \textit{help(optim)} for more details).  
 
-The methods \code{fitted} and \code{residuals} are also available for linear models. We can compare the fitted values of \code{lm} with the ones from \code{gmm} to see why this model cannot be estimated by LS.
+The methods \textit{fitted} and \textit{residuals} are also available for linear models. We can compare the fitted values of \textit{lm} with the ones from \textit{gmm} to see why this model cannot be estimated by LS.
 
-<<fig=true>>=
+\begin{center}
+<<>>=
 plot(w,y,main="LS vs GMM estimation")
 lines(w,fitted(res),col=2)
 lines(w,fitted(lm(y~w)),col=3,lty=2)
 lines(w,.1*w,col=4,lty=3)
 legend("topleft",c("Data","Fitted GMM","Fitted LS","True line"),pch=c(1,NA,NA,NA),col=1:3,lty=c(NA,1,2,3))
 @
+\end{center}
 
 The LS seems to fit the model better. But the graphics hides the endogeneity problem. LS overestimates the relationship between $y$ and $w$ because it does not take into account the fact that some of the correlation is caused by the fact that $y_i$ and $w_i$ are positively correlated with the error term $\epsilon_i$.  
 
-Finally, the \code{plot} method produces some graphics to analyze the properties of the residuals. It can only be applied to \code{gmm} objects when \code{g} is a formula because when \code{g} is a function, residuals are not defined.
+Finally, the \textit{plot} method produces some graphics to analyze the properties of the residuals. It can only be applied to \textit{gmm} objects when \textit{g} is a formula because when \textit{g} is a function, residuals are not defined.
 
 \subsection{Estimating the AR coefficients of an ARMA process} \label{ar}
 
@@ -432,7 +451,7 @@ We want to estimate the AR coefficients of the following process:
 \[
 X_t = 1.4 X_{t-1} - 0.6X_{t-2} + u_t 
 \]
-where $u_t = 0.6\epsilon_{t-1} -0.3 \epsilon_{t-2} + \epsilon_t$ and $\epsilon_t\sim iidN(0,1)$.  This model can be estimated by GMM using any  $X_{t-s}$ for $s>2$,  because they are uncorrelated with $u_t$ and correlated with $X_{t-1}$ and $X_{t-2}$. However, as $s$ increases the quality of the instruments decreases since the stationarity of the process implies that the auto-correlation goes to zero. For this example, the selected instruments are $(X_{t-3},X_{t-4},X_{t-5},X_{t-6})$ and the sample size equals 400. The ARMA(2,2) process is generated by the function  \code{arima.sim}:
+where $u_t = 0.6\epsilon_{t-1} -0.3 \epsilon_{t-2} + \epsilon_t$ and $\epsilon_t\sim iidN(0,1)$.  This model can be estimated by GMM using any  $X_{t-s}$ for $s>2$,  because they are uncorrelated with $u_t$ and correlated with $X_{t-1}$ and $X_{t-2}$. However, as $s$ increases the quality of the instruments decreases since the stationarity of the process implies that the auto-correlation goes to zero. For this example, the selected instruments are $(X_{t-3},X_{t-4},X_{t-5},X_{t-6})$ and the sample size equals 400. The ARMA(2,2) process is generated by the function  \textit{arima.sim}:
 <<>>=
 t <- 400
 set.seed(345)
@@ -446,7 +465,7 @@ summary(res)
 @
 The optimal matrix, when moment conditions are based on time series, is an HAC matrix which is defined by equation (\ref{optw_hat}). Several  estimators of this matrix have been proposed in the literature. Given some regularity conditions, they are asymptotically equivalent. However, their impacts on the finite sample properties of GMM estimators may differ. The \pkg{gmm} package uses the \pkg{sandwich} package to compute these estimators which are well explained by \cite{zeileis06} and \cite{zeileis04}. We will therefore briefly summarize the available options.
 
-The option \code{kernel} allows to choose between five kernels: Truncated, Bartlett, Parzen, Tukey-Hanning and Quadratic spectral\footnote{The first three have been proposed by \cite{white84}, \cite{newey-west87a} and \cite{gallant87} respectively and the last two, applied to HAC estimation, by \cite{andrews91}. But the latter gives a good review of all five.}. By default, the Quadratic Spectral kernel is used as it was shown to be optimal by \cite{andrews91} with respect to some mean squared error criterion. In most statistical packages, the Bartlett kernel is used for its simplicity. It makes the estimation of large models less computationally intensive. It may also make the \code{gmm} algorithm more stable numerically when dealing with highly nonlinear models, especially with CUE. We can compare the results with different choices of kernel:
+The option \textit{kernel} allows to choose between five kernels: Truncated, Bartlett, Parzen, Tukey-Hanning and Quadratic spectral\footnote{The first three have been proposed by \cite{white84}, \cite{newey-west87a} and \cite{gallant87} respectively and the last two, applied to HAC estimation, by \cite{andrews91}. But the latter gives a good review of all five.}. By default, the Quadratic Spectral kernel is used as it was shown to be optimal by \cite{andrews91} with respect to some mean squared error criterion. In most statistical packages, the Bartlett kernel is used for its simplicity. It makes the estimation of large models less computationally intensive. It may also make the \textit{gmm} algorithm more stable numerically when dealing with highly nonlinear models, especially with CUE. We can compare the results with different choices of kernel:
 <<>>=
 res2 <- gmm(g4,x=x5t[,4:7],kernel="Truncated")
 coef(res2)
@@ -457,7 +476,7 @@ coef(res4)
 res5<- gmm(g4,x=x5t[,4:7],kernel="Tukey-Hanning")
 coef(res5)
 @
-The similarity of the results is not surprising since the matrix of weights should only affect the efficiency of the estimator.  We can compare the estimated standard deviations using the method \code{vcov}:
+The similarity of the results is not surprising since the matrix of weights should only affect the efficiency of the estimator.  We can compare the estimated standard deviations using the method \textit{vcov}:
 <<>>=
 diag(vcov(res2))^.5
 diag(vcov(res3))^.5
@@ -466,19 +485,20 @@ diag(vcov(res5))^.5
 @
 which shows, for this example, that the Bartlett kernel generates the estimates with the smallest variances. However, it does not mean it is better. We have to run simulations and compute the true variance if we want to compare them. In fact, we do not know which one produces the most accurate estimate of the variance. 
 
-The second options is for the bandwidth selection. By default it is the automatic selection proposed by \cite{andrews91}. It is also possible to choose  the automatic selection of \cite{newey-west94} by adding \code{bw=bwNeweyWest} (without quotes because \code{bwNeweyWest} is a function). A prewhitened kernel estimator can also be computed using the option \code{prewhite=p}, where $p$ is the order of the vector auto-regressive (VAR) used to compute it.  By default, it is set to \code{FALSE}. \cite{andrews-monahan92} show that a prewhitened kernel estimator improves the properties of hypothesis tests on parameters. 
+The second options is for the bandwidth selection. By default it is the automatic selection proposed by \cite{andrews91}. It is also possible to choose  the automatic selection of \cite{newey-west94} by adding \textit{bw=bwNeweyWest} (without quotes because \textit{bwNeweyWest} is a function). A prewhitened kernel estimator can also be computed using the option \textit{prewhite=p}, where $p$ is the order of the vector auto-regressive (VAR) used to compute it.  By default, it is set to \textit{FALSE}. \cite{andrews-monahan92} show that a prewhitened kernel estimator improves the properties of hypothesis tests on parameters. 
 
-Finally, the \code{plot} method can be applied to \code{gmm} objects to do a Q-Q plot of the residuals:
-
-<<fig=true,height=7, width=10>>=
+Finally, the \textit{plot} method can be applied to \textit{gmm} objects to do a Q-Q plot of the residuals:
+\begin{center}
+<<>>=
 plot(res,which=2)
 @
-
+\end{center}
 or to plot the observations with the fitted values:
-
-<<fig=true,height=7, width=10>>=
+\begin{center}
+<<>>=
 plot(res,which=3)
 @
+\end{center}
 
 \subsection{Estimating a system of equations: CAPM}
 
@@ -503,7 +523,7 @@ c <- rep(0,5)
 linearHypothesis(res,R,c,test = "Chisq")
 @
 where the asymptotic chi-square is used since the default distribution requires a normality assumption. The same test could have been performed using the names of the coefficients:
-<<eval=false>>=
+<<eval=FALSE>>=
 test <- paste(names(coef(res)[1:5])," = 0",sep="")
 linearHypothesis(res,test)
 @
@@ -555,7 +575,7 @@ E[g(\theta,x_t)] \equiv E\left(\begin{array}{c}
       \end{array}
 \right) = 0
 \]
-The related \code{g} function, with $\theta=\{\alpha, \beta, \sigma^2, \gamma\}$ is:
+The related \textit{g} function, with $\theta=\{\alpha, \beta, \sigma^2, \gamma\}$ is:
 <<>>=
 g6 <- function(theta, x) {
      t <- length(x)
@@ -565,7 +585,7 @@ g6 <- function(theta, x) {
      return(g)
  }
 @
-In order to estimate the model, the vector of interest rates needs to be properly scaled to avoid numerical problems. The transformed series is the annualized interest rates expressed in percentage. Also, the starting values are obtained using LS and some options for \code{optim} need to be modified.
+In order to estimate the model, the vector of interest rates needs to be properly scaled to avoid numerical problems. The transformed series is the annualized interest rates expressed in percentage. Also, the starting values are obtained using LS and some options for \textit{optim} need to be modified.
 <<>>=
 rf <- Finance[,"rf"]
 rf <- ((1 + rf/100)^(365) - 1) * 100
@@ -587,8 +607,8 @@ where $x_{it}$ is $1\times k$, $\beta$ is $k\times 1$, $\epsilon_{it}$ is an err
 \[
 (y_{it}-\bar{y}_i) = (x_{it}-\bar{x}_i) \beta + (\epsilon_{it}-\bar{\epsilon}_i) \mbox{  for  } i=1,...,N\mbox{ and } t=1,...,T,
 \]
-which can be estimated by \code{gmm}. For example, if there are 3 individuals the following corresponds to the GMM fixed effects estimation:
-<<eval=false>>=
+which can be estimated by \textit{gmm}. For example, if there are 3 individuals the following corresponds to the GMM fixed effects estimation:
+<<eval=FALSE>>=
 y <- rbind(y1-mean(y1),y2-mean(y2),y3-mean(y3))
 x <- rbind(x1-mean(x1),x2-mean(x2),x3-mean(x3))
 res <- gmm(y~x,h)
@@ -598,7 +618,7 @@ However, if $a_i$ is not correlated with $x_{it}$, the equation represents a ran
 y_{it} = x_{it} \beta + \eta_{it}
 \]
 This model cannot be efficiently estimated by OLS because the presence of the common factor $a_i$ at each period implies that $\eta_{it}$ is serially correlated. However, GMM is well suited to deal with such specifications. The following will therefore produce a GMM random effects estimation:
-<<eval=false>>=
+<<eval=FALSE>>=
 y <- rbind(y1,y2,y3)
 x <- rbind(x1,x2,x3)
 res <- gmm(y~x,h)
@@ -612,7 +632,7 @@ In the \pkg{gmm} package, the estimation of the optimal weighting matrices are o
 W = \left[\lim_{n\rightarrow \infty} Var{(\sqrt{n}\bar{g})}\right]^{-1}
 \]
 is estimated as follows:
-<<eval=false>>=
+<<eval=FALSE>>=
 gt <- g(t0, x)
 V <- kernHAC(lm(gt~1),sandwich = FALSE)
 W <- solve(V)
@@ -621,11 +641,11 @@ where $t0$ is any consistent estimate. As long as the optimal matrix is used, th
 \[
 (\hat{G}'W\hat{G})^{-1}/n \equiv (\hat{G}'\hat{V}^{-1}\hat{G})^{-1}/n,
 \]
-where $\hat{G}=d\bar{g}(\hat{\theta})/d\theta$ and $\hat{V}$ is obtained using \code{kernHAC()}. It is not a sandwich covariance matrix and is computed using the \code{vcov()} method included in \pkg{gmm}. However, if any other weighting matrix is used, say $W$, the estimated covariance matrix of the coefficients must then be estimated as follows: 
+where $\hat{G}=d\bar{g}(\hat{\theta})/d\theta$ and $\hat{V}$ is obtained using \textit{kernHAC()}. It is not a sandwich covariance matrix and is computed using the \textit{vcov()} method included in \pkg{gmm}. However, if any other weighting matrix is used, say $W$, the estimated covariance matrix of the coefficients must then be estimated as follows: 
 \[
 (\hat{G}'W\hat{G})^{-1}\hat{G}'W\hat{V}W\hat{G}(\hat{G}'W\hat{G})^{-1}/n.
 \]
-A \code{bread()} and \code{estfun()} methods are available for \code{gmm} objects which allows to compute the above matrix using the \pkg{sandwich} package. The \code{bread()} method computes $(\hat{G}'W\hat{G})^{-1}$ while the \code{estfun()} method returns a $T\times q$ matrix with the $t^{th}$ row equals to $g(\hat{\theta}, x_t) W \hat{G}$. The \code{meatHAC()} method applied to the latter produces the right meat.  Let us consider the example of section (\ref{ar}). Suppose we want to use the identity matrix to eliminate one source of bias, at the cost of lower efficiency. In that case, a consistent estimate of the covariance matrix is 
+A \textit{bread()} and \textit{estfun()} methods are available for \textit{gmm} objects which allows to compute the above matrix using the \pkg{sandwich} package. The \textit{bread()} method computes $(\hat{G}'W\hat{G})^{-1}$ while the \textit{estfun()} method returns a $T\times q$ matrix with the $t^{th}$ row equals to $g(\hat{\theta}, x_t) W \hat{G}$. The \textit{meatHAC()} method applied to the latter produces the right meat.  Let us consider the example of section (\ref{ar}). Suppose we want to use the identity matrix to eliminate one source of bias, at the cost of lower efficiency. In that case, a consistent estimate of the covariance matrix is 
 \[
 (\hat{G}'\hat{G})^{-1}\hat{G}'\hat{V}\hat{G}(\hat{G}'\hat{G})^{-1}/n,
 \]
@@ -634,7 +654,7 @@ which can be computed as:
 print(res<-gmm(g4,x5t[,4:7],wmatrix="ident"))
 diag(vcovHAC(res))^.5
 @
-which is more robust than using \code{vcov()}:
+which is more robust than using \textit{vcov()}:
 <<>>=
 diag(vcov(res))^.5
 @
@@ -696,12 +716,12 @@ with
 \end{equation}
 Equation (\ref{gel_obj}) represents a saddle point problem. The solution is obtained by solving simultaneously two optimization problems. We can solve for $\theta$ by minimizing $P_n(\theta,\lambda(\theta))$, where $\lambda(\theta)$ is the solution to $\arg\max_\lambda P_n(\theta,\lambda)$ for a given $\theta$. Therefore an optimization algorithm needs to be called inside the $P_n(\theta,\lambda)$ function. It makes the GEL very hard to implement numerically. For example, \cite{guggenberger08}, who analyzes the small sample properties of GEL, uses an iterative procedure based on the Newton method for $\lambda$ and a grid search for $\theta$ in order to confidently reach the absolute minimum. Using  such iterative procedures for $\lambda$ makes the problem less  computationally demanding and does not seem to affect the properties of the estimator of $\theta_0$. Indeed, \cite{guggenberger-hahn05} show that going beyond two iterations for $\lambda$ does not improve the second order asymptotic properties of the estimator of $\theta_0$.  
 
-The function \code{gel} offers two options. By default, $\lambda(\theta)$ is obtained by the following iterative method:
+The function \textit{gel} offers two options. By default, $\lambda(\theta)$ is obtained by the following iterative method:
 \[
 \lambda_l = \lambda_{l-1} - \left[\frac{1}{n}\sum_{i=1}^n \rho''(\lambda_{l-1}'g_t)g_tg_t'\right]^{-1}\left[\frac{1}{n}
 \sum_{i=1}^n \rho'(\lambda_{l-1}'g_i) g_i \right]
 \]
-starting with $\lambda=0$, which corresponds to its asymptotic value. The algorithm stops when $\|\lambda_l-\lambda_{l-1}\|$ reaches a certain tolerance level. The second option is to let \code{optim} solve the problem. Then, as for \code{gmm}, the minimization problem is solved either by \code{optim}, \code{nlminb} or \code{constrOptim}.
+starting with $\lambda=0$, which corresponds to its asymptotic value. The algorithm stops when $\|\lambda_l-\lambda_{l-1}\|$ reaches a certain tolerance level. The second option is to let \textit{optim} solve the problem. Then, as for \textit{gmm}, the minimization problem is solved either by \textit{optim}, \textit{nlminb} or \textit{constrOptim}.
  
 In order to test the over-identifying restrictions, \cite{smith04} proposes three tests which are all asymptotically distributed as a $\chi^2_{q-p}$. The first one is the J-test:
 \[
@@ -720,14 +740,14 @@ LR = 2\sum_{i=1}^n\left[ \rho\left(\hat{\lambda}'g^w(\hat{\theta},x_i)\right) - 
 
 \subsection{Estimating the parameters of a normal distribution}
 
-For this example, we can leave the option \code{smooth} at its default value, which is \code{FALSE}, because of the iid properties of $x$.  
-A good starting value is very important for GEL. The best choice is the sample mean and the standard deviation. By default the option \code{type} is set to \code{EL}. The same methods that apply to \code{gmm} objects, can also be applied to \code{gel} objects.
+For this example, we can leave the option \textit{smooth} at its default value, which is \textit{FALSE}, because of the iid properties of $x$.  
+A good starting value is very important for GEL. The best choice is the sample mean and the standard deviation. By default the option \textit{type} is set to \textit{EL}. The same methods that apply to \textit{gmm} objects, can also be applied to \textit{gel} objects.
 <<>>=
 tet0 <- c(mu = mean(x1), sig = sd(x1))
 res_el <- gel(g1,x1,tet0)
 summary(res_el)
 @
-Each Lagrange multiplier represents a shadow price of the constraint implied by moment condition. A binding constraint will produce a multiplier different from zero. Therefore, its value informs us on the validity of the moment condition.  In the above results, the $\lambda$'s are significantly different from zero which would normally suggest that the moment conditions associated with them are violated. As a result, the LM test also rejects the null hypothesis since it is based on the $\lambda$'s. Notice that \code{summary} reports two convergence codes, one for $\lambda$ et another for  $\theta$. 
+Each Lagrange multiplier represents a shadow price of the constraint implied by moment condition. A binding constraint will produce a multiplier different from zero. Therefore, its value informs us on the validity of the moment condition.  In the above results, the $\lambda$'s are significantly different from zero which would normally suggest that the moment conditions associated with them are violated. As a result, the LM test also rejects the null hypothesis since it is based on the $\lambda$'s. Notice that \textit{summary} reports two convergence codes, one for $\lambda$ et another for  $\theta$. 
 
 The ET and CUE estimates can be obtained as follows:
 <<>>=
@@ -743,11 +763,11 @@ A fourth method is available which is called the exponentially tilted empirical 
 res_etel <- gel(g1,x1,c(mu=1,sig=1),type="ETEL")
 coef(res_etel)
 @
-The type ETEL is experimental for now. Although it is supposed to be more stable because no restrictions are required to solve for $\lambda$, once we substitute $\lambda(\theta)$ in the EL objective function to estimate $\theta$, we still need to restrict $\lambda'g_t$ to avoid having NA's. The solution used in gel() is to obtain $\lambda(\theta)$ with \code{constrOptim} with the restriction $\lambda'gt > 1$ even if it is not required by ET ($\rho(v)=-\exp{(v)}$). It is however sensitive to starting values. That's the reason why we used different ones above.    
+The type ETEL is experimental for now. Although it is supposed to be more stable because no restrictions are required to solve for $\lambda$, once we substitute $\lambda(\theta)$ in the EL objective function to estimate $\theta$, we still need to restrict $\lambda'g_t$ to avoid having NA's. The solution used in gel() is to obtain $\lambda(\theta)$ with \textit{constrOptim} with the restriction $\lambda'gt > 1$ even if it is not required by ET ($\rho(v)=-\exp{(v)}$). It is however sensitive to starting values. That's the reason why we used different ones above.    
 
 \subsection{Estimating the AR coefficients of an ARMA process}
 
-Because the moment conditions are weakly dependent, we need to set the option \code{smooth=TRUE}. Before going to the estimation procedure, we need to understand the relationship between the smoothing kernel and the HAC estimator. The reason why we need to smooth the moment function is that GEL estimates the covariance matrix of $\bar{g}(\theta,x_t)$, as if we had iid observations, using the expression $(1/T)\sum_{t=1}^T(g_tg_t')$. We can show that substituting $g_t$ by $g^w_t$ in this expression results in an HAC estimator. However, the relationship between the smoothing kernel and the kernel that appears in the HAC estimator is not obvious. For example, we can show that if the smoothing kernel is Truncated, then the kernel in the HAC estimator is the Bartlett. Let us consider the truncated kernel with a bandwidth of 2. This implies that $w(s)=1/5$ for $|s|\leq 2$ and 0 otherwise. Then, the expression for the covariance matrix becomes:
+Because the moment conditions are weakly dependent, we need to set the option \textit{smooth=TRUE}. Before going to the estimation procedure, we need to understand the relationship between the smoothing kernel and the HAC estimator. The reason why we need to smooth the moment function is that GEL estimates the covariance matrix of $\bar{g}(\theta,x_t)$, as if we had iid observations, using the expression $(1/T)\sum_{t=1}^T(g_tg_t')$. We can show that substituting $g_t$ by $g^w_t$ in this expression results in an HAC estimator. However, the relationship between the smoothing kernel and the kernel that appears in the HAC estimator is not obvious. For example, we can show that if the smoothing kernel is Truncated, then the kernel in the HAC estimator is the Bartlett. Let us consider the truncated kernel with a bandwidth of 2. This implies that $w(s)=1/5$ for $|s|\leq 2$ and 0 otherwise. Then, the expression for the covariance matrix becomes:
 \begin{eqnarray*}
 \frac{1}{T}\sum_{t=1}^T g^w_t (g^w_t)' &=&
 \frac{1}{T}\sum_{t=1}^T \left( \sum_{s=-2}^2 \frac{1}{5} g_{t+s} \right) \left( \sum_{l=-2}^2 \frac{1}{5} g_{t+l}' \right),\\
@@ -766,35 +786,35 @@ where $k_5(s)$ is the Bartlett kernel with a bandwidth of 5 defined as
 \end{array}\right. .
 \]
 See \cite{smith01} for more details. The model will therefore be estimated using the kernel Truncated. The GMM estimate with the identity matrix is selected as starting value. 
-<<>>=
+<<warning=FALSE>>=
 tet0 <- gmm(g4,x=x5t[,4:7],wmatrix="ident")$coef
 res <- gel(g4,x=x5t[,4:7],tet0,smooth=TRUE,kernel="Truncated")
 summary(res)
 @
-The \code{specTest} method applied to a \code{gel} object computes the three tests proposed by \cite{smith04}:
+The \textit{specTest} method applied to a \textit{gel} object computes the three tests proposed by \cite{smith04}:
 <<>>=
 specTest(res)
 @
-The \code{plot} method produces one more graphics when applied to a \code{gel} object. It shows the implied probabilities along with the empirical density $(1/T)$. It allows to see which observations have more influence:
-
-<<fig=true,height=7, width=10>>=
+The \textit{plot} method produces one more graphics when applied to a \textit{gel} object. It shows the implied probabilities along with the empirical density $(1/T)$. It allows to see which observations have more influence:
+\begin{center}
+<<>>=
 plot(res,which=4)
 @
-
-We can also select \code{optfct="nlminb"} or \code{constraint=TRUE} in order to impose restrictions on the coefficients. The former sets lower and upper bounds for the coefficients, while the latter imposes linear constraints using the algorithm \code{constrOptim}. In this example we want the sum of the AR coefficients to be less than one. \code{constrOptim} imposes the constraint $ui\theta-ci \geq 0$. Therefore, we need to set: 
-<<eval=false>>=
+\end{center}
+We can also select \textit{optfct="nlminb"} or \textit{constraint=TRUE} in order to impose restrictions on the coefficients. The former sets lower and upper bounds for the coefficients, while the latter imposes linear constraints using the algorithm \textit{constrOptim}. In this example we want the sum of the AR coefficients to be less than one. \textit{constrOptim} imposes the constraint $ui\theta-ci \geq 0$. Therefore, we need to set: 
+<<eval=FALSE>>=
 ui=cbind(0,-1,-1)
 ci <- -1
 @
 and rerun the estimation as
-<<eval=false>>=
+<<eval=FALSE>>=
 res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",
 constraint=TRUE, ui=ui,ci=ci)
 @
 The result, which is not shown, is identical. 
 
-They are also many option to compute the $\lambda$'s. From version 1.4-0, the default algorithm is \code{nlminb} because the gradient and Hessian matrix are well defined analytically which speed up convergence. The other choices are \code{optim} or "iter" which uses a Newton method to solve the first order condition. If the option optlam is set to "optim" and the type is EL, \code{contrOptim} is selected automatically to restrict $\lambda'g_t$ to be less than 1. It is also possible to change the default values in the control list of the optimizer with the option LambdaControl (see \code{?nlminb} or \code{?optim}). Here are some examples:  
-<<eval=false>>=
+They are also many option to compute the $\lambda$'s. From version 1.4-0, the default algorithm is \textit{nlminb} because the gradient and Hessian matrix are well defined analytically which speed up convergence. The other choices are \textit{optim} or "iter" which uses a Newton method to solve the first order condition. If the option optlam is set to "optim" and the type is EL, \textit{contrOptim} is selected automatically to restrict $\lambda'g_t$ to be less than 1. It is also possible to change the default values in the control list of the optimizer with the option LambdaControl (see \textit{?nlminb} or \textit{?optim}). Here are some examples:  
+<<eval=FALSE>>=
 res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim")
 res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim",
 LambdaControl=list(trace=TRUE, parscale=rep(.1,5)))
@@ -810,7 +830,7 @@ The GEL method is very unstable numerically. This fact has been reported many ti
 
 The \pkg{gmm} package offers complete and flexible algorithms to estimate models by GMM and GEL. Several options are available which allow to choose among several GMM and GEL methods and many different HAC matrix estimators. In order to estimate the vector of parameters, users can select their preferred optimization algorithm depending on whether inequality constraints are required. For the vector of Lagrange multiplier of GEL, it can be computed by an iterative procedure based on the Newton method which increases the speed of convergence and reduce the instability of the estimation procedure. It could then easily be used by those who are interested in studying the numerical properties of both methods.   
 
-The package also offers an interface which is comparable to the least squares method \code{lm}. Linear model are estimated using formula and methods such as \code{summary}, \code{vcov}, \code{coef}, \code{confint}, \code{plot}. \code{residuals} or \code{fitted} are available for the objects of class \code{gmm} and \code{gel}. \proglang{R} users will therefore have little difficulty in using the package.
+The package also offers an interface which is comparable to the least squares method \textit{lm}. Linear model are estimated using formula and methods such as \textit{summary}, \textit{vcov}, \textit{coef}, \textit{confint}, \textit{plot}. \textit{residuals} or \textit{fitted} are available for the objects of class \textit{gmm} and \textit{gel}. \proglang{R} users will therefore have little difficulty in using the package.
 
 \section{Computational Details}
 
@@ -818,7 +838,7 @@ The package \pkg{gmm} is written entirely in \proglang{R} and S3-classes with me
 
 \section*{Acknowledgments}
 
-I am grateful to the three anonymous referees of the Journal of Statistical Software for great comments on the paper and the package. I also want to thank Achim Zeileis for his suggestions regarding the way the \pkg{sandwich} package can be used within \code{gmm}.   
+I am grateful to the three anonymous referees of the Journal of Statistical Software for great comments on the paper and the package. I also want to thank Achim Zeileis for his suggestions regarding the way the \pkg{sandwich} package can be used within \textit{gmm}.   
 
 \bibliography{empir}
 \end{document} 
