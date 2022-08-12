@@ -176,11 +176,11 @@ The object of class "gmm" is a list containing at least:
 \references{
   Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
   \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
-  URL \url{https://www.jstatsoft.org/v16/i09/}.
+  URL \doi{10.18637/jss.v016.i09}.
 
  Pierre Chausse (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
  \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
- URL \url{https://www.jstatsoft.org/v34/i11/}.
+ URL \doi{10.18637/jss.v034.i11}.
 
  Andrews DWK (1991),
   Heteroskedasticity and Autocorrelation Consistent Covariance Matrix Estimation.

@@ -148,7 +148,7 @@ likelihood method in survey sampling.
 
 Chausse, P. (2010), Computing Generalized Method of Moments and Generalized Empirical Likelihood with R.
  \emph{Journal of Statistical Software}, \bold{34}(11), 1--35.
- URL \url{https://www.jstatsoft.org/v34/i11/}.
+ URL \doi{10.18637/jss.v034.i11}.
 
 Chausse, P. and Giurcanu, M. and Luta, G. (2021) Estimating the Average Causal Effect
  using Generalized Empirical Likelihood Methods, Work in progress. 

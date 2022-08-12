@@ -31,7 +31,7 @@ A \eqn{k \times k} matrix (see details).
 \references{
    Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
   \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
-  URL \url{https://www.jstatsoft.org/v16/i09/}.
+  URL \doi{10.18637/jss.v016.i09}.
 
 }
 

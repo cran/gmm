@@ -107,7 +107,7 @@ The object of class "sysGmm" is a list containing at least:
 \references{
   Zeileis A (2006), Object-oriented Computation of Sandwich Estimators.
   \emph{Journal of Statistical Software}, \bold{16}(9), 1--16.
-  URL \url{https://www.jstatsoft.org/v16/i09/}.
+  URL \doi{10.18637/jss.v016.i09}.
 
  Andrews DWK (1991),
   Heteroskedasticity and Autocorrelation Consistent Covariance Matrix Estimation.

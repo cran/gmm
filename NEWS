@@ -193,9 +193,6 @@ Changes in version 1.3-0
 
 Changes in version 1.2-0
 
-The following modifications were suggested by the reviewers of JSS. These changes will not be noticed by users. They are intended to make it easier for 
-developpers to contribute. 
-
   o The new method specTest computes the specification tests from objects created by "gmm" or "gel" 
   o The structure of the package has been modified in order to make it more flexible. The changes include:
          o The new method "getModel" prepares the estimation. It creates what is required by the method "momentEstim".
@@ -205,10 +202,6 @@ developpers to contribute.
   o The Vignette has been modified a little and the errors in the manual corrected.
 
 Changes in version 1.1-0
-
-
-This is a major upgrade of the package. It follows great suggestions from two anonymous reviewers from JSS. 
-The package as been modified so that it is now very close to lm and glm. 
 
   o The name of the vector of parameters is now "coefficients" instead of "par"
   o The following methods are now available (see lm): fitted, residuals, vcov, coef, confint  

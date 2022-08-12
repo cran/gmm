@@ -5,7 +5,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{col}{Corollary}
 \newtheorem{lem}{Lemma}
-\usepackage[utf8x]{inputenc}
+\usepackage[utf8]{inputenc}
 \newtheorem{ass}{Assumption}
 \usepackage{amsmath}
 \usepackage{verbatim}
