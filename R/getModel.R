@@ -225,8 +225,8 @@ getModel.baseGmm <- function(object, ...)
                     attr(object$x, "k") <- 1
                 else
                     attr(object$x, "k") <- length(object$t0)
-                attr(object$x, "q") <- NCOL(object$g(object$t0, object$x))
-                attr(object$x, "n") <- NROW(object$x)
+                attr(object$x, "q") <- NCOL(gt <- object$g(object$t0, object$x))
+                attr(object$x, "n") <- NROW(gt)
                 if (object$optfct == "optimize")
                     {
                         object$namesCoef <- "Theta1"
@@ -373,8 +373,8 @@ getModel.baseGel <- function(object, ...)
                 attr(object$x,"ModelType") <- "nonlinear"
                 attr(object$x, "momentfct") <- object$g
                 attr(object$x, "k") <- k
-                attr(object$x, "q") <- NCOL(object$g(object$tet0, object$x))
-                attr(object$x, "n") <- NROW(object$x)
+                attr(object$x, "q") <- NCOL(gt <- object$g(object$tet0, object$x))
+                attr(object$x, "n") <- NROW(gt)
                 if(is.null(names(object$tet0)))
                     object$namesCoef <- paste("Theta[" ,1:attr(object$x, "k"), "]", sep = "")
                 else
