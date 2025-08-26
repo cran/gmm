@@ -51,13 +51,13 @@ evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
   probabilities are bounded below by zero. In that case, an analytical
   Kuhn-Tucker method is used to find the solution.}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link[sandwich]{kernHAC}} for more details) and to smooth the moment conditions if "smooth" is set to TRUE. Only two types of kernel are available. The truncated implies a Bartlett kernel for the HAC matrix and the Bartlett implies a Parzen kernel (see Smith 2004).}
 
-\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest}} of Newey-West(1994).}
+\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link[sandwich]{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link[sandwich]{bwNeweyWest}} of Newey-West(1994).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
-\item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
+\item{ar.method}{character. The \code{method} argument passed to \code{\link[stats]{ar}} for prewhitening.}
 
 \item{approx}{a character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
@@ -69,9 +69,9 @@ evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
 
 \item{tol_obj}{Tolerance for the gradiant of the objective function to compute \eqn{\lambda} (see \code{\link{getLamb}}).}
 
-\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link[stats]{optim}} or \code{\link[stats]{optimize}}. In that case, the former is unreliable. If \code{\link[stats]{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution.It is also possible to choose the \code{\link[stats]{nlminb}} algorithm. In that case, borns for the coefficients can be set by the options \code{upper=} and \code{lower=}.}
 
-\item{constraint}{If set to TRUE, the constraint optimization algorithm is used. See \code{\link{constrOptim}} to learn how it works. In particular, if you choose to use it, you need to provide "ui" and "ci" in order to impose the constraint \eqn{ui \theta - ci \geq 0}.}
+\item{constraint}{If set to TRUE, the constraint optimization algorithm is used. See \code{\link[stats]{constrOptim}} to learn how it works. In particular, if you choose to use it, you need to provide "ui" and "ci" in order to impose the constraint \eqn{ui \theta - ci \geq 0}.}
 
 \item{tol_mom}{It is the tolerance for the moment condition \eqn{\sum_{t=1}^n p_t g(\theta(x_t)=0}, where \eqn{p_t=\frac{1}{n}D\rho(<g_t,\lambda>)} is the implied probability. It adds a penalty if the solution diverges from its goal.}
 
@@ -82,7 +82,7 @@ evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
 
 \item{data}{A data.frame or a matrix with column names (Optional). }
 
-\item{Lambdacontrol}{Controls for the optimization of the vector of Lagrange multipliers used by either \code{\link{optim}}, \code{\link{nlminb}} or \code{\link{constrOptim}}}
+\item{Lambdacontrol}{Controls for the optimization of the vector of Lagrange multipliers used by either \code{\link[stats]{optim}}, \code{\link[stats]{nlminb}} or \code{\link[stats]{constrOptim}}}
 
 \item{model, X, Y}{logicals.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
 
@@ -97,12 +97,12 @@ evalGel(g, x, tet0, gradv = NULL, smooth = FALSE,
 \item{onlyCoefficients}{If \code{TRUE}, only the vector of coefficients
   and Lagrange multipliers are returned}
 
-\item{...}{More options to give to \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}}.}
+\item{...}{More options to give to \code{\link[stats]{optim}}, \code{\link[stats]{optimize}} or \code{\link[stats]{constrOptim}}.}
 
 }
 
 \details{
-If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t}\theta_2 + ... + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link[stats]{lm}}. We would have \code{g = y~x2+x3+...+xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link[stats]{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gel}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H.
 
 If "smooth" is set to TRUE, the sample moment conditions \eqn{\sum_{t=1}^n g(\theta,x_t)} is replaced by:
 \eqn{\sum_{t=1}^n g^k(\theta,x_t)},
@@ -148,9 +148,9 @@ The object of class "gel" is a list containing at least the following:
 
 \item{conv_mes}{Convergence message for "lambda" (see \code{\link{getLamb}})}
 
-\item{conv_par}{Convergence code for "coefficients" (see \code{\link{optim}}, \code{\link{optimize}} or \code{\link{constrOptim}})}
+\item{conv_par}{Convergence code for "coefficients" (see \code{\link[stats]{optim}}, \code{\link[stats]{optimize}} or \code{\link[stats]{constrOptim}})}
 
-\item{terms}{the \code{\link{terms}} object used when g is a formula.}
+\item{terms}{the \code{\link[stats]{terms}} object used when g is a formula.}
 
 \item{call}{the matched call.}
  

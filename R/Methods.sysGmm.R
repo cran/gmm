@@ -42,7 +42,8 @@ summary.sysGmm <- function(object, ...)
             {
             dimnames(ans$coefficients[[i]]) <- list(names(z$coefficients[[i]]), 
                                                     c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
-            names(ans$initTheta[[i]]) <- names(z$coefficients[[i]])
+            if (!is.null(ans$initTheta))
+                names(ans$initTheta[[i]]) <- names(z$coefficients[[i]])
         }
         ans$specMod <- object$specMod
 	ans$bw <- attr(object$w0,"Spec")$bw

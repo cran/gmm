@@ -18,63 +18,73 @@ momentEstim <- function(object, ...)
     }
 
 momentEstim.sysGmm.twoStep.formula <- function(object, ...)
+{
+    dat <- object$x
+    y <- lapply(1:length(dat), function(i) dat[[i]]$x[,1])
+    y <- do.call(c, y)
+    z <- lapply(1:length(dat), function(i)
+        dat[[i]]$x[,(2+dat[[i]]$k):ncol(dat[[i]]$x), drop=FALSE])
+    z <- .diagMatrix(z)
+    x <- lapply(1:length(dat), function(i) dat[[i]]$x[,2:(dat[[i]]$k+1), drop=FALSE])
+    if (attr(dat, "sysInfo")$commonCoef)
     {
-        dat <- object$x
-        y <- lapply(1:length(dat), function(i) dat[[i]]$x[,1])
-        y <- do.call(c, y)
-        z <- lapply(1:length(dat), function(i)
-            dat[[i]]$x[,(2+dat[[i]]$k):ncol(dat[[i]]$x), drop=FALSE])
-        z <- .diagMatrix(z)
-        x <- lapply(1:length(dat), function(i) dat[[i]]$x[,2:(dat[[i]]$k+1), drop=FALSE])
-        if (attr(dat, "sysInfo")$commonCoef)
-            {
-                x <- do.call(rbind, x)
-            } else if (!is.null(attr(dat, "sysInfo")$crossEquConst)) {
-                k <- attr(dat, "k")[[1]]
-                x <- .diagMatrix(x, (1:k)[-attr(dat, "sysInfo")$crossEquConst])
-            } else {
-                x <- .diagMatrix(x)
-            }
-        names(y) <- rownames(x) <- rownames(z) <- 1:length(y)
-        data <- list(y=y, x=x, z=z)
-        dat2 <- getDat(y~x-1, ~z-1, data=data)
-        attr(dat2, "ModelType") <- "linear"
+        x <- do.call(rbind, x)
+    } else if (!is.null(attr(dat, "sysInfo")$crossEquConst)) {
+        k <- attr(dat, "k")[[1]]
+        x <- .diagMatrix(x, (1:k)[-attr(dat, "sysInfo")$crossEquConst])
+    } else {
+        x <- .diagMatrix(x)
+    }
+    names(y) <- rownames(x) <- rownames(z) <- 1:length(y)
+    df <- ncol(z) - ncol(x)
+    k <- ncol(x)
+    q <- ncol(z)
+    n <- nrow(dat[[1]]$x)
+    df.residuals <- n - k        
+    data <- list(y=y, x=x, z=z)
+    dat2 <- getDat(y~x-1, ~z-1, data=data)
+    attr(dat2, "ModelType") <- "linear"        
+    if (!is.null(object$weightsMatrix))
+    {
+        w <- object$weightsMatrix
+        attr(w, "inv") <- FALSE
+        tet0 <- NULL
+        fsRes <- .fsResOnly(dat2)
+    } else if (object$wmatrix == "ident") {
+        w <- diag(q)
+        attr(w, "inv") <- FALSE
+        tet0 <- NULL
+        fsRes <- .fsResOnly(dat2)
+    } else {
         res0 <- .tetlin(dat2, 1, "2sls")
         tet0 <- .getThetaList(res0$par, dat)
         fsRes <- res0$fsRes
         w <- .weightFct_Sys(tet=tet0, dat=dat, type=object$vcov)
-        #return(list(w=w,tet0=tet0,dat=dat,dat2=dat2))
-        res <- .tetlin(dat2, w)
-        par <- .getThetaList(res$par, dat)
-        names(par) <- names(dat)
-        df <- ncol(z) - ncol(x)
-        k <- ncol(x)
-        q <- ncol(z)
-        n <- nrow(x)
-        df.residuals <- n - k
-        z = list(coefficients = par, objective = res$value, dat=dat, k=k, q=q, df=df, df.residual=df.residual, n=n)
-        z$gt <- object$g(z$coefficients, dat)
-        z$initTheta <- tet0
-        tmp <- lapply(1:length(dat), function(i) .residuals(z$coefficients[[i]], dat[[i]]))
-        z$fitted.values <- lapply(1:length(dat), function(i) tmp[[i]]$yhat)                      
-        z$residuals <- lapply(1:length(dat), function(i) tmp[[i]]$residuals)	
-        z$terms <- lapply(1:length(dat), function(i) dat[[i]]$mt)
-        if(object$model) z$model <- lapply(1:length(dat), function(i) dat[[i]]$mf)
-        if(object$X) z$x <- lapply(1:length(dat), function(i)
-            as.matrix(dat[[i]]$x[,(dat[[i]]$ny+1):(dat[[i]]$ny+dat[[i]]$k)]))
-        if(object$Y) z$y <- lapply(1:length(dat), function(i) as.matrix(dat[[i]]$x[,1:dat[[i]]$ny]))
-        z$gradv <- object$gradv
-        z$g <- object$g
-        z$WSpec <- object$WSpec
-        z$w0 <- w
-        colnames(z$gt) <- do.call(c, object$namesgt)
-        z$fsRes <- fsRes
-        class(z) <- "sysGmm.res"
-        z$specMod <- object$specMod
-        return(z)	        
     }
-
-
+    res <- .tetlin(dat2, w)
+    par <- .getThetaList(res$par, dat)
+    names(par) <- names(dat)
+    z = list(coefficients = par, objective = res$value, dat=dat, k=k, q=q, df=df, df.residual=df.residual, n=n)
+    z$gt <- object$g(z$coefficients, dat)
+    z$initTheta <- tet0
+    tmp <- lapply(1:length(dat), function(i) .residuals(z$coefficients[[i]], dat[[i]]))
+    z$fitted.values <- lapply(1:length(dat), function(i) tmp[[i]]$yhat)                      
+    z$residuals <- lapply(1:length(dat), function(i) tmp[[i]]$residuals)	
+    z$terms <- lapply(1:length(dat), function(i) dat[[i]]$mt)
+    if(object$model) z$model <- lapply(1:length(dat), function(i) dat[[i]]$mf)
+    if(object$X) z$x <- lapply(1:length(dat), function(i)
+        as.matrix(dat[[i]]$x[,(dat[[i]]$ny+1):(dat[[i]]$ny+dat[[i]]$k)]))
+    if(object$Y) z$y <- lapply(1:length(dat), function(i) as.matrix(dat[[i]]$x[,1:dat[[i]]$ny]))
+    z$gradv <- object$gradv
+    z$g <- object$g
+    z$WSpec <- object$WSpec
+    z$w0 <- w
+    colnames(z$gt) <- do.call(c, object$namesgt)
+    z$fsRes <- fsRes
+    class(z) <- "sysGmm.res"
+    z$specMod <- object$specMod
+    return(z)	        
+}
 
 momentEstim.baseGmm.eval <- function(object, ...)
     {

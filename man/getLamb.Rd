@@ -44,22 +44,22 @@ select the right space to look for \eqn{\theta}}
 \item{method}{The iterative procedure uses a Newton method for solving
   the FOC. It i however recommended to use \code{optim} or
   \code{nlminb}. If type is set to "EL" and method to "optim",
-  \code{\link{constrOptim}} is called to prevent \eqn{log(1-gt'\lambda)}
+  \code{\link[stats]{constrOptim}} is called to prevent \eqn{log(1-gt'\lambda)}
   from producing NA. The gradient and hessian is provided to
   \code{nlminb} which speed up the convergence. The latter is therefore
   the default value. "Wu" is for "EL" only. It uses the algorithm of Wu
   (2005). The value of \code{method} is ignored for "CUE" because in
   that case, the analytical solution exists.}
 
-\item{control}{Controls to send to \code{\link{optim}},
-\code{\link{nlminb}} or \code{\link{constrOptim}}} } \details{ It solves
+\item{control}{Controls to send to \code{\link[stats]{optim}},
+\code{\link[stats]{nlminb}} or \code{\link[stats]{constrOptim}}} } \details{ It solves
 the problem \eqn{\max_{\lambda} \frac{1}{n}\sum_{t=1}^n
 \rho(gt'\lambda)}. For the type "ETEL", it is only used by
 \code{\link{gel}}. In that case \eqn{\lambda} is obtained by maximizing
 \eqn{\frac{1}{n}\sum_{t=1}^n \rho(gt'\lambda)}, using
 \eqn{\rho(v)=-\exp{v}} (so ET) and \eqn{\theta} by minimizing the same
 equation but with \eqn{\rho(v)-\log{(1-v)}}. To avoid NA's,
-\code{\link{constrOptim}} is used with the restriction \eqn{\lambda'g_t
+\code{\link[stats]{constrOptim}} is used with the restriction \eqn{\lambda'g_t
 < 1}. The type "ETHD" is experimental and proposed by Antoine-Dovonon
 (2015). The paper is not yet available.  }
 

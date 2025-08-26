@@ -21,7 +21,7 @@ bwWilhelm(x, order.by = NULL, kernel = c("Quadratic Spectral",
 the observations are assumed to be ordered (e.g., a time
 series).}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details)}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link[sandwich]{kernHAC}} for more details)}
 
 \item{approx}{A character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
@@ -31,7 +31,7 @@ series).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
-\item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
+\item{ar.method}{character. The \code{method} argument passed to \code{\link[stats]{ar}} for prewhitening.}
 
 \item{data}{an optional data frame containing the variables in the 'order.by' model.}
 
@@ -54,7 +54,7 @@ The function 'bwWilhelm'  returns the optimal bandwidth.
 }
 
 \note{
-  The function was written by Daniel Wilhelm and is based on \link{bwAndrews}.
+  The function was written by Daniel Wilhelm and is based on \link[sandwich]{bwAndrews}.
 }
 
 \examples{

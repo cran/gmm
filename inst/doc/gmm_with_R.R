@@ -183,8 +183,8 @@ c <- rep(0,5)
 linearHypothesis(res,R,c,test = "Chisq")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  test <- paste(names(coef(res)[1:5])," = 0",sep="")
-#  linearHypothesis(res,test)
+# test <- paste(names(coef(res)[1:5])," = 0",sep="")
+# linearHypothesis(res,test)
 
 ## -----------------------------------------------------------------------------
 res2<-gmm(z~zm-1,cbind(1,zm))
@@ -218,19 +218,19 @@ res_rf <- gmm(g6, rf, tet0, control = list(maxit = 1000, reltol = 1e-10))
 coef(res_rf)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  y <- rbind(y1-mean(y1),y2-mean(y2),y3-mean(y3))
-#  x <- rbind(x1-mean(x1),x2-mean(x2),x3-mean(x3))
-#  res <- gmm(y~x,h)
+# y <- rbind(y1-mean(y1),y2-mean(y2),y3-mean(y3))
+# x <- rbind(x1-mean(x1),x2-mean(x2),x3-mean(x3))
+# res <- gmm(y~x,h)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  y <- rbind(y1,y2,y3)
-#  x <- rbind(x1,x2,x3)
-#  res <- gmm(y~x,h)
+# y <- rbind(y1,y2,y3)
+# x <- rbind(x1,x2,x3)
+# res <- gmm(y~x,h)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  gt <- g(t0, x)
-#  V <- kernHAC(lm(gt~1),sandwich = FALSE)
-#  W <- solve(V)
+# gt <- g(t0, x)
+# V <- kernHAC(lm(gt~1),sandwich = FALSE)
+# W <- solve(V)
 
 ## -----------------------------------------------------------------------------
 print(res<-gmm(g4,x5t[,4:7],wmatrix="ident"))
@@ -271,15 +271,15 @@ specTest(res)
 plot(res,which=4)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  ui=cbind(0,-1,-1)
-#  ci <- -1
+# ui=cbind(0,-1,-1)
+# ci <- -1
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",
-#  constraint=TRUE, ui=ui,ci=ci)
+# res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE,kernel="Truncated",
+# constraint=TRUE, ui=ui,ci=ci)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim")
-#  res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim",
-#  LambdaControl=list(trace=TRUE, parscale=rep(.1,5)))
+# res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim")
+# res <- gel(g4,x=dat5[,4:7],tet0,smooth=TRUE, optlam="optim",
+# LambdaControl=list(trace=TRUE, parscale=rep(.1,5)))
 

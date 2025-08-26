@@ -19,7 +19,7 @@
  \item{object}{An object of class \code{gmm} or \code{gmm} returned by the function \code{\link{gmm}} or \code{\link{gel}}}
 \item{lambda}{If set to TRUE, the covariance matrix of the Lagrange multipliers is produced.}
 \item{type}{Type of covariance matrix for the meat}
-\item{hacProp}{A list of arguments to pass to \code{\link{kernHAC}}}
+\item{hacProp}{A list of arguments to pass to \code{\link[sandwich]{kernHAC}}}
 \item{robToMiss}{If \code{TRUE}, it computes the robust to
  misspecification covariance matrix}
 \item{...}{Other arguments when \code{vcov} is applied to another class object}

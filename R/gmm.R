@@ -240,6 +240,60 @@ getDat <- function (formula, h, data, error=TRUE)
     return(list(x=x,nh=nh,ny=ny,k=k,mf=mf,mt=mt,cl=cl,termsh=termsh,termsx=mt))
 }
 
+.fsResOnly <- function(dat)
+{
+    x <- dat$x
+    g <- .momentFct
+    gradv <- .DmomentFct
+    ny <- dat$ny
+    nh <- dat$nh
+    k <- dat$k
+    n <- nrow(x)
+    ym <- as.matrix(x[,1:ny])
+    xm <- as.matrix(x[,(ny+1):(ny+k)])
+    hm <- as.matrix(x[,(ny+k+1):(ny+k+nh)])
+    if (!is.null(attr(dat, "eqConst")))
+    {
+        resTet <- attr(dat,"eqConst")$eqConst
+        y2 <- xm[, resTet[,1],drop=FALSE]%*%resTet[,2]
+        ym <- ym-c(y2)
+        xm <- xm[,-resTet[,1],drop=FALSE]
+        k <- ncol(xm)
+    }
+    includeExo <- which(colnames(xm)%in%colnames(hm))
+    if (length(includeExo) > 0)
+    {                        
+        endo <- xm[, -includeExo, drop = FALSE]
+        endoName <- colnames(endo)
+        if (ncol(endo) != 0)
+        {
+            if (attr(dat$termsh, "intercept") == 1)
+                restsls <- lm(endo~hm[,-1])
+            else
+                restsls <- lm(endo~hm-1)
+            fsls <- xm
+            fsls[, -includeExo] <- restsls$fitted
+        } else {
+            fsls <- xm
+            restsls <- NULL
+        }
+    } else {
+        if (attr(dat$termsh, "intercept") == 1)
+            restsls <- lm(xm~hm[,-1])
+        else
+            restsls <- lm(xm~hm-1)
+        endoName <- colnames(xm)
+    }                
+    if (!is.null(restsls))
+    {
+        chk <- .chkPerfectFit(restsls)
+        fsRes <- suppressWarnings(summary(restsls))[!chk]
+        attr(fsRes, "Endo") <- endoName[!chk]
+    }
+    return(fsRes)
+}
+    
+    
 .tetlin <- function(dat, w, type=NULL)
     {
         x <- dat$x

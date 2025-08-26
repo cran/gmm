@@ -24,6 +24,5 @@ A data frame containing 9 vectors.
   \item{LagPop}{Population of the previous period}
 }
 }
-
-\source{\url{http://fhayashi.fc2web.com/datasets.htm}}
+\source{\url{https://sites.google.com/view/fumio-hayashis-hp/hayashi-econometrics}}
 \keyword{datasets}

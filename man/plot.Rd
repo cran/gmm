@@ -28,10 +28,10 @@
   \item{main}{Vector of titles for each plot.
   }
   \item{panel}{panel function.  The useful alternative to
-    \code{\link{points}}, \code{\link{panel.smooth}} can be chosen
+    \code{\link[graphics]{points}}, \code{\link[graphics]{panel.smooth}} can be chosen
     by \code{add.smooth = TRUE}.}
   \item{ask}{logical; if \code{TRUE}, the user is \emph{ask}ed before
-    each plot, see \code{\link{par}(ask=.)}.}
+    each plot, see \code{\link[graphics]{par}(ask=.)}.}
   \item{\dots}{other parameters to be passed through to plotting
     functions.}
   \item{add.smooth}{logical indicating if a smoother should be added to

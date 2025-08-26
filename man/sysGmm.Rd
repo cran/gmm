@@ -36,15 +36,15 @@ randEffect(g, data = NULL)
   dependent processes and "CondHom" implies conditional
   homoscedasticity. The option "TrueFixed" is used only when the matrix of weights is provided and it is the optimal one.}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details)}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link[sandwich]{kernHAC}} for more details)}
 
 \item{crit}{The stopping rule for the iterative GMM. It can be reduce to increase the precision.}
 
-\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link{bwNeweyWest}} of Newey-West(1994).}
+\item{bw}{The method to compute the bandwidth parameter. By default it is \code{\link[sandwich]{bwAndrews}} which is proposed by Andrews (1991). The alternative is \code{\link[sandwich]{bwNeweyWest}} of Newey-West(1994).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
-\item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
+\item{ar.method}{character. The \code{method} argument passed to \code{\link[stats]{ar}} for prewhitening.}
 
 \item{approx}{A character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
@@ -91,7 +91,7 @@ The object of class "sysGmm" is a list containing at least:
 
 \item{objective}{the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g}\|^2}}
 
-\item{terms}{The list of \code{\link{terms}} objects for each equation}
+\item{terms}{The list of \code{\link[stats]{terms}} objects for each equation}
 
 \item{call}{the matched call.}
  

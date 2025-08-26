@@ -23,7 +23,7 @@ The function just calls \code{\link{gmm}} with the option vcov="iid". It just si
 \deqn{
 Y_i = X_i\beta + u_i
 }
-In the first step, \code{\link{lm}}  is used to regress \eqn{X_i} on the set of instruments \eqn{Z_i}. The second step also uses \code{\link{lm}} to regress \eqn{Y_i} on the fitted values of the first step. 
+In the first step, \code{\link[stats]{lm}}  is used to regress \eqn{X_i} on the set of instruments \eqn{Z_i}. The second step also uses \code{\link[stats]{lm}} to regress \eqn{Y_i} on the fitted values of the first step. 
 }
 
 \value{
@@ -43,7 +43,7 @@ The object of class "gmm" is a list containing at least:
 
 \item{objective}{the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g}\|^2}}
 
-\item{terms}{the \code{\link{terms}} object used when g is a formula.}
+\item{terms}{the \code{\link[stats]{terms}} object used when g is a formula.}
 
 \item{call}{the matched call.}
  
@@ -53,7 +53,7 @@ The object of class "gmm" is a list containing at least:
 
 \item{model}{if requested (the default), the model frame used if "g" is a formula.}
 
-\item{algoInfo}{Information produced by either \code{\link{optim}} or \code{\link{nlminb}} related to the convergence if "g" is a function. It is printed by the \code{summary.gmm} method.}
+\item{algoInfo}{Information produced by either \code{\link[stats]{optim}} or \code{\link[stats]{nlminb}} related to the convergence if "g" is a function. It is printed by the \code{summary.gmm} method.}
 }
 
 

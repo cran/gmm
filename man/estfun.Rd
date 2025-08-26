@@ -6,7 +6,7 @@
 \alias{model.matrix.tsls}
 \title{Extracts the empirical moment function}
 \description{
-It extracts the matrix of empirical moments so that it can be used by the \code{\link{kernHAC}} function. 
+It extracts the matrix of empirical moments so that it can be used by the \code{\link[sandwich]{kernHAC}} function. 
 }
 \usage{
 \method{estfun}{gmmFct}(x, y = NULL, theta = NULL, ...)
@@ -26,11 +26,11 @@ It extracts the matrix of empirical moments so that it can be used by the \code{
 \details{
 For \code{estfun.gmmFct}, it returns a \eqn{n \times q} matrix with typical element \eqn{g_i(\theta,y_t)} for \eqn{i=1,...q} and \eqn{t=1,...,n}. It is only used by \code{gmm} to obtain the estimates.
 
-For \code{estfun.gmm}, it returns the matrix of first order conditions of \eqn{\min_\theta \bar{g}'W\bar{g}/2}, which is a \eqn{n \times k} matrix with the \eqn{t^{th}} row being \eqn{g(\theta, y_t)W G}, where \eqn{G} is \eqn{d\bar{g}/d\theta}. It allows to compute the sandwich covariance matrix using \code{\link{kernHAC}} or \code{\link{vcovHAC}} when \eqn{W} is not the optimal matrix.
+For \code{estfun.gmm}, it returns the matrix of first order conditions of \eqn{\min_\theta \bar{g}'W\bar{g}/2}, which is a \eqn{n \times k} matrix with the \eqn{t^{th}} row being \eqn{g(\theta, y_t)W G}, where \eqn{G} is \eqn{d\bar{g}/d\theta}. It allows to compute the sandwich covariance matrix using \code{\link[sandwich]{kernHAC}} or \code{\link[sandwich]{vcovHAC}} when \eqn{W} is not the optimal matrix.
 
 The method if not yet available for \code{gel} objects.
 
-For tsls, model.matrix and estfun are used by \code{vcov()} to compute different covariance matrices using the \code{\link{sandwich}} package. See \code{\link{vcov.tsls}}. \code{model.matrix} returns the fitted values frin the first stage regression and \code{esfun} the residuals.
+For tsls, \code{model.matrix} and estfun are used by \code{\link{vcov.tsls}} to compute different covariance matrices using the \code{sandwich} package. \code{model.matrix} returns the fitted values from the first stage regression and \code{estfun} the residuals.
 }
 
 \value{

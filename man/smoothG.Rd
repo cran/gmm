@@ -16,8 +16,8 @@ smoothG(x, bw = bwAndrews, prewhite = 1, ar.method = "ols", weights = weightsAnd
     order \code{as.integer(prewhite)} is fitted via \code{ar} with
     method \code{"ols"} and \code{demean = FALSE}.}
 \item{ar.method}{character. The \code{method} argument passed to
-   \code{\link{ar}} for prewhitening.}
-\item{weights}{The smoothing weights can be computed by \code{\link{weightsAndrews}} of it can be provided manually. If provided, it has to be a \eqn{r\times 1}vector (see details). }
+   \code{\link[stats]{ar}} for prewhitening.}
+\item{weights}{The smoothing weights can be computed by \code{\link[sandwich]{weightsAndrews}} of it can be provided manually. If provided, it has to be a \eqn{r\times 1}vector (see details). }
 \item{approx}{a character specifying the approximation method if the
     bandwidth has to be chosen by \code{bwAndrews}.}
 \item{tol}{numeric. Weights that exceed \code{tol} are used for computing

@@ -24,7 +24,7 @@ A data frame containing 20 cross-sectional vectors.
 }
 }
 
-\source{\url{http://fhayashi.fc2web.com/datasets.htm}}
+\source{\url{https://sites.google.com/view/fumio-hayashis-hp/hayashi-econometrics}}
 
 
 \keyword{datasets}

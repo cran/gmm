@@ -38,7 +38,7 @@ gmmWithConst(obj, which, value)
 
 \item{tetw}{A \eqn{k \times 1} vector to compute the weighting matrix.}
 
-\item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradient is used to compute the asymptotic covariance matrix of \eqn{\hat{\theta}} and to obtain the analytical gradient of the objective function if the method is set to "CG" or "BFGS" in \code{\link{optim}} and if "type" is not set to "cue". If "g" is a formula, the gradiant is not required (see the details below).}
+\item{gradv}{A function of the form \eqn{G(\theta,x)} which returns a \eqn{q\times k} matrix of derivatives of \eqn{\bar{g}(\theta)} with respect to \eqn{\theta}. By default, the numerical algorithm \code{numericDeriv} is used. It is of course strongly suggested to provide this function when it is possible. This gradient is used to compute the asymptotic covariance matrix of \eqn{\hat{\theta}} and to obtain the analytical gradient of the objective function if the method is set to "CG" or "BFGS" in \code{\link[stats]{optim}} and if "type" is not set to "cue". If "g" is a formula, the gradiant is not required (see the details below).}
 
 \item{type}{The GMM method: "twostep" is the two step GMM proposed by Hansen(1982) and the "cue" and "iterative" are respectively the continuous updated and the iterative GMM proposed by Hansen, Eaton et Yaron (1996)}
 
@@ -46,20 +46,20 @@ gmmWithConst(obj, which, value)
 
 \item{vcov}{Assumption on the properties of the random vector x. By default, x is a weakly dependant process. The "iid" option will avoid using the HAC matrix which will accelerate the estimation if one is ready to make that assumption. The option "TrueFixed" is used only when the matrix of weights is provided and it is the optimal one.}
 
-\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link{kernHAC}} for more details)}
+\item{kernel}{type of kernel used to compute the covariance matrix of the vector of sample moment conditions (see \code{\link[sandwich]{kernHAC}} for more details)}
 
 \item{crit}{The stopping rule for the iterative GMM. It can be reduce to increase the precision.}
 
 \item{bw}{The method to compute the bandwidth parameter in the HAC
-  weighting matrix. The default is \code{link{bwAndrews}} (as proposed in Andrews
+  weighting matrix. The default is \code{link[sandwich]{bwAndrews}} (as proposed in Andrews
   (1991)), which minimizes the MSE of the weighting matrix. Alternatives
   are \code{link{bwWilhelm}} (as proposed in Wilhelm
   (2015)), which minimizes the mean-square error (MSE) of the resulting
-  GMM estimator, and \code{link{bwNeweyWest}} (as proposed in Newey-West(1994)).}
+  GMM estimator, and \code{link[sandwich]{bwNeweyWest}} (as proposed in Newey-West(1994)).}
 
 \item{prewhite}{logical or integer. Should the estimating functions be prewhitened? If \code{TRUE} or greater than 0 a VAR model of order \code{as.integer(prewhite)} is fitted via \code{ar} with method \code{"ols"} and \code{demean = FALSE}.}
 
-\item{ar.method}{character. The \code{method} argument passed to \code{\link{ar}} for prewhitening.}
+\item{ar.method}{character. The \code{method} argument passed to \code{\link[stats]{ar}} for prewhitening.}
 
 \item{approx}{A character specifying the approximation method if the bandwidth has to be chosen by \code{bwAndrews}.}
 
@@ -67,7 +67,7 @@ gmmWithConst(obj, which, value)
 
 \item{itermax}{The maximum number of iterations for the iterative GMM. It is unlikely that the algorithm does not converge but we keep it as a safety.}
 
-\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link{optim}} or \code{\link{optimize}}. In that case, the former is unreliable. If \code{\link{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link{nlminb}} algorithm. In that case, boundaries for the coefficients can be set by the options \code{upper=} and \code{lower=}. The \code{\link{constrOptim}} is only available for nonlinear models for now. The standard errors may have to be corrected if the estimtes reach the boundary set by ui and ci.}
+\item{optfct}{Only when the dimension of \eqn{\theta} is 1, you can choose between the algorithm \code{\link[stats]{optim}} or \code{\link[stats]{optimize}}. In that case, the former is unreliable. If \code{\link[stats]{optimize}} is chosen, "t0" must be \eqn{1\times 2} which represents the interval in which the algorithm seeks the solution. It is also possible to choose the \code{\link[stats]{nlminb}} algorithm. In that case, boundaries for the coefficients can be set by the options \code{upper=} and \code{lower=}. The \code{\link[stats]{constrOptim}} is only available for nonlinear models for now. The standard errors may have to be corrected if the estimtes reach the boundary set by ui and ci.}
 
 \item{model, X, Y}{logical.  If \code{TRUE} the corresponding components of the fit (the model frame, the model matrix, the response) are returned if g is a formula.}
 
@@ -100,11 +100,11 @@ gmmWithConst(obj, which, value)
   the coefficient estimates. It may be of interest when the standard
   errors are not needed}
 
-\item{...}{More options to give to \code{\link{optim}}.}
+\item{...}{More options to give to \code{\link[stats]{optim}}.}
 }
 
 \details{
-If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H. It is also possible to express "x" as a formula. For example, if the instruments are \eqn{\{1,z_1,z_2,z_3\}}, we can set "x" to \eqn{\tilde{} z1+z2+z3}. By default, a column of ones is added. To remove it, set "x" to \eqn{\tilde{}z1+z2+z3-1}. 
+If we want to estimate a model like \eqn{Y_t = \theta_1 + X_{2t} \theta_2 + \cdots + X_{k}\theta_k + \epsilon_t} using the moment conditions \eqn{Cov(\epsilon_tH_t)=0}, where \eqn{H_t} is a vector of \eqn{Nh} instruments, than we can define "g" like we do for \code{\link[stats]{lm}}. We would have \eqn{g = y ~\tilde{}~ x2+x3+ \cdots +xk} and the argument "x" above would become the matrix H of instruments. As for \code{\link[stats]{lm}}, \eqn{Y_t} can be a \eqn{Ny \times 1} vector which would imply that \eqn{k=Nh \times Ny}. The intercept is included by default so you do not have to add a column of ones to the matrix \eqn{H}. You do not need to provide the gradiant in that case since in that case it is embedded in \code{\link{gmm}}. The intercept can be removed by adding -1 to the formula. In that case, the column of ones need to be added manually to H. It is also possible to express "x" as a formula. For example, if the instruments are \eqn{\{1,z_1,z_2,z_3\}}, we can set "x" to \eqn{\tilde{} z1+z2+z3}. By default, a column of ones is added. To remove it, set "x" to \eqn{\tilde{}z1+z2+z3-1}. 
 
 The following explains the last example bellow. Thanks to Dieter Rozenich, a student from the Vienna University of Economics and Business Administration. He suggested that it would help to understand the implementation of the Jacobian.  
 
@@ -158,7 +158,7 @@ The object of class "gmm" is a list containing at least:
 
 \item{objective}{the value of the objective function \eqn{\| var(\bar{g})^{-1/2}\bar{g}\|^2}}
 
-\item{terms}{the \code{\link{terms}} object used when g is a formula.}
+\item{terms}{the \code{\link[stats]{terms}} object used when g is a formula.}
 
 \item{call}{the matched call.}
  
@@ -168,7 +168,7 @@ The object of class "gmm" is a list containing at least:
 
 \item{model}{if requested (the default), the model frame used if "g" is a formula.}
 
-\item{algoInfo}{Information produced by either \code{\link{optim}} or \code{\link{nlminb}} related to the convergence if "g" is a function. It is printed by the \code{summary.gmm} method.}
+\item{algoInfo}{Information produced by either \code{\link[stats]{optim}} or \code{\link[stats]{nlminb}} related to the convergence if "g" is a function. It is printed by the \code{summary.gmm} method.}
 
  }
 
